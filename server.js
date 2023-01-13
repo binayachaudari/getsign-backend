@@ -2,6 +2,9 @@ const express = require('express');
 const fileUpload = require('express-fileupload');
 const { config } = require('./config');
 const cors = require('cors');
+const connectDB = require('./db');
+
+connectDB();
 
 var bodyParser = require('body-parser');
 
