@@ -1,4 +1,5 @@
 const AWS = require('aws-sdk');
+const FileDetailsModal = require('../modals/FileDetails');
 
 const s3 = new AWS.S3({
   credentials: {
@@ -10,7 +11,9 @@ const s3 = new AWS.S3({
 
 module.exports = {
   uploadFile: async (req, res, next) => {
+    const body = req.body;
     const file = req.files.file;
+
     const s3Res = await s3
       .upload({
         Bucket: process.env.BUCKET_NAME,
@@ -19,7 +22,15 @@ module.exports = {
         ContentType: file.mimetype,
       })
       .promise();
-    res.send(s3Res);
+
+    const result = await FileDetailsModal.create({
+      account_id: body.account_id,
+      board_id: body.board_id,
+      file: s3Res.Key,
+      item_id: body.item_id,
+      user_id: body.user_id,
+    });
+    res.send(result);
   },
   getFile: async (req, res, next) => {
     try {
