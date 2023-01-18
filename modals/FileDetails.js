@@ -22,6 +22,15 @@ const schema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    file_name: {
+      type: String,
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: ['ready_to_sign', 'pending', 'signed'],
+    },
+    fields: [{}],
   },
   {
     timestamps: {
