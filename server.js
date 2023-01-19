@@ -3,6 +3,7 @@ const fileUpload = require('express-fileupload');
 const { config } = require('./config');
 const cors = require('cors');
 const connectDB = require('./db');
+const path = require('path');
 
 connectDB();
 
@@ -19,6 +20,19 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(fileUpload());
 
 app.use('/api/v1', require('./routes/api'));
+
+/**
+ * Server static in production
+ */
+if (process.env.NODE_ENV === 'production') {
+  //set static folder
+  app.use(express.static(path.join(__dirname, '..', 'application', 'dist')));
+  app.get('*', (req, res, next) => {
+    res.sendFile(
+      path.join(__dirname, '..', 'application', 'dist', 'index.html')
+    );
+  });
+}
 
 app.use((err, req, res, next) => {
   res.json({ ...err }).status(err?.statusCode || 500);
