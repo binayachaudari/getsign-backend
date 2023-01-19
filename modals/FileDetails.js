@@ -13,6 +13,7 @@ const schema = new mongoose.Schema(
     board_id: {
       type: Number,
       required: true,
+      unique: true,
     },
     item_id: {
       type: Number,
@@ -31,6 +32,11 @@ const schema = new mongoose.Schema(
       enum: ['ready_to_sign', 'pending', 'signed'],
     },
     fields: [{}],
+    sender_name: String,
+    email_address: String,
+    email_title: String,
+    message: String,
+    deadline: Number,
   },
   {
     timestamps: {
