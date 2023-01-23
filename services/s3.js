@@ -56,4 +56,26 @@ const getFile = async (id) => {
   }
 };
 
-module.exports = { uploadFile, getFile };
+const deleteFile = async (id) => {
+  try {
+    const fileDetails = await FileDetailsModal.findById(id);
+    s3.deleteObject(
+      {
+        Bucket: process.env.BUCKET_NAME,
+        Key: fileDetails.file,
+      },
+      (err, data) => {
+        if (err) {
+          console.log(err, err.stack);
+          throw err;
+        }
+      }
+    );
+
+    await FileDetailsModal.findByIdAndDelete(id);
+  } catch (error) {
+    throw error;
+  }
+};
+
+module.exports = { uploadFile, getFile, deleteFile };
