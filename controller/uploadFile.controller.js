@@ -1,5 +1,5 @@
 const { addFormFields } = require('../services/file');
-const { uploadFile, getFile } = require('../services/s3');
+const { uploadFile, getFile, deleteFile } = require('../services/s3');
 
 module.exports = {
   uploadFile: async (req, res, next) => {
@@ -24,6 +24,15 @@ module.exports = {
     const id = req.params.id;
     try {
       const result = await addFormFields(id, req.body);
+      return res.json({ data: result }).status(200);
+    } catch (error) {
+      next(error);
+    }
+  },
+  deleteFile: async (req, res, next) => {
+    const id = req.params.id;
+    try {
+      const result = await deleteFile(id);
       return res.json({ data: result }).status(200);
     } catch (error) {
       next(error);
