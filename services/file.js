@@ -38,7 +38,7 @@ const generatePDF = async (id, fields) => {
             height: placeHolder?.image.height,
           });
         } else {
-          const value = fields.find((item) => item?.id === placeHolder?.title);
+          const value = fields.find((item) => item?.id === placeHolder?.itemId);
 
           if (value)
             currentPage.drawText(value?.text, {

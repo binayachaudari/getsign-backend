@@ -44,7 +44,6 @@ module.exports = {
       const result = await generatePDF(id, fields);
       return res.json({ data: result }).status(200);
     } catch (error) {
-      console.log(error);
       next(error);
     }
   },
