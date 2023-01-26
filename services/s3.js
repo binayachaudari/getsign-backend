@@ -43,7 +43,6 @@ const getFile = async (id) => {
     });
     const body = await fetch(url);
     const contentType = body.headers.get('content-type');
-    console.log(body);
     const arrBuffer = await body.arrayBuffer();
     const buffer = Buffer.from(arrBuffer);
     var base64String = buffer.toString('base64');

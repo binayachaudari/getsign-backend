@@ -1,4 +1,4 @@
-const { addFormFields } = require('../services/file');
+const { addFormFields, generatePDF } = require('../services/file');
 const { uploadFile, getFile, deleteFile } = require('../services/s3');
 
 module.exports = {
@@ -35,6 +35,16 @@ module.exports = {
       const result = await deleteFile(id);
       return res.json({ data: result }).status(200);
     } catch (error) {
+      next(error);
+    }
+  },
+  generatePDF: async (req, res, next) => {
+    const { id, fields } = req.body;
+    try {
+      const result = await generatePDF(id, fields);
+      return res.json({ data: result }).status(200);
+    } catch (error) {
+      console.log(error);
       next(error);
     }
   },

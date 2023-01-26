@@ -1,4 +1,7 @@
+const { PDFDocument } = require('pdf-lib');
 const FileDetails = require('../modals/FileDetails');
+const { getFile } = require('./s3');
+const fontkit = require('@pdf-lib/fontkit');
 
 const addFormFields = async (id, payload) => {
   try {
@@ -13,4 +16,55 @@ const addFormFields = async (id, payload) => {
   }
 };
 
-module.exports = { addFormFields };
+const generatePDF = async (id, fields) => {
+  try {
+    const fileDetails = await getFile(id);
+    const pdfDoc = await PDFDocument.load(fileDetails?.file);
+    const pages = pdfDoc.getPages();
+    pdfDoc.registerFontkit(fontkit);
+
+    const parsedFileDetails = fileDetails.toJSON();
+
+    if (fields?.length && parsedFileDetails?.fields) {
+      parsedFileDetails?.fields?.forEach(async (placeHolder) => {
+        const currentPage = pages[placeHolder?.formField?.pageIndex];
+
+        if (placeHolder?.image) {
+          const pngImage = await pdfDoc.embedPng(placeHolder?.image?.src);
+          currentPage.drawImage(pngImage, {
+            x: placeHolder?.formField.coordinates.x,
+            y: placeHolder?.formField.coordinates.y,
+            width: placeHolder?.image.width,
+            height: placeHolder?.image.height,
+          });
+        } else {
+          const value = fields.find((item) => item?.id === placeHolder?.title);
+
+          if (value)
+            currentPage.drawText(value?.text, {
+              x: placeHolder.formField.coordinates.x,
+              y: placeHolder.formField.coordinates.y,
+              size: 16,
+            });
+        }
+      });
+
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([new Uint8Array(pdfBytes)], {
+        type: 'application/pdf',
+      });
+      const type = blob.type;
+      const arrayBuffer = await blob.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      const base64String = buffer.toString('base64');
+      return {
+        name: parsedFileDetails.file_name,
+        file: `data:${type};base64,${base64String}`,
+      };
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
+module.exports = { addFormFields, generatePDF };
