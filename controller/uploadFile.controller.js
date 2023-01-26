@@ -1,4 +1,8 @@
-const { addFormFields, generatePDF } = require('../services/file');
+const {
+  addFormFields,
+  generatePDF,
+  addSenderDetails,
+} = require('../services/file');
 const { uploadFile, getFile, deleteFile } = require('../services/s3');
 
 module.exports = {
@@ -42,6 +46,24 @@ module.exports = {
     const { id, fields } = req.body;
     try {
       const result = await generatePDF(id, fields);
+      return res.json({ data: result }).status(200);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  addSenderDetails: async (req, res, next) => {
+    const id = req.params.id;
+    const { sender_name, email_address, email_title, message } = req.body;
+
+    try {
+      const result = await addSenderDetails(id, {
+        sender_name,
+        email_address,
+        email_title,
+        message,
+      });
+
       return res.json({ data: result }).status(200);
     } catch (error) {
       next(error);

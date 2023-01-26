@@ -67,4 +67,22 @@ const generatePDF = async (id, fields) => {
   }
 };
 
-module.exports = { addFormFields, generatePDF };
+const addSenderDetails = (
+  id,
+  { sender_name, email_address, email_title, message }
+) => {
+  try {
+    const updated = FileDetails.findByIdAndUpdate(id, {
+      sender_name,
+      email_address,
+      email_title,
+      message,
+    });
+
+    return updated;
+  } catch (error) {
+    throw error;
+  }
+};
+
+module.exports = { addFormFields, generatePDF, addSenderDetails };
