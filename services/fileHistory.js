@@ -1,17 +1,17 @@
 const FileHistory = require('../modals/FileHistory');
 
-const addFileHistory = async (id, payload) => {
+const addFileHistory = async (id, status) => {
   try {
     const addedHistory = await FileHistory.find({
       fileId: id,
-      status: payload?.status,
+      status,
     });
 
-    if (addedHistory) return;
+    if (addedHistory?.length) return;
 
-    await FileHistory.create({
+    return await FileHistory.create({
       fileId: id,
-      status: payload.status,
+      status,
     });
   } catch (error) {
     throw error;
