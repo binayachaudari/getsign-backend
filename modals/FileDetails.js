@@ -29,7 +29,13 @@ const schema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['ready_to_sign', 'pending', 'signed'],
+      enum: [
+        'ready_to_sign',
+        'pending',
+        'signed_by_sender',
+        'signed_by_receiver',
+        'viewed',
+      ],
     },
     fields: [{}],
     sender_name: String,

@@ -3,6 +3,7 @@ const {
   generatePDF,
   addSenderDetails,
 } = require('../services/file');
+const { addFileHistory } = require('../services/fileHistory');
 const { uploadFile, getFile, deleteFile } = require('../services/s3');
 
 module.exports = {
@@ -28,6 +29,7 @@ module.exports = {
     const id = req.params.id;
     try {
       const result = await addFormFields(id, req.body);
+      await addFileHistory(id, { status: req?.body?.status });
       return res.json({ data: result }).status(200);
     } catch (error) {
       next(error);
