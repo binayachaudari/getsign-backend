@@ -3,7 +3,7 @@ const {
   generatePDF,
   addSenderDetails,
 } = require('../services/file');
-const { addFileHistory } = require('../services/fileHistory');
+const { addFileHistory, getFileHistory } = require('../services/fileHistory');
 const { uploadFile, getFile, deleteFile } = require('../services/s3');
 
 module.exports = {
@@ -67,6 +67,16 @@ module.exports = {
         message,
       });
 
+      return res.json({ data: result }).status(200);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getFileHistory: async (req, res, next) => {
+    const id = req.params.id;
+    try {
+      const result = await getFileHistory(id);
       return res.json({ data: result }).status(200);
     } catch (error) {
       next(error);

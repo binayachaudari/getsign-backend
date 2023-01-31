@@ -3,6 +3,7 @@ const controller = require('../../controller/uploadFile.controller');
 
 router.post('/upload-file', controller.uploadFile);
 router.get('/get-file/:id', controller.getFile);
+router.get('/history/:id', controller.getFileHistory);
 router.post('/add-form-fields/:id', controller.updateFields);
 router.delete('/:id', controller.deleteFile);
 router.post('/generate', controller.generatePDF);
