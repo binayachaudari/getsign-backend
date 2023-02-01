@@ -99,6 +99,9 @@ module.exports = {
     try {
       const result = await sendEmail(id, 'binaya@jetpackapps.co');
       return res.json({ data: result }).status(200);
-    } catch (error) {}
+    } catch (error) {
+      console.log(error);
+      next(error);
+    }
   },
 };

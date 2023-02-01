@@ -12,10 +12,7 @@ const schema = new mongoose.Schema(
     },
     viewedIpAddress: String,
     receiverSignedIpAddress: String,
-    file: {
-      type: String,
-      required: true,
-    },
+    file: String,
   },
   {
     timestamps: {

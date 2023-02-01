@@ -2,6 +2,7 @@ const nodemailer = require('nodemailer');
 const { config, SES } = require('aws-sdk');
 const FileHistory = require('../modals/FileHistory');
 const FileDetails = require('../modals/FileDetails');
+const { addFileHistory } = require('./fileHistory');
 
 config.update({
   credentials: {
@@ -43,25 +44,37 @@ let transporter = nodemailer.createTransport({
 
 module.exports = {
   sendEmail: async (id, to) => {
-    const fromFileHistory = await FileHistory.findById(id);
-    const parsedFileHistory = fromFileHistory.toJSON();
+    try {
+      const fromFileHistory = await FileHistory.findById(id);
+      if (!fromFileHistory) throw new Error('No file with such ID');
+      const parsedFileHistory = fromFileHistory.toJSON();
 
-    let fileDetails;
+      let fileDetails;
 
-    if (parsedFileHistory?.fileId) {
-      const query = await FileDetails.findById(parsedFileHistory?.fileId);
-      fileDetails = query.toJSON();
+      if (parsedFileHistory?.fileId) {
+        const query = await FileDetails.findById(parsedFileHistory?.fileId);
+        fileDetails = query.toJSON();
+      }
+
+      const mailResponse = await transporter.sendMail({
+        from: process.env.EMAIL_USERNAME,
+        to,
+        subject: fileDetails.email_title,
+        text: `${fileDetails.sender_name} (${fileDetails.email_address}) has requested a signature
+        link: https://jetsign.jtpk.app/sign/${id}?receiver=true
+        Document: ${fileDetails.file_name}
+        Message from ${fileDetails.sender_name}: ${fileDetails.message}
+        `,
+      });
+
+      if (mailResponse?.messageId) {
+        return await addFileHistory({
+          id: parsedFileHistory.fileId,
+          status: 'sent',
+        });
+      }
+    } catch (err) {
+      throw err;
     }
-
-    transporter.sendMail({
-      from: process.env.EMAIL_USERNAME,
-      to,
-      subject: fileDetails.email_title,
-      text: `${fileDetails.sender_name} (${fileDetails.email_address}) has requested a signature
-      link: https://https://jetsign.jtpk.app/sign/${id}?receiver=true
-      Document: ${fileDetails.file_name}
-      Message from ${fileDetails.sender_name}: ${fileDetails.message}
-      `,
-    });
   },
 };
