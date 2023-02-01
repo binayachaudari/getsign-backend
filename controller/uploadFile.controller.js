@@ -4,6 +4,7 @@ const {
   addSenderDetails,
 } = require('../services/file');
 const { addFileHistory, getFileHistory } = require('../services/fileHistory');
+const { sendEmail } = require('../services/mailer');
 const { uploadFile, getFile, deleteFile } = require('../services/s3');
 
 module.exports = {
@@ -91,5 +92,13 @@ module.exports = {
     } catch (error) {
       next(error);
     }
+  },
+
+  sendPDF: async (req, res, next) => {
+    const id = req.params.id;
+    try {
+      const result = await sendEmail(id, 'binaya@jetpackapps.co');
+      return res.json({ data: result }).status(200);
+    } catch (error) {}
   },
 };
