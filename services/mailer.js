@@ -56,21 +56,21 @@ module.exports = {
         fileDetails = query.toJSON();
       }
 
-      const mailResponse = await transporter.sendMail({
-        from: process.env.EMAIL_USERNAME,
-        to,
-        subject: fileDetails.email_title,
-        text: `${fileDetails.sender_name} (${fileDetails.email_address}) has requested a signature
-        link: https://jetsign.jtpk.app/sign/${id}?receiver=true
+      const addedHistory = await addFileHistory({
+        id: parsedFileHistory.fileId,
+        status: 'sent',
+      });
+
+      if (addedHistory?._id) {
+        return await transporter.sendMail({
+          from: process.env.EMAIL_USERNAME,
+          to,
+          subject: fileDetails.email_title,
+          text: `${fileDetails.sender_name} (${fileDetails.email_address}) has requested a signature
+        link: https://jetsign.jtpk.app/sign/${addedHistory?._id}?receiver=true
         Document: ${fileDetails.file_name}
         Message from ${fileDetails.sender_name}: ${fileDetails.message}
         `,
-      });
-
-      if (mailResponse?.messageId) {
-        return await addFileHistory({
-          id: parsedFileHistory.fileId,
-          status: 'sent',
         });
       }
     } catch (err) {
