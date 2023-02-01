@@ -1,6 +1,6 @@
 const { PDFDocument } = require('pdf-lib');
 const FileDetails = require('../modals/FileDetails');
-const { getFile } = require('./s3');
+const { getFile, s3 } = require('./s3');
 const fontkit = require('@pdf-lib/fontkit');
 
 const addFormFields = async (id, payload) => {
@@ -29,24 +29,24 @@ const generatePDF = async (id, fields) => {
       parsedFileDetails?.fields?.forEach(async (placeHolder) => {
         const currentPage = pages[placeHolder?.formField?.pageIndex];
 
-        if (placeHolder?.image) {
-          const pngImage = await pdfDoc.embedPng(placeHolder?.image?.src);
-          currentPage.drawImage(pngImage, {
-            x: placeHolder?.formField.coordinates.x,
-            y: placeHolder?.formField.coordinates.y,
-            width: placeHolder?.image.width,
-            height: placeHolder?.image.height,
-          });
-        } else {
-          const value = fields.find((item) => item?.id === placeHolder?.itemId);
+        // if (placeHolder?.image) {
+        //   const pngImage = await pdfDoc.embedPng(placeHolder?.image?.src);
+        //   currentPage.drawImage(pngImage, {
+        //     x: placeHolder?.formField.coordinates.x,
+        //     y: placeHolder?.formField.coordinates.y,
+        //     width: placeHolder?.image.width,
+        //     height: placeHolder?.image.height,
+        //   });
+        // } else {
+        const value = fields.find((item) => item?.id === placeHolder?.itemId);
 
-          if (value)
-            currentPage.drawText(value?.text, {
-              x: placeHolder.formField.coordinates.x,
-              y: placeHolder.formField.coordinates.y,
-              size: 16,
-            });
-        }
+        if (value)
+          currentPage.drawText(value?.text, {
+            x: placeHolder.formField.coordinates.x,
+            y: placeHolder.formField.coordinates.y,
+            size: 11,
+          });
+        // }
       });
 
       const pdfBytes = await pdfDoc.save();
@@ -61,6 +61,53 @@ const generatePDF = async (id, fields) => {
         name: parsedFileDetails.file_name,
         file: `data:${type};base64,${base64String}`,
       };
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
+const signPDF = async (id, fields) => {
+  try {
+    const fileDetails = await getFile(id);
+    const pdfDoc = await PDFDocument.load(fileDetails?.file);
+    const pages = pdfDoc.getPages();
+    pdfDoc.registerFontkit(fontkit);
+
+    const parsedFileDetails = fileDetails.toJSON();
+
+    if (fields?.length && parsedFileDetails?.fields) {
+      fields?.forEach(async (placeHolder) => {
+        const currentPage = pages[placeHolder?.formField?.pageIndex];
+        if (placeHolder?.image) {
+          const pngImage = await pdfDoc.embedPng(placeHolder?.image?.src);
+          currentPage.drawImage(pngImage, {
+            x: placeHolder?.formField.coordinates.x,
+            y: placeHolder?.formField.coordinates.y,
+            width: placeHolder?.image.width,
+            height: placeHolder?.image.height,
+          });
+        }
+      });
+
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([new Uint8Array(pdfBytes)], {
+        type: 'application/pdf',
+      });
+
+      const arrayBuffer = await blob.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      const s3Res = await s3
+        .upload({
+          Bucket: process.env.BUCKET_NAME,
+          Key: `jet-sign-${id}-sender-signed-${Date.now().toString()}`,
+          Body: buffer,
+          ContentType: blob.type,
+        })
+        .promise();
+
+      return s3Res;
     }
   } catch (error) {
     throw error;
@@ -85,4 +132,4 @@ const addSenderDetails = (
   }
 };
 
-module.exports = { addFormFields, generatePDF, addSenderDetails };
+module.exports = { addFormFields, generatePDF, addSenderDetails, signPDF };

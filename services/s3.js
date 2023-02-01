@@ -77,4 +77,4 @@ const deleteFile = async (id) => {
   }
 };
 
-module.exports = { uploadFile, getFile, deleteFile };
+module.exports = { uploadFile, getFile, deleteFile, s3 };

@@ -1,6 +1,7 @@
 const FileHistory = require('../modals/FileHistory');
+const { signPDF } = require('./file');
 
-const addFileHistory = async (id, status) => {
+const addFileHistory = async ({ id, status, signatures }) => {
   try {
     const addedHistory = await FileHistory.find({
       fileId: id,
@@ -9,9 +10,11 @@ const addFileHistory = async (id, status) => {
 
     if (addedHistory?.length) return;
 
+    const signedFile = await signPDF(id, signatures);
     return await FileHistory.create({
       fileId: id,
       status,
+      file: signedFile.Key,
     });
   } catch (error) {
     throw error;

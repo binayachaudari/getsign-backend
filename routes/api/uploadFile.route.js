@@ -8,5 +8,6 @@ router.post('/add-form-fields/:id', controller.updateFields);
 router.delete('/:id', controller.deleteFile);
 router.post('/generate', controller.generatePDF);
 router.put('/:id', controller.addSenderDetails);
+router.post('/sign/:id', controller.addSignature);
 
 module.exports = router;

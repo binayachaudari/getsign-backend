@@ -10,7 +10,12 @@ const schema = new mongoose.Schema(
       type: String,
       enum: ['sent', 'signed_by_sender', 'signed_by_receiver', 'viewed'],
     },
-    ipAddress: String,
+    viewedIpAddress: String,
+    receiverSignedIpAddress: String,
+    file: {
+      type: String,
+      required: true,
+    },
   },
   {
     timestamps: {

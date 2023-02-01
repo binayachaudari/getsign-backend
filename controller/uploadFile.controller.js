@@ -27,10 +27,9 @@ module.exports = {
   },
   updateFields: async (req, res, next) => {
     const id = req.params.id;
-    const { fields, status } = req.body;
+    const { fields } = req.body;
     try {
       const result = await addFormFields(id, fields);
-      if (status) await addFileHistory(id, status);
       return res.json({ data: result }).status(200);
     } catch (error) {
       next(error);
@@ -68,6 +67,17 @@ module.exports = {
       });
 
       return res.json({ data: result }).status(200);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  addSignature: async (req, res, next) => {
+    const id = req.params.id;
+    const { status, signatures } = req.body;
+    try {
+      const result = await addFileHistory({ id, status, signatures });
+      return res.json({ data: { ...result } }).status(200);
     } catch (error) {
       next(error);
     }
