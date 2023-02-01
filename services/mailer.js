@@ -12,29 +12,6 @@ config.update({
   region: process.env.AWS_REGION,
 });
 
-let params = {
-  Destination: {
-    ToAddresses: ['binaya@jetpackapps.co'], //Recivers emails
-  },
-  Message: {
-    Body: {
-      //   Html: {
-      //     Charset: 'UTF-8',
-      //     Data: html_email // Email as a html
-      //   },
-      Text: {
-        Charset: 'UTF-8',
-        Data: 'This is a test email', // Email as a text for email clients dose not support html
-      },
-    },
-    Subject: {
-      Charset: 'UTF-8',
-      Data: 'Test Email', // Message Subject
-    },
-  },
-  Source: process.env.EMAIL_USERNAME, // Sender Email
-};
-
 let ses = new SES({ apiVersion: '2012-08-10' });
 
 // create Nodemailer SES transporter

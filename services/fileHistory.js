@@ -1,7 +1,13 @@
 const FileHistory = require('../modals/FileHistory');
 const { signPDF } = require('./file');
 
-const addFileHistory = async ({ id, status, signatures }) => {
+const addFileHistory = async ({
+  id,
+  status,
+  signatures,
+  viewedIP,
+  receiverSignedIP,
+}) => {
   try {
     const addedHistory = await FileHistory.find({
       fileId: id,
@@ -16,12 +22,14 @@ const addFileHistory = async ({ id, status, signatures }) => {
         fileId: id,
         status,
         file: signedFile.Key,
+        receiverSignedIpAddress: receiverSignedIP,
       });
     }
 
     return await FileHistory.create({
       fileId: id,
       status,
+      viewedIpAddress: viewedIP,
     });
   } catch (error) {
     throw error;
@@ -39,7 +47,25 @@ const getFileHistory = async (id) => {
   }
 };
 
+const viewedFile = async (id, ip) => {
+  try {
+    const fromFileHistory = await FileHistory.findById(id);
+    if (!fromFileHistory) throw new Error('No file with such id');
+
+    const parsedFromFileHistory = fromFileHistory.toJSON();
+
+    return await addFileHistory({
+      id: parsedFromFileHistory.fileId,
+      status: 'viewed',
+      ip,
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
   addFileHistory,
   getFileHistory,
+  viewedFile,
 };
