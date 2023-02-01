@@ -1,8 +1,7 @@
 const nodemailer = require('nodemailer');
 const { config, SES } = require('aws-sdk');
-const FileHistory = require('../modals/FileHistory');
 const FileDetails = require('../modals/FileDetails');
-const { addFileHistory } = require('./fileHistory');
+const { addFileHistory, getFileHistory } = require('./fileHistory');
 
 config.update({
   credentials: {
@@ -22,19 +21,28 @@ let transporter = nodemailer.createTransport({
 module.exports = {
   sendEmail: async (id, to) => {
     try {
-      const fromFileHistory = await FileHistory.findById(id);
-      if (!fromFileHistory) throw new Error('No file with such ID');
-      const parsedFileHistory = fromFileHistory.toJSON();
+      let fileId;
+      const template = await FileDetails.findById(id);
+      if (!template) throw new Error('No file with such ID');
 
-      let fileDetails;
+      const parsedTemplate = template.toJSON();
 
-      if (parsedFileHistory?.fileId) {
-        const query = await FileDetails.findById(parsedFileHistory?.fileId);
-        fileDetails = query.toJSON();
+      const shouldUseFileHistoryId = parsedTemplate?.fields?.filter(
+        (item) => item.title === 'Sender Signature'
+      )?.length;
+
+      if (shouldUseFileHistoryId) {
+        const history = await getFileHistory(parsedTemplate?._id);
+        const parsedHistory = history.toJSON();
+        fileId = parsedHistory?.find(
+          (item) => item.title === 'Sender Signature'
+        )?._id;
       }
 
+      fileId = parsedTemplate?._id;
+
       const addedHistory = await addFileHistory({
-        id: parsedFileHistory.fileId,
+        id: parsedTemplate._id,
         status: 'sent',
       });
 
@@ -42,11 +50,11 @@ module.exports = {
         return await transporter.sendMail({
           from: process.env.EMAIL_USERNAME,
           to,
-          subject: fileDetails.email_title,
-          text: `${fileDetails.sender_name} (${fileDetails.email_address}) has requested a signature
-        link: https://jetsign.jtpk.app/sign/${addedHistory?._id}?receiver=true
-        Document: ${fileDetails.file_name}
-        Message from ${fileDetails.sender_name}: ${fileDetails.message}
+          subject: parsedTemplate.email_title,
+          text: `${parsedTemplate.sender_name} (${parsedTemplate.email_address}) has requested a signature
+        link: https://jetsign.jtpk.app/sign/${fileId}?receiver=true
+        Document: ${parsedTemplate.file_name}
+        Message from ${parsedTemplate.sender_name}: ${parsedTemplate.message}
         `,
         });
       }
