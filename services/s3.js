@@ -1,5 +1,6 @@
 const AWS = require('aws-sdk');
 const FileDetailsModal = require('../modals/FileDetails');
+const FileHistory = require('../modals/FileHistory');
 
 const s3 = new AWS.S3({
   credentials: {
@@ -72,6 +73,7 @@ const deleteFile = async (id) => {
     );
 
     await FileDetailsModal.findByIdAndDelete(id);
+    await FileHistory.deleteMany({ fileId: id });
   } catch (error) {
     throw error;
   }

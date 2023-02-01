@@ -39,8 +39,7 @@ module.exports = {
         )?._id;
       }
 
-      fileId = parsedTemplate?._id;
-
+      fileId = template._id;
       const addedHistory = await addFileHistory({
         id: parsedTemplate._id,
         status: 'sent',
