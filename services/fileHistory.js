@@ -1,5 +1,6 @@
 const FileHistory = require('../modals/FileHistory');
 const { signPDF } = require('./file');
+const { s3 } = require('./s3');
 
 const addFileHistory = async ({
   id,
@@ -17,12 +18,14 @@ const addFileHistory = async ({
     if (addedHistory?.length) return;
 
     if (signatures?.length) {
-      const signedFile = await signPDF(id, signatures);
+      const signedFile = await signPDF({ id, signatures, status });
       return await FileHistory.create({
         fileId: id,
         status,
         file: signedFile.Key,
-        receiverSignedIpAddress: receiverSignedIP,
+        ...(status === 'signed_by_receiver' && {
+          receiverSignedIpAddress: receiverSignedIP,
+        }),
       });
     }
 
@@ -64,8 +67,45 @@ const viewedFile = async (id, ip) => {
   }
 };
 
+const getFileToSign = async (id) => {
+  try {
+    const fromFileHistory = await FileHistory.findById(id);
+    if (!fromFileHistory) throw new Error('No file with such id');
+
+    const parsedFromFileHistory = fromFileHistory.toJSON();
+    const getFileToSignKey = await FileHistory.findOne({
+      fileId: parsedFromFileHistory.fileId,
+      status: 'signed_by_sender',
+    });
+
+    const parsedGetFileToSignKey = getFileToSignKey.toJSON();
+
+    try {
+      const url = s3.getSignedUrl('getObject', {
+        Bucket: process.env.BUCKET_NAME,
+        Key: parsedGetFileToSignKey.file,
+      });
+      const body = await fetch(url);
+      const contentType = body.headers.get('content-type');
+      const arrBuffer = await body.arrayBuffer();
+      const buffer = Buffer.from(arrBuffer);
+      var base64String = buffer.toString('base64');
+
+      return {
+        ...parsedGetFileToSignKey,
+        file: `data:${contentType};base64,${base64String}`,
+      };
+    } catch (error) {
+      throw error;
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
   addFileHistory,
   getFileHistory,
   viewedFile,
+  getFileToSign,
 };

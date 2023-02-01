@@ -67,7 +67,7 @@ const generatePDF = async (id, fields) => {
   }
 };
 
-const signPDF = async (id, fields) => {
+const signPDF = async ({ id, fields, status }) => {
   try {
     const fileDetails = await getFile(id);
     const pdfDoc = await PDFDocument.load(fileDetails?.file);
@@ -101,7 +101,7 @@ const signPDF = async (id, fields) => {
       const s3Res = await s3
         .upload({
           Bucket: process.env.BUCKET_NAME,
-          Key: `jet-sign-${id}-sender-signed-${Date.now().toString()}`,
+          Key: `jet-sign-${id}-${status}-${Date.now().toString()}`,
           Body: buffer,
           ContentType: blob.type,
         })

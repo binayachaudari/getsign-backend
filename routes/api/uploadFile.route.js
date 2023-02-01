@@ -12,5 +12,6 @@ router.post('/sign/:id', controller.addSignature);
 
 router.get('/send-mail/:id', controller.sendPDF);
 router.get('/viewed/:id', controller.viewedPDF);
+router.get('/get-signed-file/:id', controller.getFileForReceiver);
 
 module.exports = router;

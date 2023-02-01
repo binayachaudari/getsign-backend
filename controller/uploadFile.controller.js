@@ -7,6 +7,7 @@ const {
   addFileHistory,
   getFileHistory,
   viewedFile,
+  getFileToSign,
 } = require('../services/fileHistory');
 const { sendEmail } = require('../services/mailer');
 const { uploadFile, getFile, deleteFile } = require('../services/s3');
@@ -79,9 +80,23 @@ module.exports = {
 
   addSignature: async (req, res, next) => {
     const id = req.params.id;
+    let ips = (
+      req.headers['cf-connecting-ip'] ||
+      req.headers['x-real-ip'] ||
+      req.headers['x-forwarded-for'] ||
+      req.connection.remoteAddress ||
+      ''
+    ).split(',');
+
+    const ip = ips[0].trim();
     const { status, signatures } = req.body;
     try {
-      const result = await addFileHistory({ id, status, signatures });
+      const result = await addFileHistory({
+        id,
+        status,
+        signatures,
+        receiverSignedIP: ip,
+      });
       return res.json({ data: { ...result } }).status(200);
     } catch (error) {
       next(error);
@@ -122,6 +137,16 @@ module.exports = {
     const ip = ips[0].trim();
     try {
       const result = await viewedFile(id, ip);
+      return res.json({ data: result }).status(200);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getFileForReceiver: async (req, res, next) => {
+    const id = req.params.id;
+    try {
+      const result = await getFileToSign(id);
       return res.json({ data: result }).status(200);
     } catch (error) {
       next(error);
