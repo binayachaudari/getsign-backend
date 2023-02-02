@@ -13,7 +13,7 @@ const addFileHistory = async ({
     const addedHistory = await FileHistory.find({
       fileId: id,
       status,
-    });
+    }).exec();
 
     if (addedHistory?.length) return;
 
@@ -41,9 +41,11 @@ const addFileHistory = async ({
 
 const getFileHistory = async (id) => {
   try {
-    const history = await FileHistory.find({ fileId: id }).sort({
-      createdAt: 'desc',
-    });
+    const history = await FileHistory.find({ fileId: id })
+      .sort({
+        createdAt: 'desc',
+      })
+      .exec();
     return history;
   } catch (error) {
     throw error;

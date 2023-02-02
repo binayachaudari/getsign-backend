@@ -25,35 +25,32 @@ module.exports = {
       const template = await FileDetails.findById(id);
       if (!template) throw new Error('No file with such ID');
 
-      const parsedTemplate = template.toJSON();
-
-      const shouldUseFileHistoryId = parsedTemplate?.fields?.filter(
+      const shouldUseFileHistoryId = template?.fields?.filter(
         (item) => item.title === 'Sender Signature'
       )?.length;
 
       if (shouldUseFileHistoryId) {
-        const history = await getFileHistory(parsedTemplate?._id);
-        const parsedHistory = history.toJSON();
-        fileId = parsedHistory?.find(
-          (item) => item.title === 'Sender Signature'
-        )?._id;
+        const history = await getFileHistory(id);
+        fileId = history?.find(
+          (item) => item.status === 'signed_by_sender'
+        )?.id;
       }
 
-      fileId = template._id;
+      fileId = template.id;
       const addedHistory = await addFileHistory({
-        id: parsedTemplate._id,
+        id: template.id,
         status: 'sent',
       });
 
-      if (addedHistory?._id) {
+      if (addedHistory?.id) {
         return await transporter.sendMail({
           from: process.env.EMAIL_USERNAME,
           to,
-          subject: parsedTemplate.email_title,
-          text: `${parsedTemplate.sender_name} (${parsedTemplate.email_address}) has requested a signature
+          subject: template.email_title,
+          text: `${template.sender_name} (${template.email_address}) has requested a signature
         link: https://jetsign.jtpk.app/sign/${fileId}?receiver=true
-        Document: ${parsedTemplate.file_name}
-        Message from ${parsedTemplate.sender_name}: ${parsedTemplate.message}
+        Document: ${template.file_name}
+        Message from ${template.sender_name}: ${template.message}
         `,
         });
       }
