@@ -19,13 +19,13 @@ let transporter = nodemailer.createTransport({
   SES: ses,
 });
 
-const sendSimpleEmail = async (template, to, fileId) => {
+const sendSimpleEmail = async ({ template, to, itemId, fileId }) => {
   return await transporter.sendMail({
     from: process.env.EMAIL_USERNAME,
     to,
     subject: template.email_title,
     text: `${template.sender_name} (${template.email_address}) has requested a signature
-  link: https://jetsign.jtpk.app/sign/${fileId}?receiver=true
+  link: https://jetsign.jtpk.app/sign/${itemId}/${fileId}?receiver=true
   Document: ${template.file_name}
   Message from ${template.sender_name}: ${template.message}
   `,
@@ -62,11 +62,12 @@ module.exports = {
         { session }
       );
 
-      const mailStatus = await sendSimpleEmail(
+      const mailStatus = await sendSimpleEmail({
         template,
         to,
-        newSentHistory[0]._id
-      );
+        itemId,
+        fileId: newSentHistory[0]._id,
+      });
 
       if (mailStatus?.messageId) {
         await session.commitTransaction();
