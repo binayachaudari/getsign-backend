@@ -9,6 +9,7 @@ const addFileHistory = async ({
   itemId,
   signatures,
   ipAddress,
+  values,
 }) => {
   try {
     const addedHistory = await FileHistory.findOne({
@@ -19,12 +20,13 @@ const addFileHistory = async ({
 
     if (addedHistory) return;
 
-    if (signatures?.length) {
+    if (signatures?.length || values?.length) {
       const signedFile = await signPDF({
         id,
-        fields: signatures,
+        signatureFields: signatures,
         status,
         itemId,
+        values,
       });
 
       return await FileHistory.create({

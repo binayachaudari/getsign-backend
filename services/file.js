@@ -67,7 +67,7 @@ const generatePDF = async (id, fields) => {
   }
 };
 
-const signPDF = async ({ id, fields, status, itemId }) => {
+const signPDF = async ({ id, signatureFields, status, itemId, values }) => {
   try {
     const fileDetails = await getFile(id);
     const pdfDoc = await PDFDocument.load(fileDetails?.file);
@@ -76,19 +76,36 @@ const signPDF = async ({ id, fields, status, itemId }) => {
 
     const parsedFileDetails = fileDetails.toJSON();
 
-    if (fields?.length && parsedFileDetails?.fields) {
-      fields?.forEach(async (placeHolder) => {
-        const currentPage = pages[placeHolder?.formField?.pageIndex];
-        if (placeHolder?.image) {
-          const pngImage = await pdfDoc.embedPng(placeHolder?.image?.src);
-          currentPage.drawImage(pngImage, {
-            x: placeHolder?.formField.coordinates.x,
-            y: placeHolder?.formField.coordinates.y,
-            width: placeHolder?.image.width,
-            height: placeHolder?.image.height,
-          });
-        }
-      });
+    if (parsedFileDetails?.fields) {
+      if (signatureFields?.length) {
+        signatureFields?.forEach(async (placeHolder) => {
+          const currentPage = pages[placeHolder?.formField?.pageIndex];
+          if (placeHolder?.image) {
+            const pngImage = await pdfDoc.embedPng(placeHolder?.image?.src);
+            currentPage.drawImage(pngImage, {
+              x: placeHolder?.formField.coordinates.x,
+              y: placeHolder?.formField.coordinates.y,
+              width: placeHolder?.image.width,
+              height: placeHolder?.image.height,
+            });
+          }
+        });
+      }
+
+      if (values?.length) {
+        parsedFileDetails?.fields?.forEach(async (placeHolder) => {
+          const currentPage = pages[placeHolder?.formField?.pageIndex];
+
+          const value = values.find((item) => item?.id === placeHolder?.itemId);
+
+          if (value)
+            currentPage.drawText(value?.text, {
+              x: placeHolder.formField.coordinates.x,
+              y: placeHolder.formField.coordinates.y,
+              size: 11,
+            });
+        });
+      }
 
       const pdfBytes = await pdfDoc.save();
       const blob = new Blob([new Uint8Array(pdfBytes)], {
@@ -108,6 +125,7 @@ const signPDF = async ({ id, fields, status, itemId }) => {
         .promise();
     }
   } catch (error) {
+    console.log(error);
     throw error;
   }
 };
