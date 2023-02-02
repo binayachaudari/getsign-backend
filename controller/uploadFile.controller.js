@@ -105,9 +105,9 @@ module.exports = {
   },
 
   getFileHistory: async (req, res, next) => {
-    const id = req.params.id;
+    const { itemId, id } = req.params;
     try {
-      const result = await getFileHistory(id);
+      const result = await getFileHistory(itemId, id);
       return res.json({ data: result }).status(200);
     } catch (error) {
       next(error);

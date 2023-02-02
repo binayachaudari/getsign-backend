@@ -50,9 +50,9 @@ const addFileHistory = async ({
   }
 };
 
-const getFileHistory = async (id) => {
+const getFileHistory = async (itemId, id) => {
   try {
-    const history = await FileHistory.find({ fileId: id })
+    const history = await FileHistory.find({ fileId: id, itemId })
       .sort({
         createdAt: 'desc',
       })
