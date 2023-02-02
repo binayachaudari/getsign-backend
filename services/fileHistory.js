@@ -65,15 +65,14 @@ const getFileHistory = async (itemId, id) => {
   }
 };
 
-const viewedFile = async (id, ip) => {
+const viewedFile = async (id, itemId, ip) => {
   try {
     const fromFileHistory = await FileHistory.findById(id);
     if (!fromFileHistory) throw new Error('No file with such id');
 
-    const parsedFromFileHistory = fromFileHistory.toJSON();
-
     return await addFileHistory({
-      id: parsedFromFileHistory.fileId,
+      id: fromFileHistory.fileId,
+      itemId,
       status: 'viewed',
       ipAddress: ip,
     });

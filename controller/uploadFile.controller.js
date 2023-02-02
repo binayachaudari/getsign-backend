@@ -127,7 +127,7 @@ module.exports = {
   },
 
   viewedPDF: async (req, res, next) => {
-    const id = req.params.id;
+    const { itemId, id } = req.params;
     let ips = (
       req.headers['cf-connecting-ip'] ||
       req.headers['x-real-ip'] ||
@@ -138,7 +138,7 @@ module.exports = {
 
     const ip = ips[0].trim();
     try {
-      const result = await viewedFile(id, ip);
+      const result = await viewedFile(id, itemId, ip);
       return res.json({ data: result }).status(200);
     } catch (error) {
       next(error);
