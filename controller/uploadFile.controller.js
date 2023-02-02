@@ -145,9 +145,10 @@ module.exports = {
   },
 
   getFileForReceiver: async (req, res, next) => {
-    const id = req.params.id;
+    // fileHistory id having status = 'sent'
+    const { itemId, id } = req.params;
     try {
-      const result = await getFileToSign(id);
+      const result = await getFileToSign(id, itemId);
       return res.json({ data: result }).status(200);
     } catch (error) {
       next(error);

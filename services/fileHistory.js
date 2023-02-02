@@ -80,33 +80,32 @@ const viewedFile = async (id, ip) => {
   }
 };
 
-const getFileToSign = async (id) => {
+const getFileToSign = async (id, itemId) => {
   try {
-    let fileFromHistory;
-    let usingTemplateId = false;
-    fileFromHistory = await FileHistory.findById(id);
-    if (!fileFromHistory) {
-      usingTemplateId = true;
-    }
+    let fileId;
+    const fileFromHistory = await FileHistory.findById(id);
 
     const getFileToSignKey = await FileHistory.findOne({
-      fileId: usingTemplateId ? id : fileFromHistory.fileId,
+      fileId: fileFromHistory.fileId,
+      itemId,
       status: 'signed_by_sender',
     }).exec();
 
     try {
       let url;
       if (!getFileToSignKey?.file) {
-        const template = FileDetails.findById(id);
+        const template = await FileDetails.findById(fileFromHistory.fileId);
         url = s3.getSignedUrl('getObject', {
           Bucket: process.env.BUCKET_NAME,
           Key: template?.file,
         });
+        fileId = template.id;
       } else {
         url = s3.getSignedUrl('getObject', {
           Bucket: process.env.BUCKET_NAME,
           Key: getFileToSignKey?.file,
         });
+        fileId = getFileToSignKey.fileId;
       }
 
       const body = await fetch(url);
@@ -116,7 +115,7 @@ const getFileToSign = async (id) => {
       var base64String = buffer.toString('base64');
 
       return {
-        ...getFileToSignKey.toJSON(),
+        fileId,
         file: `data:${contentType};base64,${base64String}`,
       };
     } catch (error) {
