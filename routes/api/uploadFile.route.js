@@ -14,4 +14,6 @@ router.get('/send-mail/:itemId/:id', controller.sendPDF);
 router.get('/viewed/:itemId/:id', controller.viewedPDF);
 router.get('/get-signed-file/:itemId/:id', controller.getFileForReceiver);
 
+router.get('/contract/:id', controller.getContract);
+
 module.exports = router;

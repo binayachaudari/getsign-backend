@@ -1,7 +1,7 @@
 const FileDetails = require('../modals/FileDetails');
 const FileHistory = require('../modals/FileHistory');
 const { signPDF } = require('./file');
-const { s3 } = require('./s3');
+const { s3, getSignedUrl } = require('./s3');
 
 const addFileHistory = async ({
   id,
@@ -127,9 +127,31 @@ const getFileToSign = async (id, itemId) => {
   }
 };
 
+const getFinalContract = async (id) => {
+  try {
+    const fileHistory = await FileHistory.findById(id);
+
+    const url = await getSignedUrl(fileHistory.file);
+
+    const body = await fetch(url);
+    const contentType = body.headers.get('content-type');
+    const arrBuffer = await body.arrayBuffer();
+    const buffer = Buffer.from(arrBuffer);
+    var base64String = buffer.toString('base64');
+
+    return {
+      name: fileHistory?.file,
+      file: `data:${contentType};base64,${base64String}`,
+    };
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
   addFileHistory,
   getFileHistory,
   viewedFile,
   getFileToSign,
+  getFinalContract,
 };

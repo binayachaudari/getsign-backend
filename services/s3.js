@@ -79,4 +79,11 @@ const deleteFile = async (id) => {
   }
 };
 
-module.exports = { uploadFile, getFile, deleteFile, s3 };
+const getSignedUrl = async (key) => {
+  return s3.getSignedUrl('getObject', {
+    Bucket: process.env.BUCKET_NAME,
+    Key: key,
+  });
+};
+
+module.exports = { uploadFile, getFile, deleteFile, s3, getSignedUrl };

@@ -8,6 +8,7 @@ const {
   getFileHistory,
   viewedFile,
   getFileToSign,
+  getFinalContract,
 } = require('../services/fileHistory');
 const { sendEmail } = require('../services/mailer');
 const { uploadFile, getFile, deleteFile } = require('../services/s3');
@@ -150,6 +151,16 @@ module.exports = {
     const { itemId, id } = req.params;
     try {
       const result = await getFileToSign(id, itemId);
+      return res.json({ data: result }).status(200);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getContract: async (req, res, next) => {
+    const { id } = req.params;
+    try {
+      const result = await getFinalContract(id);
       return res.json({ data: result }).status(200);
     } catch (error) {
       next(error);
