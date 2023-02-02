@@ -67,7 +67,7 @@ const generatePDF = async (id, fields) => {
   }
 };
 
-const signPDF = async ({ id, fields, status }) => {
+const signPDF = async ({ id, fields, status, itemId }) => {
   try {
     const fileDetails = await getFile(id);
     const pdfDoc = await PDFDocument.load(fileDetails?.file);
@@ -98,16 +98,14 @@ const signPDF = async ({ id, fields, status }) => {
       const arrayBuffer = await blob.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
 
-      const s3Res = await s3
+      return await s3
         .upload({
           Bucket: process.env.BUCKET_NAME,
-          Key: `jet-sign-${id}-${status}-${Date.now().toString()}`,
+          Key: `jet-sign-${id}-${itemId}-${status}-${Date.now().toString()}`,
           Body: buffer,
           ContentType: blob.type,
         })
         .promise();
-
-      return s3Res;
     }
   } catch (error) {
     throw error;

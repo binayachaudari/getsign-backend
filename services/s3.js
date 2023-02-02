@@ -73,7 +73,7 @@ const deleteFile = async (id) => {
     );
 
     await FileDetailsModal.findByIdAndDelete(id);
-    await FileHistory.deleteMany({ fileId: id });
+    // await FileHistory.deleteMany({ fileId: id });
   } catch (error) {
     throw error;
   }

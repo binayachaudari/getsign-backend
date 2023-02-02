@@ -2,6 +2,10 @@ const mongoose = require('mongoose');
 
 const schema = new mongoose.Schema(
   {
+    itemId: {
+      type: Number,
+      required: true,
+    },
     fileId: {
       type: String,
       required: true,

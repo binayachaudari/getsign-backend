@@ -6,35 +6,45 @@ const { s3 } = require('./s3');
 const addFileHistory = async ({
   id,
   status,
+  itemId,
   signatures,
-  viewedIP,
-  receiverSignedIP,
+  ipAddress,
 }) => {
   try {
-    const addedHistory = await FileHistory.find({
+    const addedHistory = await FileHistory.findOne({
       fileId: id,
+      itemId,
       status,
     }).exec();
 
-    if (addedHistory?.length) return;
+    if (addedHistory) return;
 
     if (signatures?.length) {
-      const signedFile = await signPDF({ id, fields: signatures, status });
+      const signedFile = await signPDF({
+        id,
+        fields: signatures,
+        status,
+        itemId,
+      });
+
       return await FileHistory.create({
         fileId: id,
         status,
+        itemId,
         file: signedFile.Key,
         ...(status === 'signed_by_receiver' && {
-          receiverSignedIpAddress: receiverSignedIP,
+          receiverSignedIpAddress: ipAddress,
         }),
       });
     }
 
-    return await FileHistory.create({
-      fileId: id,
-      status,
-      viewedIpAddress: viewedIP,
-    });
+    if (status === 'viewed')
+      return await FileHistory.create({
+        fileId: id,
+        status,
+        itemId,
+        viewedIpAddress: ipAddress,
+      });
   } catch (error) {
     throw error;
   }
@@ -63,7 +73,7 @@ const viewedFile = async (id, ip) => {
     return await addFileHistory({
       id: parsedFromFileHistory.fileId,
       status: 'viewed',
-      ip,
+      ipAddress: ip,
     });
   } catch (error) {
     throw error;

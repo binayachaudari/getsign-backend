@@ -89,13 +89,14 @@ module.exports = {
     ).split(',');
 
     const ip = ips[0].trim();
-    const { status, signatures } = req.body;
+    const { status, signatures, itemId } = req.body;
     try {
       const result = await addFileHistory({
         id,
+        itemId,
         status,
         signatures,
-        receiverSignedIP: ip,
+        ipAddress: ip,
       });
       return res.json({ data: { ...result } }).status(200);
     } catch (error) {
