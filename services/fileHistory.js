@@ -18,7 +18,7 @@ const addFileHistory = async ({
     if (addedHistory?.length) return;
 
     if (signatures?.length) {
-      const signedFile = await signPDF({ id, signatures, status });
+      const signedFile = await signPDF({ id, fields: signatures, status });
       return await FileHistory.create({
         fileId: id,
         status,
