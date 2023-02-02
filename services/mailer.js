@@ -2,6 +2,7 @@ const nodemailer = require('nodemailer');
 const { config, SES } = require('aws-sdk');
 const FileDetails = require('../modals/FileDetails');
 const { addFileHistory, getFileHistory } = require('./fileHistory');
+const FileHistory = require('../modals/FileHistory');
 
 config.update({
   credentials: {
@@ -18,44 +19,65 @@ let transporter = nodemailer.createTransport({
   SES: ses,
 });
 
+const sendSimpleEmail = async (template, to, fileId) => {
+  return await transporter.sendMail({
+    from: process.env.EMAIL_USERNAME,
+    to,
+    subject: template.email_title,
+    text: `${template.sender_name} (${template.email_address}) has requested a signature
+  link: https://jetsign.jtpk.app/sign/${fileId}?receiver=true
+  Document: ${template.file_name}
+  Message from ${template.sender_name}: ${template.message}
+  `,
+  });
+};
+
 module.exports = {
-  sendEmail: async (id, to) => {
+  sendEmail: async (itemId, id, to) => {
+    const session = await FileHistory.startSession();
+    session.startTransaction();
+
     try {
-      let fileId;
       const template = await FileDetails.findById(id);
       if (!template) throw new Error('No file with such ID');
 
-      const shouldUseFileHistoryId = template?.fields?.filter(
-        (item) => item.title === 'Sender Signature'
-      )?.length;
-
-      if (shouldUseFileHistoryId) {
-        const history = await getFileHistory(id);
-        fileId = history?.find(
-          (item) => item.status === 'signed_by_sender'
-        )?.id;
-      } else {
-        fileId = template.id;
-      }
-
-      const addedHistory = await addFileHistory({
-        id: template.id,
+      const addedHistory = await FileHistory.findOne({
+        fileId: id,
+        itemId,
         status: 'sent',
-      });
+      })
+        .session(session)
+        .exec();
 
-      if (addedHistory?.id) {
-        return await transporter.sendMail({
-          from: process.env.EMAIL_USERNAME,
-          to,
-          subject: template.email_title,
-          text: `${template.sender_name} (${template.email_address}) has requested a signature
-        link: https://jetsign.jtpk.app/sign/${fileId}?receiver=true
-        Document: ${template.file_name}
-        Message from ${template.sender_name}: ${template.message}
-        `,
-        });
+      if (addedHistory) return;
+
+      const newSentHistory = await FileHistory.create(
+        [
+          {
+            fileId: id,
+            status: 'sent',
+            itemId,
+          },
+        ],
+        { session }
+      );
+
+      const mailStatus = await sendSimpleEmail(
+        template,
+        to,
+        newSentHistory[0]._id
+      );
+
+      if (mailStatus?.messageId) {
+        await session.commitTransaction();
+        return mailStatus;
       }
+
+      await session.abortTransaction();
+      session.endSession();
     } catch (err) {
+      await session.abortTransaction();
+      session.endSession();
       throw err;
     }
   },

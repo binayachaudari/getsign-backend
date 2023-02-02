@@ -115,9 +115,9 @@ module.exports = {
   },
 
   sendPDF: async (req, res, next) => {
-    const id = req.params.id;
+    const { itemId, id } = req.params;
     try {
-      const result = await sendEmail(id, 'binaya@jetpackapps.co');
+      const result = await sendEmail(itemId, id, 'binaya@jetpackapps.co');
       return res.json({ data: result }).status(200);
     } catch (error) {
       console.log(error);

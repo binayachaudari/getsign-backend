@@ -10,7 +10,7 @@ router.post('/generate', controller.generatePDF);
 router.put('/:id', controller.addSenderDetails);
 router.post('/sign/:id', controller.addSignature);
 
-router.get('/send-mail/:id', controller.sendPDF);
+router.get('/send-mail/:itemId/:id', controller.sendPDF);
 router.get('/viewed/:id', controller.viewedPDF);
 router.get('/get-signed-file/:id', controller.getFileForReceiver);
 
