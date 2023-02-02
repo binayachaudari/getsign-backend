@@ -1,3 +1,4 @@
+const FileDetails = require('../modals/FileDetails');
 const FileHistory = require('../modals/FileHistory');
 const { signPDF } = require('./file');
 const { s3 } = require('./s3');
@@ -71,22 +72,33 @@ const viewedFile = async (id, ip) => {
 
 const getFileToSign = async (id) => {
   try {
-    const fromFileHistory = await FileHistory.findById(id);
-    if (!fromFileHistory) throw new Error('No file with such id');
+    let fileFromHistory;
+    let usingTemplateId = false;
+    fileFromHistory = await FileHistory.findById(id);
+    if (!fileFromHistory) {
+      usingTemplateId = true;
+    }
 
-    const parsedFromFileHistory = fromFileHistory.toJSON();
     const getFileToSignKey = await FileHistory.findOne({
-      fileId: parsedFromFileHistory.fileId,
+      fileId: usingTemplateId ? id : fileFromHistory.fileId,
       status: 'signed_by_sender',
-    });
-
-    const parsedGetFileToSignKey = getFileToSignKey.toJSON();
+    }).exec();
 
     try {
-      const url = s3.getSignedUrl('getObject', {
-        Bucket: process.env.BUCKET_NAME,
-        Key: parsedGetFileToSignKey.file,
-      });
+      let url;
+      if (!getFileToSignKey?.file) {
+        const template = FileDetails.findById(id);
+        url = s3.getSignedUrl('getObject', {
+          Bucket: process.env.BUCKET_NAME,
+          Key: template?.file,
+        });
+      } else {
+        url = s3.getSignedUrl('getObject', {
+          Bucket: process.env.BUCKET_NAME,
+          Key: getFileToSignKey?.file,
+        });
+      }
+
       const body = await fetch(url);
       const contentType = body.headers.get('content-type');
       const arrBuffer = await body.arrayBuffer();
@@ -94,7 +106,7 @@ const getFileToSign = async (id) => {
       var base64String = buffer.toString('base64');
 
       return {
-        ...parsedGetFileToSignKey,
+        ...getFileToSignKey,
         file: `data:${contentType};base64,${base64String}`,
       };
     } catch (error) {

@@ -34,9 +34,10 @@ module.exports = {
         fileId = history?.find(
           (item) => item.status === 'signed_by_sender'
         )?.id;
+      } else {
+        fileId = template.id;
       }
 
-      fileId = template.id;
       const addedHistory = await addFileHistory({
         id: template.id,
         status: 'sent',
