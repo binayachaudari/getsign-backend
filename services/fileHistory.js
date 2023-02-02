@@ -106,7 +106,7 @@ const getFileToSign = async (id) => {
       var base64String = buffer.toString('base64');
 
       return {
-        ...getFileToSignKey,
+        ...getFileToSignKey.toJSON(),
         file: `data:${contentType};base64,${base64String}`,
       };
     } catch (error) {
