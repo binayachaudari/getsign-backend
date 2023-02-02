@@ -1,7 +1,8 @@
 const { PDFDocument } = require('pdf-lib');
 const FileDetails = require('../modals/FileDetails');
-const { getFile, s3 } = require('./s3');
+const { getFile, s3, getSignedUrl } = require('./s3');
 const fontkit = require('@pdf-lib/fontkit');
+const FileHistory = require('../modals/FileHistory');
 
 const addFormFields = async (id, payload) => {
   try {
@@ -69,8 +70,31 @@ const generatePDF = async (id, fields) => {
 
 const signPDF = async ({ id, signatureFields, status, itemId, values }) => {
   try {
+    let pdfDoc;
     const fileDetails = await getFile(id);
-    const pdfDoc = await PDFDocument.load(fileDetails?.file);
+    if (status === 'signed_by_receiver') {
+      const signedBySender = await FileHistory.findOne({
+        fileId: id,
+        status: 'signed_by_sender',
+        itemId,
+      }).exec();
+
+      if (!signedBySender) {
+        pdfDoc = await PDFDocument.load(fileDetails?.file);
+      } else {
+        const url = await getSignedUrl(signedBySender?.file);
+
+        const body = await fetch(url);
+        const contentType = body.headers.get('content-type');
+        const arrBuffer = await body.arrayBuffer();
+        const buffer = Buffer.from(arrBuffer);
+        var base64String = buffer.toString('base64');
+
+        pdfDoc = await PDFDocument.load(
+          `data:${contentType};base64,${base64String}`
+        );
+      }
+    }
     const pages = pdfDoc.getPages();
     pdfDoc.registerFontkit(fontkit);
 
