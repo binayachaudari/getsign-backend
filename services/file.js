@@ -72,29 +72,28 @@ const signPDF = async ({ id, signatureFields, status, itemId, values }) => {
   try {
     let pdfDoc;
     const fileDetails = await getFile(id);
-    if (status === 'signed_by_receiver') {
-      const signedBySender = await FileHistory.findOne({
-        fileId: id,
-        status: 'signed_by_sender',
-        itemId,
-      }).exec();
+    const signedBySender = await FileHistory.findOne({
+      fileId: id,
+      status: 'signed_by_sender',
+      itemId,
+    }).exec();
 
-      if (!signedBySender) {
-        pdfDoc = await PDFDocument.load(fileDetails?.file);
-      } else {
-        const url = await getSignedUrl(signedBySender?.file);
+    if (!signedBySender) {
+      pdfDoc = await PDFDocument.load(fileDetails?.file);
+    } else {
+      const url = await getSignedUrl(signedBySender?.file);
 
-        const body = await fetch(url);
-        const contentType = body.headers.get('content-type');
-        const arrBuffer = await body.arrayBuffer();
-        const buffer = Buffer.from(arrBuffer);
-        var base64String = buffer.toString('base64');
+      const body = await fetch(url);
+      const contentType = body.headers.get('content-type');
+      const arrBuffer = await body.arrayBuffer();
+      const buffer = Buffer.from(arrBuffer);
+      var base64String = buffer.toString('base64');
 
-        pdfDoc = await PDFDocument.load(
-          `data:${contentType};base64,${base64String}`
-        );
-      }
+      pdfDoc = await PDFDocument.load(
+        `data:${contentType};base64,${base64String}`
+      );
     }
+
     const pages = pdfDoc.getPages();
     pdfDoc.registerFontkit(fontkit);
 
