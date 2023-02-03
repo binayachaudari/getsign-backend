@@ -37,6 +37,10 @@ const schema = new mongoose.Schema(
         'viewed',
       ],
     },
+    is_deleted: {
+      type: Boolean,
+      default: false,
+    },
     fields: [{}],
     sender_name: String,
     email_address: String,
