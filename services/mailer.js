@@ -3,6 +3,7 @@ const { config, SES } = require('aws-sdk');
 const FileDetails = require('../modals/FileDetails');
 const { addFileHistory, getFileHistory } = require('./fileHistory');
 const FileHistory = require('../modals/FileHistory');
+const { requestSignature } = require('../utils/emailTemplates/templates');
 
 config.update({
   credentials: {
@@ -19,21 +20,25 @@ let transporter = nodemailer.createTransport({
   SES: ses,
 });
 
-const sendSimpleEmail = async ({ template, to, itemId, fileId }) => {
+const sendRequestToSign = async ({ template, to, itemId, fileId }) => {
   return await transporter.sendMail({
     from: process.env.EMAIL_USERNAME,
     to,
     subject: template.email_title,
-    text: `${template.sender_name} (${template.email_address}) has requested a signature
-  link: https://jetsign.jtpk.app/sign/${itemId}/${fileId}?receiver=true
-  Document: ${template.file_name}
-  Message from ${template.sender_name}: ${template.message}
-  `,
+    html: requestSignature({
+      requestedBy: {
+        name: template.sender_name,
+        email: template.email_address,
+      },
+      documentName: template.file_name,
+      message: template.message,
+      url: `https://jetsign.jtpk.app/sign/${itemId}/${fileId}?receiver=true`,
+    }),
   });
 };
 
 module.exports = {
-  sendEmail: async (itemId, id, to) => {
+  emailRequestToSign: async (itemId, id, to) => {
     const session = await FileHistory.startSession();
     session.startTransaction();
 
@@ -49,7 +54,7 @@ module.exports = {
         .session(session)
         .exec();
 
-      if (addedHistory) return;
+      if (addedHistory) return { message: 'Request already sent!' };
 
       const newSentHistory = await FileHistory.create(
         [
@@ -62,7 +67,7 @@ module.exports = {
         { session }
       );
 
-      const mailStatus = await sendSimpleEmail({
+      const mailStatus = await sendRequestToSign({
         template,
         to,
         itemId,

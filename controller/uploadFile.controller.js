@@ -10,7 +10,7 @@ const {
   getFileToSign,
   getFinalContract,
 } = require('../services/fileHistory');
-const { sendEmail } = require('../services/mailer');
+const { emailRequestToSign } = require('../services/mailer');
 const { uploadFile, getFile, deleteFile } = require('../services/s3');
 
 module.exports = {
@@ -119,7 +119,11 @@ module.exports = {
   sendPDF: async (req, res, next) => {
     const { itemId, id } = req.params;
     try {
-      const result = await sendEmail(itemId, id, 'binaya@jetpackapps.co');
+      const result = await emailRequestToSign(
+        itemId,
+        id,
+        'binaya@jetpackapps.co'
+      );
       return res.json({ data: result }).status(200);
     } catch (error) {
       console.log(error);
