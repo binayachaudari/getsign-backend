@@ -1,5 +1,6 @@
 const AWS = require('aws-sdk');
 const FileDetailsModal = require('../modals/FileDetails');
+const FileHistory = require('../modals/FileHistory');
 
 const s3 = new AWS.S3({
   credentials: {
@@ -43,7 +44,6 @@ const getFile = async (id) => {
     });
     const body = await fetch(url);
     const contentType = body.headers.get('content-type');
-    console.log(body);
     const arrBuffer = await body.arrayBuffer();
     const buffer = Buffer.from(arrBuffer);
     var base64String = buffer.toString('base64');
@@ -56,4 +56,34 @@ const getFile = async (id) => {
   }
 };
 
-module.exports = { uploadFile, getFile };
+const deleteFile = async (id) => {
+  try {
+    const fileDetails = await FileDetailsModal.findById(id);
+    s3.deleteObject(
+      {
+        Bucket: process.env.BUCKET_NAME,
+        Key: fileDetails.file,
+      },
+      (err, data) => {
+        if (err) {
+          console.log(err, err.stack);
+          throw err;
+        }
+      }
+    );
+
+    await FileDetailsModal.findByIdAndDelete(id);
+    // await FileHistory.deleteMany({ fileId: id });
+  } catch (error) {
+    throw error;
+  }
+};
+
+const getSignedUrl = async (key) => {
+  return s3.getSignedUrl('getObject', {
+    Bucket: process.env.BUCKET_NAME,
+    Key: key,
+  });
+};
+
+module.exports = { uploadFile, getFile, deleteFile, s3, getSignedUrl };
