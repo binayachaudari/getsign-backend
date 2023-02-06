@@ -1,5 +1,7 @@
+const { PDFDocument } = require('pdf-lib');
 const FileDetails = require('../modals/FileDetails');
 const FileHistory = require('../modals/FileHistory');
+const { embedHistory } = require('./embedDocumentHistory');
 const { signPDF } = require('./file');
 const { s3, getSignedUrl } = require('./s3');
 
@@ -139,9 +141,30 @@ const getFinalContract = async (id) => {
     const buffer = Buffer.from(arrBuffer);
     var base64String = buffer.toString('base64');
 
+    let pdfDoc = await PDFDocument.load(
+      `data:${contentType};base64,${base64String}`
+    );
+
+    const withDocumentHistory = await embedHistory(
+      pdfDoc,
+      fileHistory.fileId,
+      fileHistory.itemId
+    );
+
+    const pdfBytes = await withDocumentHistory.save();
+
+    const blob = new Blob([new Uint8Array(pdfBytes)], {
+      type: 'application/pdf',
+    });
+
+    const wihtDocHistoryArrayBuf = await blob.arrayBuffer();
+    const withDocBuff = Buffer.from(wihtDocHistoryArrayBuf);
+
+    const contractBase64 = withDocBuff.toString('base64');
+
     return {
       name: fileHistory?.file,
-      file: `data:${contentType};base64,${base64String}`,
+      file: `data:${blob.type};base64,${contractBase64}`,
     };
   } catch (error) {
     throw error;

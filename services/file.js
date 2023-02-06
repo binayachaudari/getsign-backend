@@ -3,6 +3,7 @@ const FileDetails = require('../modals/FileDetails');
 const { getFile, s3, getSignedUrl } = require('./s3');
 const fontkit = require('@pdf-lib/fontkit');
 const FileHistory = require('../modals/FileHistory');
+const { embedHistory } = require('./embedDocumentHistory');
 
 const addFormFields = async (id, payload) => {
   try {
