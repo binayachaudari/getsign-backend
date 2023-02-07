@@ -156,7 +156,14 @@ const signPDF = async ({ id, signatureFields, status, itemId, values }) => {
 
 const addSenderDetails = (
   id,
-  { sender_name, email_address, email_title, message }
+  {
+    sender_name,
+    email_address,
+    email_title,
+    message,
+    email_column_id,
+    status_column_id,
+  }
 ) => {
   try {
     const updated = FileDetails.findByIdAndUpdate(id, {
@@ -164,6 +171,8 @@ const addSenderDetails = (
       email_address,
       email_title,
       message,
+      email_column_id,
+      status_column_id,
     });
 
     return updated;

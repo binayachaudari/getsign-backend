@@ -63,7 +63,14 @@ module.exports = {
 
   addSenderDetails: async (req, res, next) => {
     const id = req.params.id;
-    const { sender_name, email_address, email_title, message } = req.body;
+    const {
+      sender_name,
+      email_address,
+      email_title,
+      message,
+      email_column_id,
+      status_column_id,
+    } = req.body;
 
     try {
       const result = await addSenderDetails(id, {
@@ -71,6 +78,8 @@ module.exports = {
         email_address,
         email_title,
         message,
+        email_column_id,
+        status_column_id,
       });
 
       return res.json({ data: result }).status(200);
