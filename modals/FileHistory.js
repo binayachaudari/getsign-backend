@@ -16,6 +16,7 @@ const schema = new mongoose.Schema(
     },
     viewedIpAddress: String,
     receiverSignedIpAddress: String,
+    sentToEmail: String,
     file: String,
   },
   {

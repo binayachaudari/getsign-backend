@@ -49,6 +49,7 @@ module.exports = {
       const addedHistory = await FileHistory.findOne({
         fileId: id,
         itemId,
+        sentToEmail: to,
         status: 'sent',
       })
         .session(session)
@@ -62,6 +63,7 @@ module.exports = {
             fileId: id,
             status: 'sent',
             itemId,
+            sentToEmail: to,
           },
         ],
         { session }
