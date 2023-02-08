@@ -51,6 +51,7 @@ const sendSignedDocuments = async (document, to) => {
     }),
     attachments: [
       {
+        filename: document.name,
         path: document.file,
       },
     ],

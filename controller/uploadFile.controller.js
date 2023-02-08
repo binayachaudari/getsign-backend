@@ -120,10 +120,10 @@ module.exports = {
           itemId: result.itemId,
           status: 'sent',
         });
-        await sendFinalContract(finalFile, [
-          fileDetails.email_address,
-          receiverEmail.sentToEmail,
-        ]);
+        await sendFinalContract(
+          { file: finalFile.file, name: fileDetails.file_name },
+          [fileDetails.email_address, receiverEmail.sentToEmail]
+        );
       }
       return res.json({ data: { ...result } }).status(200);
     } catch (error) {
