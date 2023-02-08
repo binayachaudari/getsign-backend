@@ -127,12 +127,9 @@ module.exports = {
 
   sendPDF: async (req, res, next) => {
     const { itemId, id } = req.params;
+    const { to } = req.body;
     try {
-      const result = await emailRequestToSign(
-        itemId,
-        id,
-        'binaya@jetpackapps.co'
-      );
+      const result = await emailRequestToSign(itemId, id, to);
       return res.json({ data: result }).status(200);
     } catch (error) {
       console.log(error);
