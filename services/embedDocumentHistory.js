@@ -54,8 +54,8 @@ module.exports = {
       }
     );
 
-    // Document History
-    page.drawText('Document History', {
+    // Audit Trail
+    page.drawText('Audit Trail', {
       x: 50,
       y: height - 150 - fontSize,
       size: 18,
