@@ -123,7 +123,7 @@ module.exports = {
         .replace(' ', ' ')
         .toString();
 
-      page.drawText(dateTime, {
+      page.drawText(`${dateTime} UTC`, {
         x: currentDetailPos.x,
         y: currentDetailPos.y - 20,
         size: 14,

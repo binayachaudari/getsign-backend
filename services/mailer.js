@@ -3,7 +3,10 @@ const { config, SES } = require('aws-sdk');
 const FileDetails = require('../modals/FileDetails');
 const { addFileHistory, getFileHistory } = require('./fileHistory');
 const FileHistory = require('../modals/FileHistory');
-const { requestSignature } = require('../utils/emailTemplates/templates');
+const {
+  requestSignature,
+  signedDocument,
+} = require('../utils/emailTemplates/templates');
 
 config.update({
   credentials: {
@@ -34,6 +37,23 @@ const sendRequestToSign = async ({ template, to, itemId, fileId }) => {
       message: template.message,
       url: `https://jetsign.jtpk.app/sign/${itemId}/${fileId}?receiver=true`,
     }),
+  });
+};
+
+const sendSignedDocuments = async (document, to) => {
+  return await transporter.sendMail({
+    from: process.env.EMAIL_USERNAME,
+    to,
+    subject: `Successfully Signed Document`,
+    html: signedDocument({
+      documentName: document.name,
+      url: '#',
+    }),
+    attachments: [
+      {
+        path: document.file,
+      },
+    ],
   });
 };
 
@@ -86,6 +106,13 @@ module.exports = {
     } catch (err) {
       await session.abortTransaction();
       session.endSession();
+      throw err;
+    }
+  },
+  sendFinalContract: async (file, to) => {
+    try {
+      return await sendSignedDocuments(file, to);
+    } catch (error) {
       throw err;
     }
   },

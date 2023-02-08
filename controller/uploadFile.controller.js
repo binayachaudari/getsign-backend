@@ -1,3 +1,5 @@
+const FileDetails = require('../modals/FileDetails');
+const FileHistory = require('../modals/FileHistory');
 const {
   addFormFields,
   generatePDF,
@@ -10,7 +12,7 @@ const {
   getFileToSign,
   getFinalContract,
 } = require('../services/fileHistory');
-const { emailRequestToSign } = require('../services/mailer');
+const { emailRequestToSign, sendFinalContract } = require('../services/mailer');
 const { uploadFile, getFile, deleteFile } = require('../services/s3');
 
 module.exports = {
@@ -109,6 +111,20 @@ module.exports = {
         values,
         ipAddress: ip,
       });
+
+      if (result.status === 'signed_by_receiver') {
+        const finalFile = await getFinalContract(result._id);
+        const fileDetails = await FileDetails.findById(result.fileId);
+        const receiverEmail = await FileHistory.findOne({
+          fileId: result.fileId,
+          itemId: result.itemId,
+          status: 'sent',
+        });
+        await sendFinalContract(finalFile, [
+          fileDetails.email_address,
+          receiverEmail.sentToEmail,
+        ]);
+      }
       return res.json({ data: { ...result } }).status(200);
     } catch (error) {
       next(error);
