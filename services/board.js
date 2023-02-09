@@ -4,11 +4,12 @@ const { isAlreadyAuthenticated } = require('./authenticatedBoard');
 const getStoredBoardFile = async (boardId) => {
   try {
     const isAuthenticated = await isAlreadyAuthenticated(boardId);
-    const result = await FileDetails.findOne({
+    const doc = await FileDetails.findOne({
       board_id: boardId,
       is_deleted: false,
     }).exec();
-    return { ...result, isAuthenticated };
+
+    return { doc, isAuthenticated };
   } catch (error) {
     console.log(error);
     throw error;
