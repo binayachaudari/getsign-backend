@@ -1,6 +1,6 @@
 const { PDFDocument } = require('pdf-lib');
-const FileDetails = require('../modals/FileDetails');
-const FileHistory = require('../modals/FileHistory');
+const FileDetails = require('../models/FileDetails');
+const FileHistory = require('../models/FileHistory');
 const { embedHistory } = require('./embedDocumentHistory');
 const { signPDF } = require('./file');
 const { s3, getSignedUrl } = require('./s3');

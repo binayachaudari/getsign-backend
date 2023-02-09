@@ -1,6 +1,6 @@
 const AWS = require('aws-sdk');
-const FileDetailsModal = require('../modals/FileDetails');
-const FileHistory = require('../modals/FileHistory');
+const FileDetailsmodel = require('../models/FileDetails');
+const FileHistory = require('../models/FileHistory');
 
 const s3 = new AWS.S3({
   credentials: {
@@ -23,7 +23,7 @@ const uploadFile = async (req) => {
     })
     .promise();
 
-  const result = await FileDetailsModal.create({
+  const result = await FileDetailsmodel.create({
     account_id: body.account_id,
     board_id: body.board_id,
     file: s3Res.Key,
@@ -37,7 +37,7 @@ const uploadFile = async (req) => {
 
 const getFile = async (id) => {
   try {
-    const fileDetails = await FileDetailsModal.findById(id);
+    const fileDetails = await FileDetailsmodel.findById(id);
     const url = s3.getSignedUrl('getObject', {
       Bucket: process.env.BUCKET_NAME,
       Key: fileDetails.file,
@@ -58,7 +58,7 @@ const getFile = async (id) => {
 
 const deleteFile = async (id) => {
   try {
-    const fileDetails = await FileDetailsModal.findById(id);
+    const fileDetails = await FileDetailsmodel.findById(id);
     s3.deleteObject(
       {
         Bucket: process.env.BUCKET_NAME,
@@ -72,7 +72,7 @@ const deleteFile = async (id) => {
       }
     );
 
-    await FileDetailsModal.findByIdAndDelete(id);
+    await FileDetailsmodel.findByIdAndDelete(id);
     // await FileHistory.deleteMany({ fileId: id });
   } catch (error) {
     throw error;

@@ -1,4 +1,4 @@
-const FileDetails = require('../modals/FileDetails');
+const FileDetails = require('../models/FileDetails');
 
 const getStoredBoardFile = async (boardId) => {
   try {

@@ -1,8 +1,8 @@
 const { PDFDocument } = require('pdf-lib');
-const FileDetails = require('../modals/FileDetails');
+const FileDetails = require('../models/FileDetails');
 const { getFile, s3, getSignedUrl } = require('./s3');
 const fontkit = require('@pdf-lib/fontkit');
-const FileHistory = require('../modals/FileHistory');
+const FileHistory = require('../models/FileHistory');
 const { embedHistory } = require('./embedDocumentHistory');
 
 const addFormFields = async (id, payload) => {

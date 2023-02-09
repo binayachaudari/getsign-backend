@@ -1,5 +1,5 @@
-const FileDetails = require('../modals/FileDetails');
-const FileHistory = require('../modals/FileHistory');
+const FileDetails = require('../models/FileDetails');
+const FileHistory = require('../models/FileHistory');
 const {
   addFormFields,
   generatePDF,

@@ -1,7 +1,7 @@
 const nodemailer = require('nodemailer');
 const { config, SES } = require('aws-sdk');
-const FileDetails = require('../modals/FileDetails');
-const FileHistory = require('../modals/FileHistory');
+const FileDetails = require('../models/FileDetails');
+const FileHistory = require('../models/FileHistory');
 const {
   requestSignature,
   signedDocument,
