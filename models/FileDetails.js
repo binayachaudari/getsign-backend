@@ -31,14 +31,8 @@ const schema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    email_column_id: {
-      required: true,
-      type: String,
-    },
-    status_column_id: {
-      required: true,
-      type: String,
-    },
+    email_column_id: String,
+    status_column_id: String,
     fields: [{}],
     sender_name: String,
     email_address: String,
