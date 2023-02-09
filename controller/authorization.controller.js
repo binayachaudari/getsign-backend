@@ -1,4 +1,7 @@
-const { authenticateBoard } = require('../services/authenticatedBoard');
+const {
+  authenticateBoard,
+  isAlreadyAuthenticated,
+} = require('../services/authenticatedBoard');
 
 module.exports = {
   authorize: (req, res, next) => {
@@ -27,5 +30,15 @@ module.exports = {
           .status(200);
       })
       .catch((error) => next({ message: error, statusCode: 400 }));
+  },
+  isAuthorized: async (req, res, next) => {
+    const { boardId } = req.params;
+
+    try {
+      const result = await isAlreadyAuthenticated(boardId);
+      return res.json({ data: result }).status(200);
+    } catch (error) {
+      next(error);
+    }
   },
 };

@@ -1,4 +1,4 @@
-const AuthenticatedBoardsModel = require('../models/AuthenticatedBoards.model');
+const AuthenticatedBoardsModel = require('../models/AuthenticatedBoard.model');
 const { monday } = require('../utils/monday');
 const { me } = require('./monday.service');
 
@@ -35,4 +35,15 @@ const authenticateBoard = async (boardId, token) => {
   }
 };
 
-module.exports = { authenticateBoard };
+const isAlreadyAuthenticated = async (boardId) => {
+  try {
+    const res = await AuthenticatedBoardsModel.findOne({ boardId }).select(
+      '_id, boardId'
+    );
+    return res;
+  } catch (error) {
+    throw error;
+  }
+};
+
+module.exports = { authenticateBoard, isAlreadyAuthenticated };
