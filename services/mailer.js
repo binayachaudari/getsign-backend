@@ -1,7 +1,6 @@
 const nodemailer = require('nodemailer');
 const { config, SES } = require('aws-sdk');
 const FileDetails = require('../modals/FileDetails');
-const { addFileHistory, getFileHistory } = require('./fileHistory');
 const FileHistory = require('../modals/FileHistory');
 const {
   requestSignature,
@@ -27,7 +26,7 @@ const sendRequestToSign = async ({ template, to, itemId, fileId }) => {
   return await transporter.sendMail({
     from: process.env.EMAIL_USERNAME,
     to,
-    subject: template.email_title,
+    subject: `${template.file_name} - Signature requested by ${template.sender_name}`,
     html: requestSignature({
       requestedBy: {
         name: template.sender_name,
@@ -44,7 +43,7 @@ const sendSignedDocuments = async (document, to) => {
   return await transporter.sendMail({
     from: process.env.EMAIL_USERNAME,
     to,
-    subject: `Successfully Signed Document`,
+    subject: `You just signed ${document.name}`,
     html: signedDocument({
       documentName: document.name,
       url: '#',
