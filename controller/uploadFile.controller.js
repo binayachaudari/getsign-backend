@@ -15,6 +15,7 @@ const {
   getFinalContract,
 } = require('../services/fileHistory');
 const { emailRequestToSign, sendFinalContract } = require('../services/mailer');
+const { updateStatusColumn } = require('../services/monday.service');
 const { uploadFile, getFile, deleteFile } = require('../services/s3');
 const { monday } = require('../utils/monday');
 
