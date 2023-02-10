@@ -1,8 +1,12 @@
 const { PDFDocument } = require('pdf-lib');
+const statusMapper = require('../config/statusMapper');
+const AuthenticatedBoardModel = require('../models/AuthenticatedBoard.model');
 const FileDetails = require('../models/FileDetails');
 const FileHistory = require('../models/FileHistory');
+const { monday } = require('../utils/monday');
 const { embedHistory } = require('./embedDocumentHistory');
 const { signPDF } = require('./file');
+const { updateStatusColumn } = require('./monday.service');
 const { s3, getSignedUrl } = require('./s3');
 
 const addFileHistory = async ({
@@ -72,12 +76,27 @@ const viewedFile = async (id, itemId, ip) => {
     const fromFileHistory = await FileHistory.findById(id);
     if (!fromFileHistory) throw new Error('No file with such id');
 
-    return await addFileHistory({
+    const template = await FileDetails.findById(fromFileHistory.fileId);
+
+    const newHistory = await addFileHistory({
       id: fromFileHistory.fileId,
       itemId,
       status: 'viewed',
       ipAddress: ip,
     });
+
+    const mondayToken = await AuthenticatedBoardModel.findOne({
+      boardId: template.board_id,
+    });
+    monday.setToken(mondayToken.accessToken);
+    await updateStatusColumn({
+      itemId: template.item_id,
+      boardId: template.board_id,
+      columnId: template?.status_column_id,
+      columnValue: statusMapper[newHistory.status],
+    });
+
+    return newHistory;
   } catch (error) {
     throw error;
   }

@@ -1,3 +1,5 @@
+const statusMapper = require('../config/statusMapper');
+const AuthenticatedBoardModel = require('../models/AuthenticatedBoard.model');
 const FileDetails = require('../models/FileDetails');
 const FileHistory = require('../models/FileHistory');
 const {
@@ -14,6 +16,7 @@ const {
 } = require('../services/fileHistory');
 const { emailRequestToSign, sendFinalContract } = require('../services/mailer');
 const { uploadFile, getFile, deleteFile } = require('../services/s3');
+const { monday } = require('../utils/monday');
 
 module.exports = {
   uploadFile: async (req, res, next) => {
@@ -103,6 +106,7 @@ module.exports = {
     const ip = ips[0].trim();
     const { status, signatures, itemId, values } = req.body;
     try {
+      const template = await FileDetails.findById(id);
       const result = await addFileHistory({
         id,
         itemId,
@@ -125,6 +129,18 @@ module.exports = {
           [fileDetails.email_address, receiverEmail.sentToEmail]
         );
       }
+
+      const mondayToken = await AuthenticatedBoardModel.findOne({
+        boardId: template.board_id,
+      });
+      monday.setToken(mondayToken.accessToken);
+      await updateStatusColumn({
+        itemId: template.item_id,
+        boardId: template.board_id,
+        columnId: template?.status_column_id,
+        columnValue: statusMapper[result.status],
+      });
+
       return res.json({ data: { ...result } }).status(200);
     } catch (error) {
       next(error);

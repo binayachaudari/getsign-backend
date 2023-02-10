@@ -6,6 +6,10 @@ const {
   requestSignature,
   signedDocument,
 } = require('../utils/emailTemplates/templates');
+const { updateStatusColumn } = require('./monday.service');
+const AuthenticatedBoardModel = require('../models/AuthenticatedBoard.model');
+const { monday } = require('../utils/monday');
+const statusMapper = require('../config/statusMapper');
 
 config.update({
   credentials: {
@@ -75,13 +79,11 @@ module.exports = {
         .session(session)
         .exec();
 
-      if (addedHistory) return { message: 'Request already sent!' };
-
       const newSentHistory = await FileHistory.create(
         [
           {
             fileId: id,
-            status: 'sent',
+            status: addedHistory ? 'resent' : 'sent',
             itemId,
             sentToEmail: to,
           },
@@ -97,6 +99,17 @@ module.exports = {
       });
 
       if (mailStatus?.messageId) {
+        // Update Board status.
+        const mondayToken = await AuthenticatedBoardModel.findOne({
+          boardId: template.board_id,
+        });
+        monday.setToken(mondayToken.accessToken);
+        await updateStatusColumn({
+          itemId: template.item_id,
+          boardId: template.board_id,
+          columnId: template?.status_column_id,
+          columnValue: statusMapper[newSentHistory[0].status],
+        });
         await session.commitTransaction();
         return mailStatus;
       }

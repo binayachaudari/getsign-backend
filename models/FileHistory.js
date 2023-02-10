@@ -12,7 +12,13 @@ const schema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['sent', 'signed_by_sender', 'signed_by_receiver', 'viewed'],
+      enum: [
+        'sent',
+        'resent',
+        'signed_by_sender',
+        'signed_by_receiver',
+        'viewed',
+      ],
     },
     viewedIpAddress: String,
     receiverSignedIpAddress: String,
