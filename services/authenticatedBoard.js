@@ -9,9 +9,12 @@ const storeAuthTokens = async (boardId, token) => {
   });
 };
 
-const deleteAndInsert = async (boardId, token) => {
-  await AuthenticatedBoardsModel.deleteOne({ boardId });
-  return await storeAuthTokens(boardId, token);
+const updateToken = async (boardId, token) => {
+  const result = await AuthenticatedBoardsModel.findOne({
+    boardId,
+  });
+  result.accessToken = token;
+  result.save();
 };
 
 const authenticateBoard = async (boardId, token) => {
@@ -28,7 +31,7 @@ const authenticateBoard = async (boardId, token) => {
       res.hasOwnProperty('error_code') ||
       res.hasOwnProperty('errors')
     ) {
-      await deleteAndInsert(boardId, token);
+      await updateToken(boardId, token);
     }
   } catch (error) {
     throw error;
