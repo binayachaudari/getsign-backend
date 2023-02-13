@@ -119,6 +119,7 @@ module.exports = {
         ipAddress: ip,
       });
 
+      await setMondayToken(template.board_id);
       const alsoSignedBySender = await FileHistory.findOne({
         fileId: template.id,
         itemId,
@@ -132,7 +133,6 @@ module.exports = {
       }).exec();
 
       if (alsoSignedByReceiver?._id && alsoSignedBySender?._id) {
-        await setMondayToken(template.board_id);
         const finalFile = await getFinalContract(result._id);
 
         const emailColumn = await getEmailColumnValue(
