@@ -4,6 +4,8 @@ const { getFile, s3, getSignedUrl } = require('./s3');
 const fontkit = require('@pdf-lib/fontkit');
 const FileHistory = require('../models/FileHistory');
 const { embedHistory } = require('./embedDocumentHistory');
+const { setMondayToken } = require('../utils/monday');
+const { getColumnValues } = require('./monday.service');
 
 const addFormFields = async (id, payload) => {
   try {
@@ -69,30 +71,55 @@ const generatePDF = async (id, fields) => {
   }
 };
 
-const signPDF = async ({ id, signatureFields, status, itemId, values }) => {
+const loadFile = async (url) => {
+  const body = await fetch(url);
+  const contentType = body.headers.get('content-type');
+  const arrBuffer = await body.arrayBuffer();
+  const buffer = Buffer.from(arrBuffer);
+  var base64String = buffer.toString('base64');
+
+  return `data:${contentType};base64,${base64String}`;
+};
+
+const signPDF = async ({ id, signatureFields, status, itemId }) => {
   try {
     let pdfDoc;
     const fileDetails = await getFile(id);
+    await setMondayToken(fileDetails.board_id);
+    const valuesToFill = await getColumnValues(itemId);
+
+    const values = [
+      ...(valuesToFill?.data?.items?.[0]?.column_values || []),
+      {
+        id: 'item-name',
+        text: valuesToFill?.data?.items?.[0]?.name || '',
+        title: 'Item Name',
+        type: 'text',
+      },
+    ];
+
     const signedBySender = await FileHistory.findOne({
       fileId: id,
       status: 'signed_by_sender',
       itemId,
     }).exec();
 
-    if (!signedBySender) {
-      pdfDoc = await PDFDocument.load(fileDetails?.file);
-    } else {
+    const signedByReceiver = await FileHistory.findOne({
+      fileId: id,
+      status: 'signed_by_receiver',
+      itemId,
+    }).exec();
+
+    if (signedBySender) {
       const url = await getSignedUrl(signedBySender?.file);
-
-      const body = await fetch(url);
-      const contentType = body.headers.get('content-type');
-      const arrBuffer = await body.arrayBuffer();
-      const buffer = Buffer.from(arrBuffer);
-      var base64String = buffer.toString('base64');
-
-      pdfDoc = await PDFDocument.load(
-        `data:${contentType};base64,${base64String}`
-      );
+      const file = await loadFile(url);
+      pdfDoc = await PDFDocument.load(file);
+    } else if (signedByReceiver) {
+      const url = await getSignedUrl(signedByReceiver?.file);
+      const file = await loadFile(url);
+      pdfDoc = await PDFDocument.load(file);
+    } else {
+      pdfDoc = await PDFDocument.load(fileDetails?.file);
     }
 
     const pages = pdfDoc.getPages();
