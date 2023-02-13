@@ -67,8 +67,8 @@ const updateStatusColumn = async ({
   }`,
       {
         variables: {
-          boardId,
-          itemId,
+          boardId: Number(boardId),
+          itemId: Number(itemId),
           value,
         },
       }
