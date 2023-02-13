@@ -6,9 +6,9 @@ const {
   requestSignature,
   signedDocument,
 } = require('../utils/emailTemplates/templates');
-const { updateStatusColumn } = require('./monday.service');
+const { updateStatusColumn, getEmailColumnValue } = require('./monday.service');
 const AuthenticatedBoardModel = require('../models/AuthenticatedBoard.model');
-const { monday } = require('../utils/monday');
+const { monday, setMondayToken } = require('../utils/monday');
 const statusMapper = require('../config/statusMapper');
 
 config.update({
@@ -62,13 +62,27 @@ const sendSignedDocuments = async (document, to) => {
 };
 
 module.exports = {
-  emailRequestToSign: async (itemId, id, to) => {
+  emailRequestToSign: async (itemId, id) => {
     const session = await FileHistory.startSession();
     session.startTransaction();
 
     try {
       const template = await FileDetails.findById(id);
       if (!template) throw new Error('No file with such ID');
+
+      await setMondayToken(template.board_id);
+      const emailColumn = await getEmailColumnValue(
+        itemId,
+        template.email_column_id
+      );
+      const to = emailColumn?.data?.items?.[0]?.column_values?.[0]?.text;
+
+      //clear viewed status if already sent
+      await FileHistory.deleteOne({
+        fileId: id,
+        itemId,
+        status: 'viewed',
+      });
 
       const addedHistory = await FileHistory.findOne({
         fileId: id,
@@ -99,12 +113,8 @@ module.exports = {
       });
 
       if (mailStatus?.messageId) {
-        // Update Board status.
-        const mondayToken = await AuthenticatedBoardModel.findOne({
-          boardId: template.board_id,
-        });
-        monday.setToken(mondayToken.accessToken);
-        await updateStatusColumn({
+        await setMondayToken(template.board_id);
+        const status = await updateStatusColumn({
           itemId: template.item_id,
           boardId: template.board_id,
           columnId: template?.status_column_id,
