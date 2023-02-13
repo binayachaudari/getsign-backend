@@ -66,9 +66,11 @@ const updateStatusColumn = async ({
     }
   }`,
       {
-        boardId,
-        itemId,
-        value,
+        variables: {
+          boardId,
+          itemId,
+          value,
+        },
       }
     );
   } catch (error) {
@@ -76,4 +78,30 @@ const updateStatusColumn = async ({
   }
 };
 
-module.exports = { me, getItemDetails, updateStatusColumn };
+const getEmailColumnValue = async (itemId, emailColId) => {
+  return await monday.api(
+    `
+    query getEmailColumnValue($ids: [Int], $emailColId: [String]) {
+      items(ids: $ids) {
+        id
+        column_values (ids: $emailColId) {
+          id
+          text
+          title
+          type
+          value
+          additional_info
+        }
+      }
+    }
+    `,
+    { variables: { ids: [Number(itemId)], emailColId: [emailColId] } }
+  );
+};
+
+module.exports = {
+  me,
+  getItemDetails,
+  updateStatusColumn,
+  getEmailColumnValue,
+};
