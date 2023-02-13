@@ -189,7 +189,7 @@ module.exports = {
   },
 
   getFileForReceiver: async (req, res, next) => {
-    // fileHistory id having status = 'sent'
+    // fileHistory id having status = 'sent' | 'resent'
     const { itemId, id } = req.params;
     try {
       const result = await getFileToSign(id, itemId);

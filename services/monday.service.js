@@ -79,6 +79,26 @@ const updateStatusColumn = async ({
   }
 };
 
+const getColumnValues = async (itemId) => {
+  return await monday.api(
+    `
+    query getColumnValues($ids: [Int]) {
+      items(ids: $ids) {
+        id
+        name
+        column_values {
+          id
+          text
+          title
+          type
+        }
+      }
+    }
+    `,
+    { variables: { ids: [Number(itemId)] } }
+  );
+};
+
 const getEmailColumnValue = async (itemId, emailColId) => {
   return await monday.api(
     `
@@ -105,4 +125,5 @@ module.exports = {
   getItemDetails,
   updateStatusColumn,
   getEmailColumnValue,
+  getColumnValues,
 };

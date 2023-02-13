@@ -5,8 +5,8 @@ const FileDetails = require('../models/FileDetails');
 const FileHistory = require('../models/FileHistory');
 const { monday, setMondayToken } = require('../utils/monday');
 const { embedHistory } = require('./embedDocumentHistory');
-const { signPDF } = require('./file');
-const { updateStatusColumn } = require('./monday.service');
+const { signPDF, generatePDF } = require('./file');
+const { updateStatusColumn, getColumnValues } = require('./monday.service');
 const { s3, getSignedUrl } = require('./s3');
 
 const addFileHistory = async ({
@@ -113,18 +113,30 @@ const getFileToSign = async (id, itemId) => {
       let url;
       if (!getFileToSignKey?.file) {
         const template = await FileDetails.findById(fileFromHistory.fileId);
-        url = s3.getSignedUrl('getObject', {
-          Bucket: process.env.BUCKET_NAME,
-          Key: template?.file,
-        });
-        fileId = template.id;
-      } else {
-        url = s3.getSignedUrl('getObject', {
-          Bucket: process.env.BUCKET_NAME,
-          Key: getFileToSignKey?.file,
-        });
-        fileId = getFileToSignKey.fileId;
+        await setMondayToken(template?.board_id);
+        const columnValues = await getColumnValues(itemId);
+        const formValues = [
+          ...(columnValues?.data?.items?.[0]?.column_values || []),
+          {
+            id: 'item-name',
+            text: columnValues?.data?.items?.[0]?.name || '',
+            title: 'Item Name',
+            type: 'text',
+          },
+        ];
+
+        const generatedPDF = await generatePDF(template?.id, formValues);
+        return {
+          fileId: template.id,
+          ...generatedPDF,
+        };
       }
+
+      url = s3.getSignedUrl('getObject', {
+        Bucket: process.env.BUCKET_NAME,
+        Key: getFileToSignKey?.file,
+      });
+      fileId = getFileToSignKey.fileId;
 
       const body = await fetch(url);
       const contentType = body.headers.get('content-type');
