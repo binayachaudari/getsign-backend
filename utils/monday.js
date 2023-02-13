@@ -1,4 +1,16 @@
 const mondaySdk = require('monday-sdk-js');
+const AuthenticatedBoardModel = require('../models/AuthenticatedBoard.model');
 const monday = mondaySdk();
 
-module.exports = { monday };
+const setMondayToken = async (boardId) => {
+  const mondayToken = await AuthenticatedBoardModel.findOne({
+    boardId,
+  });
+
+  if (!mondayToken) {
+    throw new Error('Unauthorized');
+  }
+  monday.setToken(mondayToken.accessToken);
+};
+
+module.exports = { monday, setMondayToken };
