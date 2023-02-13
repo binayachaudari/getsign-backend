@@ -160,9 +160,8 @@ module.exports = {
 
   sendPDF: async (req, res, next) => {
     const { itemId, id } = req.params;
-    const { to } = req.body;
     try {
-      const result = await emailRequestToSign(itemId, id, to);
+      const result = await emailRequestToSign(itemId, id);
       return res.json({ data: result }).status(200);
     } catch (error) {
       console.log(error);
