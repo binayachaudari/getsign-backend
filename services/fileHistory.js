@@ -15,7 +15,6 @@ const addFileHistory = async ({
   itemId,
   signatures,
   ipAddress,
-  values,
 }) => {
   try {
     const addedHistory = await FileHistory.findOne({
@@ -26,13 +25,12 @@ const addFileHistory = async ({
 
     if (addedHistory) return addedHistory;
 
-    if (signatures?.length || values?.length) {
+    if (signatures?.length) {
       const signedFile = await signPDF({
         id,
         signatureFields: signatures,
         status,
         itemId,
-        values,
       });
 
       return await FileHistory.create({
@@ -98,7 +96,53 @@ const viewedFile = async (id, itemId, ip) => {
   }
 };
 
-const getFileToSign = async (id, itemId) => {
+const getFileToSignSender = async (id, itemId) => {
+  const fileDetails = await FileDetails.findById(id);
+
+  const alreadySignedByReceiver = await FileHistory.findOne({
+    fileId: id,
+    itemId,
+    status: 'signed_by_receiver',
+  }).exec();
+
+  if (!alreadySignedByReceiver) {
+    await setMondayToken(fileDetails.board_id);
+    const columnValues = await getColumnValues(itemId);
+    const formValues = [
+      ...(columnValues?.data?.items?.[0]?.column_values || []),
+      {
+        id: 'item-name',
+        text: columnValues?.data?.items?.[0]?.name || '',
+        title: 'Item Name',
+        type: 'text',
+      },
+    ];
+
+    const generatedPDF = await generatePDF(id, formValues);
+    return {
+      fileId: id,
+      ...generatedPDF,
+    };
+  }
+
+  const url = s3.getSignedUrl('getObject', {
+    Bucket: process.env.BUCKET_NAME,
+    Key: alreadySignedByReceiver?.file,
+  });
+
+  const body = await fetch(url);
+  const contentType = body.headers.get('content-type');
+  const arrBuffer = await body.arrayBuffer();
+  const buffer = Buffer.from(arrBuffer);
+  var base64String = buffer.toString('base64');
+
+  return {
+    fileId: id,
+    file: `data:${contentType};base64,${base64String}`,
+  };
+};
+
+const getFileToSignReceiver = async (id, itemId) => {
   try {
     let fileId;
     const fileFromHistory = await FileHistory.findById(id);
@@ -202,6 +246,7 @@ module.exports = {
   addFileHistory,
   getFileHistory,
   viewedFile,
-  getFileToSign,
+  getFileToSignSender,
+  getFileToSignReceiver,
   getFinalContract,
 };
