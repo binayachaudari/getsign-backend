@@ -114,8 +114,8 @@ module.exports = {
 
       if (mailStatus?.messageId) {
         await setMondayToken(template.board_id);
-        const status = await updateStatusColumn({
-          itemId: template.item_id,
+        await updateStatusColumn({
+          itemId: itemId,
           boardId: template.board_id,
           columnId: template?.status_column_id,
           columnValue: statusMapper[newSentHistory[0].status],
