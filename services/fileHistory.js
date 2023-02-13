@@ -85,9 +85,8 @@ const viewedFile = async (id, itemId, ip) => {
       ipAddress: ip,
     });
 
-    await setMondayToken(template.board_id);
     await updateStatusColumn({
-      itemId: template.item_id,
+      itemId: itemId,
       boardId: template.board_id,
       columnId: template?.status_column_id,
       columnValue: statusMapper[newHistory?.status],

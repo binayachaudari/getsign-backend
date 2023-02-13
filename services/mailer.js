@@ -113,7 +113,6 @@ module.exports = {
       });
 
       if (mailStatus?.messageId) {
-        await setMondayToken(template.board_id);
         await updateStatusColumn({
           itemId: itemId,
           boardId: template.board_id,

@@ -1,4 +1,4 @@
-const { monday } = require('../utils/monday');
+const { monday, setMondayToken } = require('../utils/monday');
 
 const me = async () => {
   try {
@@ -53,6 +53,7 @@ const updateStatusColumn = async ({
   columnValue,
   columnId,
 }) => {
+  await setMondayToken(boardId);
   const value = JSON.stringify({
     [columnId]: {
       label: columnValue,

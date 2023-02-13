@@ -136,7 +136,7 @@ module.exports = {
       });
       monday.setToken(mondayToken.accessToken);
       await updateStatusColumn({
-        itemId: template.item_id,
+        itemId: itemId,
         boardId: template.board_id,
         columnId: template?.status_column_id,
         columnValue: statusMapper[result.status],
