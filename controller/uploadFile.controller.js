@@ -1,5 +1,4 @@
 const statusMapper = require('../config/statusMapper');
-const AuthenticatedBoardModel = require('../models/AuthenticatedBoard.model');
 const FileDetails = require('../models/FileDetails');
 const FileHistory = require('../models/FileHistory');
 const {
@@ -11,13 +10,17 @@ const {
   addFileHistory,
   getFileHistory,
   viewedFile,
-  getFileToSign,
+  getFileToSignReceiver,
   getFinalContract,
+  getFileToSignSender,
 } = require('../services/fileHistory');
 const { emailRequestToSign, sendFinalContract } = require('../services/mailer');
-const { updateStatusColumn } = require('../services/monday.service');
+const {
+  updateStatusColumn,
+  getEmailColumnValue,
+} = require('../services/monday.service');
 const { uploadFile, getFile, deleteFile } = require('../services/s3');
-const { monday } = require('../utils/monday');
+const { monday, setMondayToken } = require('../utils/monday');
 
 module.exports = {
   uploadFile: async (req, res, next) => {
@@ -105,7 +108,7 @@ module.exports = {
     ).split(',');
 
     const ip = ips[0].trim();
-    const { status, signatures, itemId, values } = req.body;
+    const { status, signatures, itemId } = req.body;
     try {
       const template = await FileDetails.findById(id);
       const result = await addFileHistory({
@@ -113,28 +116,36 @@ module.exports = {
         itemId,
         status,
         signatures,
-        values,
         ipAddress: ip,
       });
 
-      if (result.status === 'signed_by_receiver') {
+      const alsoSignedBySender = await FileHistory.findOne({
+        fileId: template.id,
+        itemId,
+        status: 'signed_by_sender',
+      }).exec();
+
+      const alsoSignedByReceiver = await FileHistory.findOne({
+        fileId: template.id,
+        itemId,
+        status: 'signed_by_receiver',
+      }).exec();
+
+      if (alsoSignedByReceiver?._id && alsoSignedBySender?._id) {
+        await setMondayToken(template.board_id);
         const finalFile = await getFinalContract(result._id);
-        const fileDetails = await FileDetails.findById(result.fileId);
-        const receiverEmail = await FileHistory.findOne({
-          fileId: result.fileId,
-          itemId: result.itemId,
-          status: 'sent',
-        });
+
+        const emailColumn = await getEmailColumnValue(
+          itemId,
+          template.email_column_id
+        );
+        const to = emailColumn?.data?.items?.[0]?.column_values?.[0]?.text;
         await sendFinalContract(
-          { file: finalFile.file, name: fileDetails.file_name },
-          [fileDetails.email_address, receiverEmail.sentToEmail]
+          { file: finalFile.file, name: template.file_name },
+          [template.email_address, to]
         );
       }
 
-      const mondayToken = await AuthenticatedBoardModel.findOne({
-        boardId: template.board_id,
-      });
-      monday.setToken(mondayToken.accessToken);
       await updateStatusColumn({
         itemId: itemId,
         boardId: template.board_id,
@@ -188,11 +199,22 @@ module.exports = {
     }
   },
 
+  getFileForSender: async (req, res, next) => {
+    // actual fileId
+    const { itemId, id } = req.params;
+    try {
+      const result = await getFileToSignSender(id, itemId);
+      return res.json({ data: result }).status(200);
+    } catch (error) {
+      next(error);
+    }
+  },
+
   getFileForReceiver: async (req, res, next) => {
     // fileHistory id having status = 'sent' | 'resent'
     const { itemId, id } = req.params;
     try {
-      const result = await getFileToSign(id, itemId);
+      const result = await getFileToSignReceiver(id, itemId);
       return res.json({ data: result }).status(200);
     } catch (error) {
       next(error);

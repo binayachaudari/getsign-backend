@@ -12,6 +12,7 @@ router.post('/sign/:id', controller.addSignature);
 
 router.get('/send-mail/:itemId/:id', controller.sendPDF);
 router.get('/viewed/:itemId/:id', controller.viewedPDF);
+router.get('/file-for-sender/:itemId/:id', controller.getFileForSender);
 router.get('/file-for-receiver/:itemId/:id', controller.getFileForReceiver);
 
 router.get('/contract/:id', controller.getContract);
