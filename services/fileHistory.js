@@ -3,7 +3,7 @@ const statusMapper = require('../config/statusMapper');
 const AuthenticatedBoardModel = require('../models/AuthenticatedBoard.model');
 const FileDetails = require('../models/FileDetails');
 const FileHistory = require('../models/FileHistory');
-const { monday } = require('../utils/monday');
+const { monday, setMondayToken } = require('../utils/monday');
 const { embedHistory } = require('./embedDocumentHistory');
 const { signPDF } = require('./file');
 const { updateStatusColumn } = require('./monday.service');
@@ -24,7 +24,7 @@ const addFileHistory = async ({
       status,
     }).exec();
 
-    if (addedHistory) return;
+    if (addedHistory) return addedHistory;
 
     if (signatures?.length || values?.length) {
       const signedFile = await signPDF({
@@ -85,15 +85,12 @@ const viewedFile = async (id, itemId, ip) => {
       ipAddress: ip,
     });
 
-    const mondayToken = await AuthenticatedBoardModel.findOne({
-      boardId: template.board_id,
-    });
-    monday.setToken(mondayToken.accessToken);
+    await setMondayToken(template.board_id);
     await updateStatusColumn({
       itemId: template.item_id,
       boardId: template.board_id,
       columnId: template?.status_column_id,
-      columnValue: statusMapper[newHistory.status],
+      columnValue: statusMapper[newHistory?.status],
     });
 
     return newHistory;
