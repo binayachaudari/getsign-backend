@@ -5,7 +5,7 @@ const monday = mondaySdk();
 const setMondayToken = async (boardId) => {
   const mondayToken = await AuthenticatedBoardModel.findOne({
     boardId,
-  });
+  }).exec();
 
   if (!mondayToken) {
     throw new Error('Unauthorized');

@@ -12,14 +12,14 @@ const storeAuthTokens = async (boardId, token) => {
 const updateToken = async (boardId, token) => {
   const result = await AuthenticatedBoardsModel.findOne({
     boardId,
-  });
+  }).exec();
   result.accessToken = token;
   result.save();
 };
 
 const authenticateBoard = async (boardId, token) => {
   try {
-    const exists = await AuthenticatedBoardsModel.findOne({ boardId });
+    const exists = await AuthenticatedBoardsModel.findOne({ boardId }).exec();
     if (!exists) {
       await storeAuthTokens(boardId, token);
     }
@@ -40,9 +40,9 @@ const authenticateBoard = async (boardId, token) => {
 
 const isAlreadyAuthenticated = async (boardId) => {
   try {
-    const res = await AuthenticatedBoardsModel.findOne({ boardId }).select(
-      '_id, boardId'
-    );
+    const res = await AuthenticatedBoardsModel.findOne({ boardId })
+      .select('_id, boardId')
+      .exec();
     return res;
   } catch (error) {
     throw error;

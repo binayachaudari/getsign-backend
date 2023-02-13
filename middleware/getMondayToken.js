@@ -12,7 +12,7 @@ const getMondayToken = async (req, res, next) => {
     }
     const token = await AuthenticatedBoardModel.findOne({
       boardId: fileDetail.board_id,
-    });
+    }).exec();
 
     if (!token) {
       return next(new Error('Board has not been authenticated'));
