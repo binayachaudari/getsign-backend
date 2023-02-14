@@ -156,7 +156,7 @@ const getFileToSignSender = async (id, itemId) => {
     fileId: id,
     file: `data:${contentType};base64,${base64String}`,
     alreadySignedByOther: !!alreadySignedByReceiver,
-    alreadyViewed: !!isAlreadyViewed({ fileId: id, itemId }),
+    alreadyViewed: !!(await isAlreadyViewed({ fileId: id, itemId })),
   };
 };
 
@@ -165,9 +165,10 @@ const getFileToSignReceiver = async (id, itemId) => {
     let fileId;
     const fileFromHistory = await FileHistory.findById(id);
     const template = await FileDetails.findById(fileFromHistory.fileId);
+    fileId = fileFromHistory.fileId;
 
     const getFileToSignKey = await FileHistory.findOne({
-      fileId: fileFromHistory.fileId,
+      fileId,
       itemId,
       status: 'signed_by_sender',
     }).exec();
@@ -198,7 +199,7 @@ const getFileToSignReceiver = async (id, itemId) => {
           fileId: template.id,
           ...generatedPDF,
           alreadySignedByOther: !!getFileToSignKey,
-          alreadyViewed: !!isAlreadyViewed({ fileId, itemId }),
+          alreadyViewed: !!(await isAlreadyViewed({ fileId, itemId })),
           sendDocumentTo: to,
         };
       }
