@@ -144,6 +144,13 @@ module.exports = {
           { file: finalFile.file, name: template.file_name },
           [template.email_address, to]
         );
+        await updateStatusColumn({
+          itemId: itemId,
+          boardId: template.board_id,
+          columnId: template?.status_column_id,
+          columnValue: 'Done',
+        });
+        return res.status(200).json({ data: 'Contract has been sent!' });
       }
 
       await updateStatusColumn({
