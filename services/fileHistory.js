@@ -23,7 +23,10 @@ const addFileHistory = async ({
       status,
     }).exec();
 
-    if (addedHistory) return addedHistory;
+    if (addedHistory) {
+      if (addedHistory?.status === 'viewed') return;
+      return addedHistory;
+    }
 
     if (signatures?.length) {
       const signedFile = await signPDF({
@@ -69,6 +72,14 @@ const getFileHistory = async (itemId, id) => {
   }
 };
 
+const isAlreadyViewed = async ({ fileId, itemId }) => {
+  return await FileHistory.findOne({
+    fileId,
+    itemId,
+    status: 'viewed',
+  }).exec();
+};
+
 const viewedFile = async (id, itemId, ip) => {
   try {
     const fromFileHistory = await FileHistory.findById(id);
@@ -83,12 +94,13 @@ const viewedFile = async (id, itemId, ip) => {
       ipAddress: ip,
     });
 
-    await updateStatusColumn({
-      itemId: itemId,
-      boardId: template.board_id,
-      columnId: template?.status_column_id,
-      columnValue: statusMapper[newHistory?.status],
-    });
+    if (newHistory?.status)
+      await updateStatusColumn({
+        itemId: itemId,
+        boardId: template.board_id,
+        columnId: template?.status_column_id,
+        columnValue: statusMapper[newHistory?.status],
+      });
 
     return newHistory;
   } catch (error) {
@@ -139,6 +151,8 @@ const getFileToSignSender = async (id, itemId) => {
   return {
     fileId: id,
     file: `data:${contentType};base64,${base64String}`,
+    alreadySignedByOther: !!alreadySignedByReceiver,
+    alreadyViewed: !!isAlreadyViewed({ fileId: id, itemId }),
   };
 };
 
@@ -191,6 +205,8 @@ const getFileToSignReceiver = async (id, itemId) => {
       return {
         fileId,
         file: `data:${contentType};base64,${base64String}`,
+        alreadySignedByOther: !!getFileToSignKey,
+        alreadyViewed: !!isAlreadyViewed({ fileId, itemId }),
       };
     } catch (error) {
       throw error;
