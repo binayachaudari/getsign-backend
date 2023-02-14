@@ -6,7 +6,11 @@ const FileHistory = require('../models/FileHistory');
 const { monday, setMondayToken } = require('../utils/monday');
 const { embedHistory } = require('./embedDocumentHistory');
 const { signPDF, generatePDF } = require('./file');
-const { updateStatusColumn, getColumnValues } = require('./monday.service');
+const {
+  updateStatusColumn,
+  getColumnValues,
+  getEmailColumnValue,
+} = require('./monday.service');
 const { s3, getSignedUrl } = require('./s3');
 
 const addFileHistory = async ({
@@ -160,6 +164,7 @@ const getFileToSignReceiver = async (id, itemId) => {
   try {
     let fileId;
     const fileFromHistory = await FileHistory.findById(id);
+    const template = await FileDetails.findById(fileFromHistory.fileId);
 
     const getFileToSignKey = await FileHistory.findOne({
       fileId: fileFromHistory.fileId,
@@ -170,7 +175,6 @@ const getFileToSignReceiver = async (id, itemId) => {
     try {
       let url;
       if (!getFileToSignKey?.file) {
-        const template = await FileDetails.findById(fileFromHistory.fileId);
         await setMondayToken(template?.board_id);
         const columnValues = await getColumnValues(itemId);
         const formValues = [
@@ -202,11 +206,19 @@ const getFileToSignReceiver = async (id, itemId) => {
       const buffer = Buffer.from(arrBuffer);
       var base64String = buffer.toString('base64');
 
+      await setMondayToken(template.board_id);
+      const emailColumn = await getEmailColumnValue(
+        itemId,
+        template.email_column_id
+      );
+      const to = emailColumn?.data?.items?.[0]?.column_values?.[0]?.text;
+
       return {
         fileId,
         file: `data:${contentType};base64,${base64String}`,
         alreadySignedByOther: !!getFileToSignKey,
         alreadyViewed: !!isAlreadyViewed({ fileId, itemId }),
+        sendDocumentTo: to,
       };
     } catch (error) {
       throw error;
