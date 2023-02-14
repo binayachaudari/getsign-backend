@@ -172,10 +172,16 @@ const getFileToSignReceiver = async (id, itemId) => {
       status: 'signed_by_sender',
     }).exec();
 
+    await setMondayToken(template.board_id);
+    const emailColumn = await getEmailColumnValue(
+      itemId,
+      template.email_column_id
+    );
+    const to = emailColumn?.data?.items?.[0]?.column_values?.[0]?.text;
+
     try {
       let url;
       if (!getFileToSignKey?.file) {
-        await setMondayToken(template?.board_id);
         const columnValues = await getColumnValues(itemId);
         const formValues = [
           ...(columnValues?.data?.items?.[0]?.column_values || []),
@@ -191,6 +197,9 @@ const getFileToSignReceiver = async (id, itemId) => {
         return {
           fileId: template.id,
           ...generatedPDF,
+          alreadySignedByOther: !!getFileToSignKey,
+          alreadyViewed: !!isAlreadyViewed({ fileId, itemId }),
+          sendDocumentTo: to,
         };
       }
 
@@ -205,13 +214,6 @@ const getFileToSignReceiver = async (id, itemId) => {
       const arrBuffer = await body.arrayBuffer();
       const buffer = Buffer.from(arrBuffer);
       var base64String = buffer.toString('base64');
-
-      await setMondayToken(template.board_id);
-      const emailColumn = await getEmailColumnValue(
-        itemId,
-        template.email_column_id
-      );
-      const to = emailColumn?.data?.items?.[0]?.column_values?.[0]?.text;
 
       return {
         fileId,
