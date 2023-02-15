@@ -220,7 +220,7 @@ const getFileToSignReceiver = async (id, itemId) => {
         fileId,
         file: `data:${contentType};base64,${base64String}`,
         alreadySignedByOther: !!getFileToSignKey,
-        alreadyViewed: !!isAlreadyViewed({ fileId, itemId }),
+        alreadyViewed: !!(await isAlreadyViewed({ fileId, itemId })),
         sendDocumentTo: to,
       };
     } catch (error) {
