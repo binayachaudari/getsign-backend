@@ -6,8 +6,11 @@ const FileHistory = require('../models/FileHistory');
 const { embedHistory } = require('./embedDocumentHistory');
 const { setMondayToken } = require('../utils/monday');
 const { getColumnValues, updateStatusColumn } = require('./monday.service');
+const statusMapper = require('../config/statusMapper');
 
 const addFormFields = async (id, payload) => {
+  const session = await FileHistory.startSession();
+  session.startTransaction();
   try {
     const updatedFields = await FileDetails.findByIdAndUpdate(id, {
       status: 'ready_to_sign',
@@ -16,20 +19,22 @@ const addFormFields = async (id, payload) => {
 
     await setMondayToken(updatedFields.board_id);
 
-    // get itemId that are already signed by receiver
-    const signedItemIds = await FileHistory.distinct('itemId', {
+    // Signed by receiver
+    const signedByReceiver = await FileHistory.distinct('itemId', {
       fileId: updatedFields._id,
       status: 'signed_by_receiver',
     });
 
-    // find all itemIds not signed by receiver
-    const hasNotBeenSignedByReceiver = await FileHistory.distinct('itemId', {
+    // only signed by sender (not signed by receiver)
+    const onlySenderSigned = await FileHistory.distinct('itemId', {
       fileId: updatedFields._id,
-      itemId: { $nin: signedItemIds },
+      status: 'signed_by_sender',
+      itemId: { $nin: signedByReceiver },
     });
 
-    if (hasNotBeenSignedByReceiver?.length > 0) {
-      hasNotBeenSignedByReceiver?.forEach(async (item) => {
+    if (onlySenderSigned?.length > 0) {
+      onlySenderSigned?.forEach(async (item) => {
+        // updating status column
         await updateStatusColumn({
           itemId: item,
           boardId: updatedFields.board_id,
@@ -37,14 +42,18 @@ const addFormFields = async (id, payload) => {
           columnValue: undefined,
         });
       });
+
+      // delete history
+      await FileHistory.deleteMany({
+        itemId: { $in: onlySenderSigned },
+      });
     }
     // delete file histories
-    await FileHistory.deleteMany({
-      itemId: { $in: hasNotBeenSignedByReceiver },
-    });
 
     return updatedFields;
   } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
     throw error;
   }
 };
