@@ -5,13 +5,42 @@ const fontkit = require('@pdf-lib/fontkit');
 const FileHistory = require('../models/FileHistory');
 const { embedHistory } = require('./embedDocumentHistory');
 const { setMondayToken } = require('../utils/monday');
-const { getColumnValues } = require('./monday.service');
+const { getColumnValues, updateStatusColumn } = require('./monday.service');
 
 const addFormFields = async (id, payload) => {
   try {
     const updatedFields = await FileDetails.findByIdAndUpdate(id, {
       status: 'ready_to_sign',
       fields: [...payload],
+    });
+
+    await setMondayToken(updatedFields.board_id);
+
+    // get itemId that are already signed by receiver
+    const signedItemIds = await FileHistory.distinct('itemId', {
+      fileId: updatedFields._id,
+      status: 'signed_by_receiver',
+    });
+
+    // find all itemIds not signed by receiver
+    const hasNotBeenSignedByReceiver = await FileHistory.distinct('itemId', {
+      fileId: updatedFields._id,
+      itemId: { $nin: signedItemIds },
+    });
+
+    if (hasNotBeenSignedByReceiver?.length > 0) {
+      hasNotBeenSignedByReceiver?.forEach(async (item) => {
+        await updateStatusColumn({
+          itemId: item,
+          boardId: updatedFields.board_id,
+          columnId: updatedFields?.status_column_id,
+          columnValue: undefined,
+        });
+      });
+    }
+    // delete file histories
+    await FileHistory.deleteMany({
+      itemId: { $in: hasNotBeenSignedByReceiver },
     });
 
     return updatedFields;
