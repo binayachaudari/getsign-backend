@@ -12,14 +12,22 @@ const getStoredBoardFile = async (boardId, itemId) => {
 
     if (alreadySignedFile?.fileId) {
       const doc = await FileDetails.findById(alreadySignedFile.fileId);
-      return { doc, isAuthenticated };
+      return {
+        doc,
+        isAuthenticated,
+        alreadySignedFile: !!alreadySignedFile?._id,
+      };
     }
     const doc = await FileDetails.findOne({
       board_id: boardId,
       is_deleted: false,
     }).exec();
 
-    return { doc, isAuthenticated };
+    return {
+      doc,
+      isAuthenticated,
+      alreadySignedFile: !!alreadySignedFile?._id,
+    };
   } catch (error) {
     console.log(error);
     throw error;
