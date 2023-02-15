@@ -13,7 +13,6 @@ const schema = new mongoose.Schema(
     board_id: {
       type: Number,
       required: true,
-      unique: true,
     },
     item_id: {
       type: Number,
