@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { Schema } = mongoose;
 
 const schema = new mongoose.Schema(
   {
@@ -7,8 +8,8 @@ const schema = new mongoose.Schema(
       required: true,
     },
     fileId: {
-      type: String,
-      required: true,
+      type: Schema.Types.ObjectId,
+      ref: 'FileDetails',
     },
     status: {
       type: String,
