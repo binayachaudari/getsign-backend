@@ -6,7 +6,7 @@ const getStoredBoardFile = async (boardId, itemId) => {
   try {
     const isAuthenticated = await isAlreadyAuthenticated(boardId);
     const alreadySignedFile = await FileHistory.findOne({
-      item_id: itemId,
+      itemId,
       status: { $in: ['signed_by_receiver', 'signed_by_sender'] },
     }).exec();
 
