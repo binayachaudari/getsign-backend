@@ -5,16 +5,13 @@ const requestSignature = ({ requestedBy, documentName, message, url }) => {
 <!--[if (gte mso 9)|(IE)]><!-->
 <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
 <style>
-<!--[if (gte mso 9)|(IE)]><!-->
  p, h1, h2, h3, h4 { font-family: 'Roboto', Verdana, Helvetica, sans-serif !important; }
-<!--<![endif]-->
 * {
   font-family: 'Roboto', Verdana, Helvetica, sans-serif !important;  
 }
 </style>
-<!--<![endif]-->
   </head>
-  <div style="width: 100%;margin:0;">
+  <div style="width: 100%;margin:0;font-family: 'Roboto', Verdana, Helvetica, sans-serif !important;">
     <center style="width:100%;table-layout:fixed;background-color:rgba(230,233,239,0.5);padding:60px 12px;">
       <table width="100%" style="margin:0 auto;width:100%;max-width:600px;border-spacing:0;font-family:'Times New Roman',Times,serif;color:black">
         <tbody><tr>
@@ -79,16 +76,13 @@ const sendReminder = ({ requestedBy, documentName, message, url }) => {
 <!--[if (gte mso 9)|(IE)]><!-->
 <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
 <style>
-<!--[if (gte mso 9)|(IE)]><!-->
  p, h1, h2, h3, h4 { font-family: 'Roboto', Verdana, Helvetica, sans-serif !important; }
-<!--<![endif]-->
 * {
   font-family: 'Roboto', Verdana, Helvetica, sans-serif !important;  
 }
 </style>
-<!--<![endif]-->
   </head>
-  <div style="width: 100%;margin:0;>
+  <div style="width: 100%;margin:0;  font-family: 'Roboto', Verdana, Helvetica, sans-serif !important;">
     <center style="width:100%;table-layout:fixed;background-color:rgba(230,233,239,0.5);padding:60px 12px;">
       <table width="100%" style="margin:0 auto;width:100%;max-width:600px;border-spacing:0;font-family:'Times New Roman',Times,serif;color:black">
         <tbody><tr>
@@ -153,16 +147,13 @@ const signedDocument = ({ documentName, url }) => {
 <!--[if (gte mso 9)|(IE)]><!-->
 <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
 <style>
-<!--[if (gte mso 9)|(IE)]><!-->
  p, h1, h2, h3, h4 { font-family: 'Roboto', Verdana, Helvetica, sans-serif !important; }
-<!--<![endif]-->
 * {
   font-family: 'Roboto', Verdana, Helvetica, sans-serif !important;  
 }
 </style>
-<!--<![endif]-->
   </head>
-  <div style="margin:0;width:100%">
+  <div style="margin:0;width:100%;font-family: 'Roboto', Verdana, Helvetica, sans-serif !important;  ">
   <center style="width:100%;table-layout:fixed;padding:60px 12px">
     <table width="100%" style="margin:0 auto;width:100%;max-width:600px;border-spacing:0;font-family:'Times New Roman',Times,serif;color:black">
       <tbody><tr>
