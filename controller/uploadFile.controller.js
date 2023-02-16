@@ -243,4 +243,14 @@ module.exports = {
       next(error);
     }
   },
+
+  getContractFile: async (req, res, next) => {
+    const { id } = req.params;
+    try {
+      const result = await getFinalContract(id);
+      return res.json({ data: result }).status(200);
+    } catch (error) {
+      next(error);
+    }
+  },
 };

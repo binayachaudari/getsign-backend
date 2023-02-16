@@ -16,5 +16,6 @@ router.get('/file-for-sender/:itemId/:id', controller.getFileForSender);
 router.get('/file-for-receiver/:itemId/:id', controller.getFileForReceiver);
 
 router.get('/contract/:itemId/:fileId', controller.getContract);
+router.get('/download/:id', controller.getContractFile);
 
 module.exports = router;
