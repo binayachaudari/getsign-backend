@@ -50,7 +50,7 @@ const sendSignedDocuments = async (document, to) => {
     subject: `You just signed ${document.name}`,
     html: signedDocument({
       documentName: document.name,
-      url: '#',
+      url: `https://jetsign.jtpk.app/download/${document.itemId}/${document.fileId}`,
     }),
     attachments: [
       {

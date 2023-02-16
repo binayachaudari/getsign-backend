@@ -142,7 +142,12 @@ module.exports = {
         );
         const to = emailColumn?.data?.items?.[0]?.column_values?.[0]?.text;
         await sendFinalContract(
-          { file: finalFile.file, name: template.file_name },
+          {
+            file: finalFile.file,
+            name: template.file_name,
+            itemId,
+            fileId: result._id,
+          },
           [template.email_address, to]
         );
         await updateStatusColumn({
