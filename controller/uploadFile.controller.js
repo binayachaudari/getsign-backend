@@ -13,6 +13,7 @@ const {
   getFileToSignReceiver,
   getFinalContract,
   getFileToSignSender,
+  downloadContract,
 } = require('../services/fileHistory');
 const { emailRequestToSign, sendFinalContract } = require('../services/mailer');
 const {
@@ -229,9 +230,9 @@ module.exports = {
   },
 
   getContract: async (req, res, next) => {
-    const { id } = req.params;
+    const { itemId, fileId } = req.params;
     try {
-      const result = await getFinalContract(id);
+      const result = await downloadContract(itemId, fileId);
       return res.json({ data: result }).status(200);
     } catch (error) {
       next(error);

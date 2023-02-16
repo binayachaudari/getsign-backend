@@ -231,6 +231,18 @@ const getFileToSignReceiver = async (id, itemId) => {
   }
 };
 
+const downloadContract = async (itemId, fileId) => {
+  const signed = await FileHistory.findOne({
+    fileId: fileId,
+    itemId,
+    status: { $in: ['signed_by_sender', 'signed_by_receiver'] },
+  })
+    .sort({ created_at: 'desc' })
+    .exec();
+
+  return await getFinalContract(signed?._id);
+};
+
 const getFinalContract = async (id) => {
   try {
     const fileHistory = await FileHistory.findById(id);
@@ -280,4 +292,5 @@ module.exports = {
   getFileToSignSender,
   getFileToSignReceiver,
   getFinalContract,
+  downloadContract,
 };
