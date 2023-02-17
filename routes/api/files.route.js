@@ -1,14 +1,23 @@
 const router = require('express').Router();
 const controller = require('../../controller/uploadFile.controller');
+const {
+  validateUploadFile,
+  validateTemplateDetails,
+  validateSenderDetails,
+  validateSignatures,
+} = require('../../validators/files.validator');
 
-router.post('/upload-file', controller.uploadFile);
+router.post('/upload-file', validateUploadFile(), controller.uploadFile);
 router.get('/get-file/:id', controller.getFile);
 router.get('/history/:itemId/:id', controller.getFileHistory);
-router.post('/add-form-fields/:id', controller.updateFields);
+router.post(
+  '/add-form-fields/:id',
+  validateTemplateDetails(),
+  controller.updateFields
+);
 router.delete('/:id', controller.deleteFile);
-router.post('/generate', controller.generatePDF);
-router.put('/:id', controller.addSenderDetails);
-router.post('/sign/:id', controller.addSignature);
+router.put('/:id', validateSenderDetails(), controller.addSenderDetails);
+router.post('/sign/:id', validateSignatures(), controller.addSignature);
 
 router.get('/send-mail/:itemId/:id', controller.sendPDF);
 router.get('/viewed/:itemId/:id', controller.viewedPDF);
