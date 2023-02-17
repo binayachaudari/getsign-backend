@@ -7,8 +7,7 @@ const {
   signedDocument,
 } = require('../utils/emailTemplates/templates');
 const { updateStatusColumn, getEmailColumnValue } = require('./monday.service');
-const AuthenticatedBoardModel = require('../models/AuthenticatedBoard.model');
-const { monday, setMondayToken } = require('../utils/monday');
+const { setMondayToken } = require('../utils/monday');
 const statusMapper = require('../config/statusMapper');
 
 config.update({
