@@ -219,7 +219,7 @@ const signPDF = async ({ id, signatureFields, status, itemId }) => {
   }
 };
 
-const addSenderDetails = (
+const addSenderDetails = async (
   id,
   {
     sender_name,
@@ -231,7 +231,7 @@ const addSenderDetails = (
   }
 ) => {
   try {
-    const updated = FileDetails.findById(id);
+    const updated = await FileDetails.findById(id);
 
     updated.sender_name = sender_name;
     updated.email_address = email_address;
