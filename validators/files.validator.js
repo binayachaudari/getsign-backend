@@ -36,7 +36,7 @@ const validateSenderDetails = () => [
 ];
 const validateSignatures = () => [
   body('status').trim().isIn(['signed_by_sender', 'signed_by_receiver']),
-  body('item_id').trim().not().isEmpty().toInt(),
+  body('itemId').trim().not().isEmpty().toInt(),
   body('signatures').isArray(),
   body('signatures.*.id').trim().not().isEmpty().escape(),
   body('signatures.*.itemId').trim().not().isEmpty().escape(),
