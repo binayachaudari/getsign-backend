@@ -231,14 +231,16 @@ const addSenderDetails = (
   }
 ) => {
   try {
-    const updated = FileDetails.findByIdAndUpdate(id, {
-      sender_name,
-      email_address,
-      email_title,
-      message,
-      email_column_id,
-      status_column_id,
-    });
+    const updated = FileDetails.findById(id);
+
+    updated.sender_name = sender_name;
+    updated.email_address = email_address;
+    updated.email_title = email_title;
+    updated.message = message;
+    updated.email_column_id = email_column_id;
+    updated.status_column_id = status_column_id;
+
+    updated.save();
 
     return updated;
   } catch (error) {

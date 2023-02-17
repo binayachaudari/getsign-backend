@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const encrypt = require('mongoose-encryption');
 
 const schema = new mongoose.Schema(
   {
@@ -46,5 +47,14 @@ const schema = new mongoose.Schema(
     },
   }
 );
+
+const encKey = process.env.SOME_32BYTE_BASE64_STRING;
+const sigKey = process.env.SOME_64BYTE_BASE64_STRING;
+
+schema.plugin(encrypt, {
+  encryptionKey: encKey,
+  signingKey: sigKey,
+  encryptedFields: ['sender_name', 'email_address', 'email_title', 'message'],
+});
 
 module.exports = mongoose.model('FileDetails', schema);

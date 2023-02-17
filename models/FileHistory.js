@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+const encrypt = require('mongoose-encryption');
+
 const { Schema } = mongoose;
 
 const schema = new mongoose.Schema(
@@ -33,5 +35,18 @@ const schema = new mongoose.Schema(
     },
   }
 );
+
+const encKey = process.env.SOME_32BYTE_BASE64_STRING;
+const sigKey = process.env.SOME_64BYTE_BASE64_STRING;
+
+schema.plugin(encrypt, {
+  encryptionKey: encKey,
+  signingKey: sigKey,
+  encryptedFields: [
+    'viewedIpAddress',
+    'receiverSignedIpAddress',
+    'sentToEmail',
+  ],
+});
 
 module.exports = mongoose.model('FileHistory', schema);
