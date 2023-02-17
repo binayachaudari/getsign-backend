@@ -11,7 +11,6 @@ const validateUploadFile = () => [
   body('board_id').trim().not().isEmpty().toInt(),
   body('item_id').trim().not().isEmpty().toInt(),
   body('user_id').trim().not().isEmpty().toInt(),
-  body('file_name').trim().not().isEmpty().escape(),
 ];
 
 const validateTemplateDetails = () => [
