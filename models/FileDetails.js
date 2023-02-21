@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const encrypt = require('mongoose-encryption');
 
 const schema = new mongoose.Schema(
   {
@@ -13,7 +14,6 @@ const schema = new mongoose.Schema(
     board_id: {
       type: Number,
       required: true,
-      unique: true,
     },
     item_id: {
       type: Number,
@@ -31,14 +31,8 @@ const schema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    email_column_id: {
-      required: true,
-      type: String,
-    },
-    status_column_id: {
-      required: true,
-      type: String,
-    },
+    email_column_id: String,
+    status_column_id: String,
     fields: [{}],
     sender_name: String,
     email_address: String,
@@ -53,5 +47,14 @@ const schema = new mongoose.Schema(
     },
   }
 );
+
+const encKey = process.env.SOME_32BYTE_BASE64_STRING;
+const sigKey = process.env.SOME_64BYTE_BASE64_STRING;
+
+schema.plugin(encrypt, {
+  encryptionKey: encKey,
+  signingKey: sigKey,
+  encryptedFields: ['sender_name', 'email_address', 'email_title', 'message'],
+});
 
 module.exports = mongoose.model('FileDetails', schema);

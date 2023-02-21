@@ -1,6 +1,8 @@
 const AWS = require('aws-sdk');
-const FileDetailsModal = require('../modals/FileDetails');
-const FileHistory = require('../modals/FileHistory');
+const FileDetailsModel = require('../models/FileDetails');
+const FileHistory = require('../models/FileHistory');
+const { setMondayToken } = require('../utils/monday');
+const { updateStatusColumn } = require('./monday.service');
 
 const s3 = new AWS.S3({
   credentials: {
@@ -23,7 +25,7 @@ const uploadFile = async (req) => {
     })
     .promise();
 
-  const result = await FileDetailsModal.create({
+  const result = await FileDetailsModel.create({
     account_id: body.account_id,
     board_id: body.board_id,
     file: s3Res.Key,
@@ -37,7 +39,7 @@ const uploadFile = async (req) => {
 
 const getFile = async (id) => {
   try {
-    const fileDetails = await FileDetailsModal.findById(id);
+    const fileDetails = await FileDetailsModel.findById(id);
     const url = s3.getSignedUrl('getObject', {
       Bucket: process.env.BUCKET_NAME,
       Key: fileDetails.file,
@@ -57,25 +59,71 @@ const getFile = async (id) => {
 };
 
 const deleteFile = async (id) => {
+  const session = await FileHistory.startSession();
+  session.startTransaction();
+  let deleted;
   try {
-    const fileDetails = await FileDetailsModal.findById(id);
-    s3.deleteObject(
-      {
-        Bucket: process.env.BUCKET_NAME,
-        Key: fileDetails.file,
-      },
-      (err, data) => {
-        if (err) {
-          console.log(err, err.stack);
-          throw err;
-        }
-      }
-    );
+    const template = await FileDetailsModel.findById(id);
+    await setMondayToken(template.board_id);
 
-    await FileDetailsModal.findByIdAndDelete(id);
-    // await FileHistory.deleteMany({ fileId: id });
+    // get itemId that are already signed by receiver or sender
+    const signedItemIds = await FileHistory.distinct('itemId', {
+      fileId: id,
+      status: { $in: ['signed_by_receiver', 'signed_by_sender'] },
+    });
+
+    // find all itemIds not signed by sender or receiver
+    const inProcessItemIds = await FileHistory.distinct('itemId', {
+      fileId: id,
+      itemId: { $nin: signedItemIds },
+    });
+
+    if (inProcessItemIds?.length > 0) {
+      inProcessItemIds?.forEach(async (item) => {
+        const status = await updateStatusColumn({
+          itemId: item,
+          boardId: template.board_id,
+          columnId: template?.status_column_id,
+          columnValue: undefined,
+        });
+      });
+
+      // delete file histories not having ids signed by sender or receiver
+      deleted = await FileHistory.deleteMany({
+        itemId: { $in: inProcessItemIds },
+      }).session(session);
+    }
+
+    // if no items are signed—delete the file else update the is_deleted column
+    if (signedItemIds?.length) {
+      deleted = await FileDetailsModel.findByIdAndUpdate(id, {
+        $set: { is_deleted: true },
+      }).session(session);
+    } else {
+      s3.deleteObject(
+        {
+          Bucket: process.env.BUCKET_NAME,
+          Key: template.file,
+        },
+        async (err, data) => {
+          if (err) {
+            await session.abortTransaction();
+            session.endSession();
+            console.log(err, err.stack);
+            throw err;
+          }
+        }
+      );
+
+      deleted = await FileDetailsModel.findByIdAndDelete(id);
+    }
+
+    await session.commitTransaction();
+    return deleted;
   } catch (error) {
-    throw error;
+    await session.abortTransaction();
+    session.endSession();
+    throw err;
   }
 };
 

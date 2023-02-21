@@ -1,11 +1,14 @@
 const nodemailer = require('nodemailer');
 const { config, SES } = require('aws-sdk');
-const FileDetails = require('../modals/FileDetails');
-const FileHistory = require('../modals/FileHistory');
+const FileDetails = require('../models/FileDetails');
+const FileHistory = require('../models/FileHistory');
 const {
   requestSignature,
   signedDocument,
 } = require('../utils/emailTemplates/templates');
+const { updateStatusColumn, getEmailColumnValue } = require('./monday.service');
+const { setMondayToken } = require('../utils/monday');
+const statusMapper = require('../config/statusMapper');
 
 config.update({
   credentials: {
@@ -46,7 +49,7 @@ const sendSignedDocuments = async (document, to) => {
     subject: `You just signed ${document.name}`,
     html: signedDocument({
       documentName: document.name,
-      url: '#',
+      url: `https://jetsign.jtpk.app/download/${document.fileId}`,
     }),
     attachments: [
       {
@@ -58,13 +61,27 @@ const sendSignedDocuments = async (document, to) => {
 };
 
 module.exports = {
-  emailRequestToSign: async (itemId, id, to) => {
+  emailRequestToSign: async (itemId, id) => {
     const session = await FileHistory.startSession();
     session.startTransaction();
 
     try {
       const template = await FileDetails.findById(id);
       if (!template) throw new Error('No file with such ID');
+
+      await setMondayToken(template.board_id);
+      const emailColumn = await getEmailColumnValue(
+        itemId,
+        template.email_column_id
+      );
+      const to = emailColumn?.data?.items?.[0]?.column_values?.[0]?.text;
+
+      //clear viewed status if already sent
+      await FileHistory.deleteOne({
+        fileId: id,
+        itemId,
+        status: 'viewed',
+      });
 
       const addedHistory = await FileHistory.findOne({
         fileId: id,
@@ -75,13 +92,11 @@ module.exports = {
         .session(session)
         .exec();
 
-      if (addedHistory) return { message: 'Request already sent!' };
-
       const newSentHistory = await FileHistory.create(
         [
           {
             fileId: id,
-            status: 'sent',
+            status: addedHistory ? 'resent' : 'sent',
             itemId,
             sentToEmail: to,
           },
@@ -97,6 +112,12 @@ module.exports = {
       });
 
       if (mailStatus?.messageId) {
+        await updateStatusColumn({
+          itemId: itemId,
+          boardId: template.board_id,
+          columnId: template?.status_column_id,
+          columnValue: statusMapper[newSentHistory[0].status],
+        });
         await session.commitTransaction();
         return mailStatus;
       }
