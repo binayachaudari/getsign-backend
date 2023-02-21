@@ -2,10 +2,10 @@ const { getStoredBoardFile } = require('../services/board');
 
 module.exports = {
   getBoardFile: async (req, res, next) => {
-    const boardId = req.params.boardId;
+    const { boardId, itemId } = req.params;
 
     try {
-      const boardDetails = await getStoredBoardFile(boardId);
+      const boardDetails = await getStoredBoardFile(boardId, itemId);
       return res.json({ data: boardDetails }).status(200);
     } catch (error) {
       next(error);

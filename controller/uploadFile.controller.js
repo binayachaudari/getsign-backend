@@ -1,3 +1,6 @@
+const statusMapper = require('../config/statusMapper');
+const FileDetails = require('../models/FileDetails');
+const FileHistory = require('../models/FileHistory');
 const {
   addFormFields,
   generatePDF,
@@ -7,11 +10,18 @@ const {
   addFileHistory,
   getFileHistory,
   viewedFile,
-  getFileToSign,
+  getFileToSignReceiver,
   getFinalContract,
+  getFileToSignSender,
+  downloadContract,
 } = require('../services/fileHistory');
-const { emailRequestToSign } = require('../services/mailer');
+const { emailRequestToSign, sendFinalContract } = require('../services/mailer');
+const {
+  updateStatusColumn,
+  getEmailColumnValue,
+} = require('../services/monday.service');
 const { uploadFile, getFile, deleteFile } = require('../services/s3');
+const { monday, setMondayToken } = require('../utils/monday');
 
 module.exports = {
   uploadFile: async (req, res, next) => {
@@ -63,7 +73,14 @@ module.exports = {
 
   addSenderDetails: async (req, res, next) => {
     const id = req.params.id;
-    const { sender_name, email_address, email_title, message } = req.body;
+    const {
+      sender_name,
+      email_address,
+      email_title,
+      message,
+      email_column_id,
+      status_column_id,
+    } = req.body;
 
     try {
       const result = await addSenderDetails(id, {
@@ -71,6 +88,8 @@ module.exports = {
         email_address,
         email_title,
         message,
+        email_column_id,
+        status_column_id,
       });
 
       return res.json({ data: result }).status(200);
@@ -90,16 +109,63 @@ module.exports = {
     ).split(',');
 
     const ip = ips[0].trim();
-    const { status, signatures, itemId, values } = req.body;
+    const { status, signatures, itemId } = req.body;
     try {
+      const template = await FileDetails.findById(id);
       const result = await addFileHistory({
         id,
         itemId,
         status,
         signatures,
-        values,
         ipAddress: ip,
       });
+
+      await setMondayToken(template.board_id);
+      const alsoSignedBySender = await FileHistory.findOne({
+        fileId: template.id,
+        itemId,
+        status: 'signed_by_sender',
+      }).exec();
+
+      const alsoSignedByReceiver = await FileHistory.findOne({
+        fileId: template.id,
+        itemId,
+        status: 'signed_by_receiver',
+      }).exec();
+
+      if (alsoSignedByReceiver?._id && alsoSignedBySender?._id) {
+        const finalFile = await getFinalContract(result._id);
+
+        const emailColumn = await getEmailColumnValue(
+          itemId,
+          template.email_column_id
+        );
+        const to = emailColumn?.data?.items?.[0]?.column_values?.[0]?.text;
+        await sendFinalContract(
+          {
+            file: finalFile.file,
+            name: template.file_name,
+            itemId,
+            fileId: result._id,
+          },
+          [template.email_address, to]
+        );
+        await updateStatusColumn({
+          itemId: itemId,
+          boardId: template.board_id,
+          columnId: template?.status_column_id,
+          columnValue: 'Done',
+        });
+        return res.status(200).json({ data: 'Contract has been sent!' });
+      }
+
+      await updateStatusColumn({
+        itemId: itemId,
+        boardId: template.board_id,
+        columnId: template?.status_column_id,
+        columnValue: statusMapper[result.status],
+      });
+
       return res.json({ data: { ...result } }).status(200);
     } catch (error) {
       next(error);
@@ -119,11 +185,7 @@ module.exports = {
   sendPDF: async (req, res, next) => {
     const { itemId, id } = req.params;
     try {
-      const result = await emailRequestToSign(
-        itemId,
-        id,
-        'binaya@jetpackapps.co'
-      );
+      const result = await emailRequestToSign(itemId, id);
       return res.json({ data: result }).status(200);
     } catch (error) {
       console.log(error);
@@ -150,11 +212,22 @@ module.exports = {
     }
   },
 
-  getFileForReceiver: async (req, res, next) => {
-    // fileHistory id having status = 'sent'
+  getFileForSender: async (req, res, next) => {
+    // actual fileId
     const { itemId, id } = req.params;
     try {
-      const result = await getFileToSign(id, itemId);
+      const result = await getFileToSignSender(id, itemId);
+      return res.json({ data: result }).status(200);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getFileForReceiver: async (req, res, next) => {
+    // fileHistory id having status = 'sent' | 'resent'
+    const { itemId, id } = req.params;
+    try {
+      const result = await getFileToSignReceiver(id, itemId);
       return res.json({ data: result }).status(200);
     } catch (error) {
       next(error);
@@ -162,6 +235,16 @@ module.exports = {
   },
 
   getContract: async (req, res, next) => {
+    const { itemId, fileId } = req.params;
+    try {
+      const result = await downloadContract(itemId, fileId);
+      return res.json({ data: result }).status(200);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getContractFile: async (req, res, next) => {
     const { id } = req.params;
     try {
       const result = await getFinalContract(id);

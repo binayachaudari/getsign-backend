@@ -1,9 +1,14 @@
 const nodemailer = require('nodemailer');
 const { config, SES } = require('aws-sdk');
-const FileDetails = require('../modals/FileDetails');
-const { addFileHistory, getFileHistory } = require('./fileHistory');
-const FileHistory = require('../modals/FileHistory');
-const { requestSignature } = require('../utils/emailTemplates/templates');
+const FileDetails = require('../models/FileDetails');
+const FileHistory = require('../models/FileHistory');
+const {
+  requestSignature,
+  signedDocument,
+} = require('../utils/emailTemplates/templates');
+const { updateStatusColumn, getEmailColumnValue } = require('./monday.service');
+const { setMondayToken } = require('../utils/monday');
+const statusMapper = require('../config/statusMapper');
 
 config.update({
   credentials: {
@@ -24,7 +29,7 @@ const sendRequestToSign = async ({ template, to, itemId, fileId }) => {
   return await transporter.sendMail({
     from: process.env.EMAIL_USERNAME,
     to,
-    subject: template.email_title,
+    subject: `${template.file_name} - Signature requested by ${template.sender_name}`,
     html: requestSignature({
       requestedBy: {
         name: template.sender_name,
@@ -37,8 +42,26 @@ const sendRequestToSign = async ({ template, to, itemId, fileId }) => {
   });
 };
 
+const sendSignedDocuments = async (document, to) => {
+  return await transporter.sendMail({
+    from: process.env.EMAIL_USERNAME,
+    to,
+    subject: `You just signed ${document.name}`,
+    html: signedDocument({
+      documentName: document.name,
+      url: `https://jetsign.jtpk.app/download/${document.fileId}`,
+    }),
+    attachments: [
+      {
+        filename: document.name,
+        path: document.file,
+      },
+    ],
+  });
+};
+
 module.exports = {
-  emailRequestToSign: async (itemId, id, to) => {
+  emailRequestToSign: async (itemId, id) => {
     const session = await FileHistory.startSession();
     session.startTransaction();
 
@@ -46,22 +69,36 @@ module.exports = {
       const template = await FileDetails.findById(id);
       if (!template) throw new Error('No file with such ID');
 
+      await setMondayToken(template.board_id);
+      const emailColumn = await getEmailColumnValue(
+        itemId,
+        template.email_column_id
+      );
+      const to = emailColumn?.data?.items?.[0]?.column_values?.[0]?.text;
+
+      //clear viewed status if already sent
+      await FileHistory.deleteOne({
+        fileId: id,
+        itemId,
+        status: 'viewed',
+      });
+
       const addedHistory = await FileHistory.findOne({
         fileId: id,
         itemId,
+        sentToEmail: to,
         status: 'sent',
       })
         .session(session)
         .exec();
 
-      if (addedHistory) return { message: 'Request already sent!' };
-
       const newSentHistory = await FileHistory.create(
         [
           {
             fileId: id,
-            status: 'sent',
+            status: addedHistory ? 'resent' : 'sent',
             itemId,
+            sentToEmail: to,
           },
         ],
         { session }
@@ -75,6 +112,12 @@ module.exports = {
       });
 
       if (mailStatus?.messageId) {
+        await updateStatusColumn({
+          itemId: itemId,
+          boardId: template.board_id,
+          columnId: template?.status_column_id,
+          columnValue: statusMapper[newSentHistory[0].status],
+        });
         await session.commitTransaction();
         return mailStatus;
       }
@@ -84,6 +127,13 @@ module.exports = {
     } catch (err) {
       await session.abortTransaction();
       session.endSession();
+      throw err;
+    }
+  },
+  sendFinalContract: async (file, to) => {
+    try {
+      return await sendSignedDocuments(file, to);
+    } catch (error) {
       throw err;
     }
   },
