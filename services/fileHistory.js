@@ -1,9 +1,8 @@
 const { PDFDocument } = require('pdf-lib');
 const statusMapper = require('../config/statusMapper');
-const AuthenticatedBoardModel = require('../models/AuthenticatedBoard.model');
 const FileDetails = require('../models/FileDetails');
 const FileHistory = require('../models/FileHistory');
-const { monday, setMondayToken } = require('../utils/monday');
+const { setMondayToken } = require('../utils/monday');
 const { embedHistory } = require('./embedDocumentHistory');
 const { signPDF, generatePDF } = require('./file');
 const {
@@ -70,7 +69,10 @@ const getFileHistory = async (itemId, id) => {
         createdAt: 'desc',
       })
       .exec();
-    return history;
+    const data = history?.filter((item) => item?.status !== 'resent');
+    const resendStatus = history?.filter((item) => item?.status === 'resent');
+
+    return { data, resendStatus };
   } catch (error) {
     throw error;
   }

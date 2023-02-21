@@ -176,7 +176,9 @@ module.exports = {
     const { itemId, id } = req.params;
     try {
       const result = await getFileHistory(itemId, id);
-      return res.json({ data: result }).status(200);
+      return res
+        .json({ data: result.data, resentHistory: result.resendStatus })
+        .status(200);
     } catch (error) {
       next(error);
     }
