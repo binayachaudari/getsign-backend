@@ -1,14 +1,42 @@
 const router = require('express').Router();
 const controller = require('../../controller/uploadFile.controller');
+const {
+  validateRequest,
+} = require('../../middleware/validateRequest.middleware');
+const {
+  validateUploadFile,
+  validateTemplateDetails,
+  validateSenderDetails,
+  validateSignatures,
+} = require('../../validators/files.validator');
 
-router.post('/upload-file', controller.uploadFile);
+router.post(
+  '/upload-file',
+  validateUploadFile(),
+  validateRequest,
+  controller.uploadFile
+);
 router.get('/get-file/:id', controller.getFile);
 router.get('/history/:itemId/:id', controller.getFileHistory);
-router.post('/add-form-fields/:id', controller.updateFields);
+router.post(
+  '/add-form-fields/:id',
+  validateTemplateDetails(),
+  validateRequest,
+  controller.updateFields
+);
 router.delete('/:id', controller.deleteFile);
-router.post('/generate', controller.generatePDF);
-router.put('/:id', controller.addSenderDetails);
-router.post('/sign/:id', controller.addSignature);
+router.put(
+  '/:id',
+  validateSenderDetails(),
+  validateRequest,
+  controller.addSenderDetails
+);
+router.post(
+  '/sign/:id',
+  validateSignatures(),
+  validateRequest,
+  controller.addSignature
+);
 
 router.get('/send-mail/:itemId/:id', controller.sendPDF);
 router.get('/viewed/:itemId/:id', controller.viewedPDF);

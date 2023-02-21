@@ -20,6 +20,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(fileUpload());
 
 app.use('/api/v1', require('./routes/api'));
+app.post('/webhook', require('./controller/webhook.controller'));
 
 /**
  * Server static in production
