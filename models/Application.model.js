@@ -6,6 +6,7 @@ const schema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    slug: String,
     app_id: {
       type: Number,
       required: true,

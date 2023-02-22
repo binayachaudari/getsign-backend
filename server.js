@@ -8,6 +8,8 @@ const path = require('path');
 connectDB();
 
 var bodyParser = require('body-parser');
+const { appSubscriptionValidation } = require('./validators/webhook.validator');
+const { validateRequest } = require('./middleware/validateRequest.middleware');
 
 const app = express();
 const PORT = config.PORT;
@@ -20,7 +22,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(fileUpload());
 
 app.use('/api/v1', require('./routes/api'));
-app.post('/webhook', require('./controller/webhook.controller'));
+app.post(
+  '/webhook',
+  appSubscriptionValidation(),
+  validateRequest,
+  require('./controller/webhook.controller')
+);
 
 /**
  * Server static in production
