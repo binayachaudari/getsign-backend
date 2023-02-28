@@ -8,7 +8,12 @@ const setMondayToken = async (boardId) => {
   }).exec();
 
   if (!mondayToken) {
-    throw new Error('Unauthorized');
+    await AuthenticatedBoardModel.deleteMany({ boardId });
+    throw new Error({
+      statusCode: 403,
+      message:
+        'You might have uninstalled the application, please reauthorize monday token',
+    });
   }
   monday.setToken(mondayToken.accessToken);
 };

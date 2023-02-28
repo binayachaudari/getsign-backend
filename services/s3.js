@@ -123,7 +123,7 @@ const deleteFile = async (id) => {
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
-    throw NativeError;
+    throw error;
   }
 };
 
