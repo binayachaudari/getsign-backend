@@ -10,6 +10,7 @@ const {
   validateSignatures,
   validateIdParam,
   validateItemIdAndIdParam,
+  validateItemIdAndFileId,
 } = require('../../validators/files.validator');
 
 router.post(
@@ -82,7 +83,7 @@ router.get(
 
 router.get(
   '/contract/:itemId/:fileId',
-  validateItemIdAndIdParam(),
+  validateItemIdAndFileId(),
   validateRequest,
   controller.getContract
 );

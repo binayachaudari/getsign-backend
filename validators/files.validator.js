@@ -22,6 +22,11 @@ const validateItemIdAndIdParam = () => [
   param('id').trim().not().isEmpty().escape(),
 ];
 
+const validateItemIdAndFileId = () => [
+  param('itemId').trim().not().isEmpty().toInt(),
+  param('fileId').trim().not().isEmpty().escape(),
+];
+
 const validateTemplateDetails = () => [
   param('id').trim().not().isEmpty().escape(),
   body('fields').isArray(),
@@ -71,4 +76,5 @@ module.exports = {
   validateSignatures,
   validateIdParam,
   validateItemIdAndIdParam,
+  validateItemIdAndFileId,
 };
