@@ -19,36 +19,48 @@ const addFormFields = async (id, payload) => {
 
     await setMondayToken(updatedFields.board_id);
 
-    // Signed by receiver
-    const signedByReceiver = await FileHistory.distinct('itemId', {
-      fileId: updatedFields._id,
-      status: 'signed_by_receiver',
-    });
+    const notSignedByBoth = await FileHistory.aggregate([
+      {
+        $group: {
+          _id: '$itemId',
+          status: {
+            $push: '$status',
+          },
+          fileId: {
+            $first: '$fileId',
+          },
+        },
+      },
+      {
+        $match: {
+          fileId: updatedFields._id,
+          status: {
+            $not: {
+              $all: ['signed_by_sender', 'signed_by_receiver'],
+            },
+          },
+        },
+      },
+    ]);
 
-    // only signed by sender (not signed by receiver)
-    const onlySenderSigned = await FileHistory.distinct('itemId', {
-      fileId: updatedFields._id,
-      status: 'signed_by_sender',
-      itemId: { $nin: signedByReceiver },
-    });
-
-    if (onlySenderSigned?.length > 0) {
-      onlySenderSigned?.forEach(async (item) => {
+    if (notSignedByBoth?.length > 0) {
+      notSignedByBoth?.forEach(async (item) => {
         // updating status column
         await updateStatusColumn({
-          itemId: item,
+          itemId: item?._id,
           boardId: updatedFields.board_id,
           columnId: updatedFields?.status_column_id,
           columnValue: undefined,
         });
       });
 
+      const notSignedByBothItemIds = notSignedByBoth.map((item) => item?._id);
+
       // delete history
       await FileHistory.deleteMany({
-        itemId: { $in: onlySenderSigned },
+        itemId: { $in: notSignedByBothItemIds },
       });
     }
-    // delete file histories
 
     return updatedFields;
   } catch (error) {
