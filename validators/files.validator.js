@@ -1,19 +1,29 @@
-const { body } = require('express-validator');
+const { body, param } = require('express-validator');
 
 const validateUploadFile = () => [
   body('file').custom((value, { req }) => {
+    console.log(req.files.file.name);
     if (req.files?.file?.mimetype === 'application/pdf') {
       return '.pdf';
     }
     return false;
   }),
+
   body('account_id').trim().not().isEmpty().toInt(),
   body('board_id').trim().not().isEmpty().toInt(),
   body('item_id').trim().not().isEmpty().toInt(),
   body('user_id').trim().not().isEmpty().toInt(),
 ];
 
+const validateIdParam = () => [param('id').trim().not().isEmpty().escape()];
+
+const validateItemIdAndIdParam = () => [
+  param('itemId').trim().not().isEmpty().toInt(),
+  param('id').trim().not().isEmpty().escape(),
+];
+
 const validateTemplateDetails = () => [
+  param('id').trim().not().isEmpty().escape(),
   body('fields').isArray(),
   body('fields.*.id').trim().not().isEmpty().escape(),
   body('fields.*.itemId').trim().not().isEmpty().escape(),
@@ -27,6 +37,7 @@ const validateTemplateDetails = () => [
 ];
 
 const validateSenderDetails = () => [
+  param('id').trim().not().isEmpty().escape(),
   body('sender_name').trim().not().isEmpty().escape(),
   body('email_address').trim().isEmail().escape(),
   body('email_title').trim().not().isEmpty().escape(),
@@ -35,6 +46,7 @@ const validateSenderDetails = () => [
   body('status_column_id').trim().not().isEmpty().escape(),
 ];
 const validateSignatures = () => [
+  param('id').trim().not().isEmpty().escape(),
   body('status').trim().isIn(['signed_by_sender', 'signed_by_receiver']),
   body('itemId').trim().not().isEmpty().toInt(),
   body('signatures').isArray(),
@@ -57,4 +69,6 @@ module.exports = {
   validateTemplateDetails,
   validateSenderDetails,
   validateSignatures,
+  validateIdParam,
+  validateItemIdAndIdParam,
 };

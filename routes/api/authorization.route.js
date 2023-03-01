@@ -5,6 +5,7 @@ const {
 } = require('../../middleware/validateRequest.middleware');
 const {
   authorizationValidation,
+  authorizationBoardId,
 } = require('../../validators/authorize.validator');
 
 router.post(
@@ -13,6 +14,11 @@ router.post(
   validateRequest,
   controller.authorize
 );
-router.get('/:boardId', controller.isAuthorized);
+router.get(
+  '/:boardId',
+  authorizationBoardId(),
+  validateRequest,
+  controller.isAuthorized
+);
 
 module.exports = router;

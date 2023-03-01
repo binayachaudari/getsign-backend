@@ -1,4 +1,4 @@
-const { body } = require('express-validator');
+const { body, param } = require('express-validator');
 
 const authorizationValidation = () => [
   body('client_id').trim().not().isEmpty(),
@@ -7,6 +7,11 @@ const authorizationValidation = () => [
   body('code').trim().not().isEmpty(),
 ];
 
+const authorizationBoardId = () => [
+  param('boardId').trim().not().isEmpty().toInt(),
+];
+
 module.exports = {
   authorizationValidation,
+  authorizationBoardId,
 };
