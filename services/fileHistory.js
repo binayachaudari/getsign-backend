@@ -115,7 +115,27 @@ const viewedFile = async (id, itemId, ip) => {
 };
 
 const getFileToSignSender = async (id, itemId) => {
-  const fileDetails = await FileDetails.findById(id);
+  const fileDetails = await FileDetails.findById(id).populate('fileId');
+
+  if (fileDetails.is_deleted) {
+    return {
+      fileId: fileDetails._id,
+      isDeleted: true,
+    };
+  }
+
+  const isAlreadySignedBySender = await FileHistory.findOne({
+    fileId: id,
+    itemId,
+    status: 'signed_by_sender',
+  }).exec();
+
+  if (isAlreadySignedBySender) {
+    return {
+      fileId,
+      isAlreadySigned: true,
+    };
+  }
 
   const alreadySignedByReceiver = await FileHistory.findOne({
     fileId: id,
@@ -165,15 +185,16 @@ const getFileToSignSender = async (id, itemId) => {
 const getFileToSignReceiver = async (id, itemId) => {
   try {
     let fileId;
-    const fileFromHistory = await FileHistory.findById(id);
-    const template = await FileDetails.findById(fileFromHistory.fileId);
-    fileId = fileFromHistory.fileId;
+    const fileFromHistory = await FileHistory.findById(id).populate('fileId');
+    const template = fileFromHistory.fileId;
+    fileId = fileFromHistory.fileId?._id;
 
-    const getFileToSignKey = await FileHistory.findOne({
-      fileId,
-      itemId,
-      status: 'signed_by_sender',
-    }).exec();
+    if (template?.is_deleted) {
+      return {
+        fileId,
+        isDeleted: true,
+      };
+    }
 
     await setMondayToken(template.board_id);
     const emailColumn = await getEmailColumnValue(
@@ -181,6 +202,26 @@ const getFileToSignReceiver = async (id, itemId) => {
       template.email_column_id
     );
     const to = emailColumn?.data?.items?.[0]?.column_values?.[0]?.text;
+
+    const isAlreadySigned = await FileHistory.findOne({
+      fileId,
+      itemId,
+      status: 'signed_by_receiver',
+    }).exec();
+
+    if (isAlreadySigned) {
+      return {
+        fileId,
+        isAlreadySigned: true,
+        sendDocumentTo: to,
+      };
+    }
+
+    const getFileToSignKey = await FileHistory.findOne({
+      fileId,
+      itemId,
+      status: 'signed_by_sender',
+    }).exec();
 
     try {
       let url;
