@@ -25,6 +25,13 @@ const uploadFile = async (req) => {
     })
     .promise();
 
+  // get values from previous file that has been deleted
+  const prev = await FileDetailsModel.findOne({
+    account_id: body.account_id,
+    board_id: body.board_id,
+    is_deleted: true,
+  });
+
   const result = await FileDetailsModel.create({
     account_id: body.account_id,
     board_id: body.board_id,
@@ -33,6 +40,15 @@ const uploadFile = async (req) => {
     user_id: body.user_id,
     file_name: file.name,
   });
+
+  result.email_address = prev?.email_address;
+  result.email_column_id = prev?.email_column_id;
+  result.status_column_id = prev?.status_column_id;
+  result.sender_name = prev?.sender_name;
+  result.email_title = prev?.email_title;
+  result.message = prev?.message;
+
+  await result.save();
 
   return result;
 };
