@@ -115,7 +115,7 @@ const viewedFile = async (id, itemId, ip) => {
 };
 
 const getFileToSignSender = async (id, itemId) => {
-  const fileDetails = await FileDetails.findById(id).populate('fileId');
+  const fileDetails = await FileDetails.findById(id);
 
   if (fileDetails.is_deleted) {
     return {
@@ -286,7 +286,7 @@ const downloadContract = async (itemId, fileId) => {
   return await getFinalContract(signed?._id);
 };
 
-const getFinalContract = async (id) => {
+const getFinalContract = async (id, withBlob) => {
   try {
     const fileHistory = await FileHistory.findById(id);
 
@@ -322,6 +322,12 @@ const getFinalContract = async (id) => {
     return {
       name: fileHistory?.file,
       file: `data:${blob.type};base64,${contractBase64}`,
+      ...(withBlob && {
+        actualFile: new File([new Uint8Array(pdfBytes)], fileHistory?.file, {
+          lastModified: Date.now(),
+          type: mime,
+        }),
+      }),
     };
   } catch (error) {
     throw error;
