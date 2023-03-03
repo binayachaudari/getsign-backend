@@ -4,10 +4,10 @@ const { config } = require('./config');
 const cors = require('cors');
 const connectDB = require('./db');
 const path = require('path');
+const bodyParser = require('body-parser');
 
 connectDB();
 
-var bodyParser = require('body-parser');
 const { appSubscriptionValidation } = require('./validators/webhook.validator');
 const { validateRequest } = require('./middleware/validateRequest.middleware');
 

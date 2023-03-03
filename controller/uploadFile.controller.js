@@ -19,6 +19,7 @@ const { emailRequestToSign, sendFinalContract } = require('../services/mailer');
 const {
   updateStatusColumn,
   getEmailColumnValue,
+  uploadContract,
 } = require('../services/monday.service');
 const { uploadFile, getFile, deleteFile } = require('../services/s3');
 const { monday, setMondayToken } = require('../utils/monday');
@@ -136,7 +137,7 @@ module.exports = {
       }).exec();
 
       if (alsoSignedByReceiver?._id && alsoSignedBySender?._id) {
-        const finalFile = await getFinalContract(result._id);
+        const finalFile = await getFinalContract(result._id, true);
 
         const emailColumn = await getEmailColumnValue(
           itemId,
@@ -157,6 +158,12 @@ module.exports = {
           boardId: template.board_id,
           columnId: template?.status_column_id,
           columnValue: 'Done',
+        });
+        await uploadContract({
+          itemId,
+          boardId: template.board_id,
+          columnId: template?.file_column_id,
+          file: finalFile,
         });
         return res.status(200).json({ data: 'Contract has been sent!' });
       }

@@ -286,9 +286,9 @@ const downloadContract = async (itemId, fileId) => {
   return await getFinalContract(signed?._id);
 };
 
-const getFinalContract = async (id, withBlob) => {
+const getFinalContract = async (id, withPdfBytes) => {
   try {
-    const fileHistory = await FileHistory.findById(id);
+    const fileHistory = await FileHistory.findById(id).populate('fileId');
 
     const url = await getSignedUrl(fileHistory.file);
 
@@ -304,7 +304,7 @@ const getFinalContract = async (id, withBlob) => {
 
     const withDocumentHistory = await embedHistory(
       pdfDoc,
-      fileHistory.fileId,
+      fileHistory.fileId?._id,
       fileHistory.itemId
     );
 
@@ -320,13 +320,11 @@ const getFinalContract = async (id, withBlob) => {
     const contractBase64 = withDocBuff.toString('base64');
 
     return {
-      name: fileHistory?.file,
+      name: fileHistory?.fileId?.file_name,
       file: `data:${blob.type};base64,${contractBase64}`,
-      ...(withBlob && {
-        actualFile: new File([new Uint8Array(pdfBytes)], fileHistory?.file, {
-          lastModified: Date.now(),
-          type: mime,
-        }),
+      ...(withPdfBytes && {
+        bytes: pdfBytes,
+        type: blob.type,
       }),
     };
   } catch (error) {
