@@ -1,4 +1,6 @@
+const AuthenticatedBoardModel = require('../models/AuthenticatedBoard.model');
 const { monday, setMondayToken } = require('../utils/monday');
+const axios = require('axios');
 
 const me = async () => {
   try {
@@ -79,6 +81,52 @@ const updateStatusColumn = async ({
   }
 };
 
+const uploadContract = async ({ itemId, columnId, boardId, file }) => {
+  const mondayToken = await AuthenticatedBoardModel.findOne({
+    boardId,
+  }).exec();
+  const url = 'https://api.monday.com/v2/file';
+  var query = `mutation add_file($file: File!) { add_file_to_column (file: $file, item_id: ${itemId}, column_id: "${columnId}") { id } }`;
+  var data = '';
+  const boundary = 'xxxxxxxxxxxxxxx';
+
+  try {
+    // construct query part
+    data += '--' + boundary + '\r\n';
+    data += 'Content-Disposition: form-data; name="query"; \r\n';
+    data += 'Content-Type:application/json\r\n\r\n';
+    data += '\r\n' + query + '\r\n';
+
+    // construct file part
+    data += '--' + boundary + '\r\n';
+    data +=
+      'Content-Disposition: form-data; name="variables[file]"; filename="' +
+      file.name +
+      '"\r\n';
+    data += `Content-Type:${file.type}\r\n\r\n`;
+
+    var payload = Buffer.concat([
+      Buffer.from(data, 'utf8'),
+      new Uint8Array(file.bytes),
+      Buffer.from('\r\n--' + boundary + '--\r\n', 'utf8'),
+    ]);
+
+    return await axios({
+      url,
+      method: 'post',
+      headers: {
+        'Content-Type': 'multipart/form-data; boundary=' + boundary,
+        Authorization: mondayToken.accessToken,
+      },
+      data: payload,
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity,
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
 const getColumnValues = async (itemId) => {
   return await monday.api(
     `
@@ -126,4 +174,5 @@ module.exports = {
   updateStatusColumn,
   getEmailColumnValue,
   getColumnValues,
+  uploadContract,
 };
