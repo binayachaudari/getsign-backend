@@ -80,6 +80,7 @@ module.exports = {
       message,
       email_column_id,
       status_column_id,
+      file_column_id,
     } = req.body;
 
     try {
@@ -90,6 +91,7 @@ module.exports = {
         message,
         email_column_id,
         status_column_id,
+        file_column_id,
       });
 
       return res.json({ data: result }).status(200);

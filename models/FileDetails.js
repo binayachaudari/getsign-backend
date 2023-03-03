@@ -33,6 +33,7 @@ const schema = new mongoose.Schema(
     },
     email_column_id: String,
     status_column_id: String,
+    file_column_id: String,
     fields: [{}],
     sender_name: String,
     email_address: String,

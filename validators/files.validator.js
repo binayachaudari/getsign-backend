@@ -49,6 +49,7 @@ const validateSenderDetails = () => [
   body('message').trim().not().isEmpty().escape(),
   body('email_column_id').trim().not().isEmpty().escape(),
   body('status_column_id').trim().not().isEmpty().escape(),
+  body('file_column_id').trim().not().isEmpty().escape(),
 ];
 const validateSignatures = () => [
   param('id').trim().not().isEmpty().escape(),

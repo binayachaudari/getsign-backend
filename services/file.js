@@ -240,6 +240,7 @@ const addSenderDetails = async (
     message,
     email_column_id,
     status_column_id,
+    file_column_id,
   }
 ) => {
   try {
@@ -251,6 +252,7 @@ const addSenderDetails = async (
     updated.message = message;
     updated.email_column_id = email_column_id;
     updated.status_column_id = status_column_id;
+    updated.file_column_id = file_column_id;
 
     updated.save();
 

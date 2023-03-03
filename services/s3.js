@@ -44,6 +44,7 @@ const uploadFile = async (req) => {
   result.email_address = prev?.email_address;
   result.email_column_id = prev?.email_column_id;
   result.status_column_id = prev?.status_column_id;
+  result.file_column_id = prev?.file_column_id;
   result.sender_name = prev?.sender_name;
   result.email_title = prev?.email_title;
   result.message = prev?.message;
