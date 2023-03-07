@@ -2,7 +2,6 @@ const { body, param } = require('express-validator');
 
 const validateUploadFile = () => [
   body('file').custom((value, { req }) => {
-    console.log(req.files.file.name);
     if (req.files?.file?.mimetype === 'application/pdf') {
       return '.pdf';
     }
