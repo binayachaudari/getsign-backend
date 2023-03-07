@@ -51,6 +51,30 @@ const uploadFile = async (req) => {
 
   await result.save();
 
+  if (prev?._id) {
+    // get itemId that are already signed by receiver or sender
+    const signedItemIds = await FileHistory.distinct('itemId', {
+      fileId: prev._id,
+      status: { $in: ['signed_by_receiver', 'signed_by_sender'] },
+    });
+
+    if (!signedItemIds.length) {
+      s3.deleteObject(
+        {
+          Bucket: process.env.BUCKET_NAME,
+          Key: prev.file,
+        },
+        async (err, data) => {
+          if (err) {
+            throw err;
+          }
+        }
+      );
+
+      deleted = await FileDetailsModel.findByIdAndDelete(prev.id);
+    }
+  }
+
   return result;
 };
 
@@ -97,7 +121,7 @@ const deleteFile = async (id) => {
 
     if (inProcessItemIds?.length > 0) {
       inProcessItemIds?.forEach(async (item) => {
-        const status = await updateStatusColumn({
+        await updateStatusColumn({
           itemId: item,
           boardId: template.board_id,
           columnId: template?.status_column_id,
@@ -112,28 +136,9 @@ const deleteFile = async (id) => {
     }
 
     // if no items are signed—delete the file else update the is_deleted column
-    if (signedItemIds?.length) {
-      deleted = await FileDetailsModel.findByIdAndUpdate(id, {
-        $set: { is_deleted: true },
-      }).session(session);
-    } else {
-      s3.deleteObject(
-        {
-          Bucket: process.env.BUCKET_NAME,
-          Key: template.file,
-        },
-        async (err, data) => {
-          if (err) {
-            await session.abortTransaction();
-            session.endSession();
-            console.log(err, err.stack);
-            throw err;
-          }
-        }
-      );
-
-      deleted = await FileDetailsModel.findByIdAndDelete(id);
-    }
+    deleted = await FileDetailsModel.findByIdAndUpdate(id, {
+      $set: { is_deleted: true },
+    }).session(session);
 
     await session.commitTransaction();
     return deleted;
