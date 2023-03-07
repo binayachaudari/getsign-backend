@@ -42,14 +42,20 @@ const validateTemplateDetails = () => [
 
 const validateSenderDetails = () => [
   param('id').trim().not().isEmpty().escape(),
-  body('sender_name').trim().not().isEmpty().escape(),
-  body('email_address').trim().isEmail().escape(),
+  body('sender_name').trim().escape().not().isEmpty(),
+  body('email_address')
+    .trim()
+    .escape()
+    .normalizeEmail()
+    .isEmail()
+    .withMessage({ message: 'Invalid Email Provided' }),
   body('email_title').trim().not().isEmpty().escape(),
   body('message').trim().not().isEmpty().escape(),
   body('email_column_id').trim().not().isEmpty().escape(),
   body('status_column_id').trim().not().isEmpty().escape(),
   body('file_column_id').trim().not().isEmpty().escape(),
 ];
+
 const validateSignatures = () => [
   param('id').trim().not().isEmpty().escape(),
   body('status').trim().isIn(['signed_by_sender', 'signed_by_receiver']),
