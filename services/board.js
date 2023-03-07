@@ -12,10 +12,14 @@ const getStoredBoardFile = async (boardId, itemId) => {
 
     if (alreadySignedFile?.fileId) {
       const doc = await FileDetails.findById(alreadySignedFile.fileId);
+      const hasStartedSigningProcess = await FileHistory.findOne({
+        fileId: doc?._id,
+      });
       return {
         doc,
         isAuthenticated,
         alreadySignedFile: !!alreadySignedFile?._id,
+        hasStartedSigningProcess: !!hasStartedSigningProcess?._id,
       };
     }
     const doc = await FileDetails.findOne({
@@ -23,10 +27,15 @@ const getStoredBoardFile = async (boardId, itemId) => {
       is_deleted: false,
     }).exec();
 
+    const hasStartedSigningProcess = await FileHistory.findOne({
+      fileId: doc?._id,
+    });
+
     return {
       doc,
       isAuthenticated,
       alreadySignedFile: !!alreadySignedFile?._id,
+      hasStartedSigningProcess: !!hasStartedSigningProcess?.id,
     };
   } catch (error) {
     console.log(error);
