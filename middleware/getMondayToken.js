@@ -30,7 +30,6 @@ const getMondayToken = async (req, res, next) => {
     }
     req.token = token.accessToken;
     req.boardId = fileDetail.board_id;
-    req.itemId = fileDetail.item_id;
 
     monday.setToken(token.accessToken);
     next();

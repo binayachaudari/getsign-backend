@@ -4,7 +4,7 @@ const {
 } = require('../services/monday.service');
 
 const itemDetails = async (req, res, next) => {
-  const { itemId } = req;
+  const { itemId } = req.params;
   try {
     const result = await getItemDetails(itemId);
     return res.json({ ...result }).status(200);

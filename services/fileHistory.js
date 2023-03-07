@@ -117,13 +117,6 @@ const viewedFile = async (id, itemId, ip) => {
 const getFileToSignSender = async (id, itemId) => {
   const fileDetails = await FileDetails.findById(id);
 
-  if (fileDetails.is_deleted) {
-    return {
-      fileId: fileDetails._id,
-      isDeleted: true,
-    };
-  }
-
   const isAlreadySignedBySender = await FileHistory.findOne({
     fileId: id,
     itemId,
@@ -188,13 +181,6 @@ const getFileToSignReceiver = async (id, itemId) => {
     const fileFromHistory = await FileHistory.findById(id).populate('fileId');
     const template = fileFromHistory.fileId;
     fileId = fileFromHistory.fileId?._id;
-
-    if (template?.is_deleted) {
-      return {
-        fileId,
-        isDeleted: true,
-      };
-    }
 
     await setMondayToken(template.board_id);
     const emailColumn = await getEmailColumnValue(
