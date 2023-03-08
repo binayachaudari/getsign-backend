@@ -115,6 +115,14 @@ module.exports = {
     const { status, signatures, itemId } = req.body;
     try {
       const template = await FileDetails.findById(id);
+      const senderSignRequired = template?.fields?.filter((field) =>
+        ['Sender Signature', 'Sender Initials'].includes(field?.title)
+      )?.length;
+
+      const receiverSignRequired = template?.fields?.filter((field) =>
+        ['Receiver Signature', 'Receiver Initials'].includes(field?.title)
+      )?.length;
+
       const result = await addFileHistory({
         id,
         itemId,
@@ -136,7 +144,18 @@ module.exports = {
         status: 'signed_by_receiver',
       }).exec();
 
-      if (alsoSignedByReceiver?._id && alsoSignedBySender?._id) {
+      // const onlySenderSigRequired =
+      //   !receiverSignRequired && senderSignRequired && alsoSignedBySender?._id;
+
+      const onlyReceiverSigRequired =
+        !senderSignRequired &&
+        receiverSignRequired &&
+        alsoSignedByReceiver?._id;
+
+      const bothPartySigned =
+        alsoSignedByReceiver?._id && alsoSignedBySender?._id;
+
+      if (onlyReceiverSigRequired || bothPartySigned) {
         const finalFile = await getFinalContract(result._id, true);
 
         const emailColumn = await getEmailColumnValue(
@@ -157,7 +176,7 @@ module.exports = {
           itemId: itemId,
           boardId: template.board_id,
           columnId: template?.status_column_id,
-          columnValue: 'Done',
+          columnValue: 'Completed',
         });
         await uploadContract({
           itemId,
