@@ -54,8 +54,10 @@ const updateStatusColumn = async ({
   boardId,
   columnValue,
   columnId,
+  userId,
+  accountId,
 }) => {
-  await setMondayToken(boardId);
+  await setMondayToken(userId, accountId);
   const value = JSON.stringify({
     [columnId]: {
       label: columnValue,

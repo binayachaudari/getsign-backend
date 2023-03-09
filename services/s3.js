@@ -105,7 +105,7 @@ const deleteFile = async (id) => {
   let deleted;
   try {
     const template = await FileDetailsModel.findById(id);
-    await setMondayToken(template.board_id);
+    await setMondayToken(template.user_id, template.account_id);
 
     // get itemId that are already signed by receiver or sender
     const signedItemIds = await FileHistory.distinct('itemId', {
@@ -126,6 +126,8 @@ const deleteFile = async (id) => {
           boardId: template.board_id,
           columnId: template?.status_column_id,
           columnValue: undefined,
+          userId: template?.user_id,
+          accountId: template?.account_id,
         });
       });
 

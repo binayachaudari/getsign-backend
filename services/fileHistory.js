@@ -106,6 +106,8 @@ const viewedFile = async (id, itemId, ip) => {
         boardId: template.board_id,
         columnId: template?.status_column_id,
         columnValue: statusMapper[newHistory?.status],
+        userId: template?.user_id,
+        accountId: template?.account_id,
       });
 
     return newHistory;
@@ -137,7 +139,7 @@ const getFileToSignSender = async (id, itemId) => {
   }).exec();
 
   if (!alreadySignedByReceiver) {
-    await setMondayToken(fileDetails.board_id);
+    await setMondayToken(fileDetails.user_id, fileDetails.account_id);
     const columnValues = await getColumnValues(itemId);
     const formValues = [
       ...(columnValues?.data?.items?.[0]?.column_values || []),
@@ -187,7 +189,7 @@ const getFileToSignReceiver = async (id, itemId) => {
     const template = fileFromHistory.fileId;
     fileId = fileFromHistory.fileId?._id;
 
-    await setMondayToken(template.board_id);
+    await setMondayToken(template?.user_id, template?.account_id);
     const emailColumn = await getEmailColumnValue(
       itemId,
       template.email_column_id

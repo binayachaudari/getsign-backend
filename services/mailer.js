@@ -69,7 +69,7 @@ module.exports = {
       const template = await FileDetails.findById(id);
       if (!template) throw new Error('No file with such ID');
 
-      await setMondayToken(template.board_id);
+      await setMondayToken(template.user_id, template.account_id);
       const emailColumn = await getEmailColumnValue(
         itemId,
         template.email_column_id
@@ -116,6 +116,8 @@ module.exports = {
           boardId: template.board_id,
           columnId: template?.status_column_id,
           columnValue: statusMapper[newSentHistory[0].status],
+          userId: template?.user_id,
+          accountId: template?.account_id,
         });
         await session.commitTransaction();
         return mailStatus;
