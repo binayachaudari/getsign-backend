@@ -41,7 +41,7 @@ module.exports = {
         const params = new URLSearchParams();
         params.append('result', JSON.stringify(result));
         params.append('user', JSON.stringify(user));
-        return res.redirect('/authorize?' + params).status(200);
+        return res.redirect('/authorize?' + params);
       })
       .catch((error) => next({ message: error, statusCode: 400 }));
   },
