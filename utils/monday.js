@@ -15,7 +15,7 @@ const setMondayToken = async (userId, accountId) => {
     .sort({ created_at: 'desc' })
     .exec();
 
-  if (applicationStatus.type === 'uninstall') {
+  if (applicationStatus && applicationStatus?.type === 'uninstall') {
     throw new Error({
       status: 401,
       message:
