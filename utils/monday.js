@@ -1,5 +1,4 @@
 const mondaySdk = require('monday-sdk-js');
-const AuthenticatedBoardModel = require('../models/AuthenticatedBoard.model');
 const ApplicationModel = require('../models/Application.model');
 const UserModel = require('../models/User.model');
 const monday = mondaySdk();

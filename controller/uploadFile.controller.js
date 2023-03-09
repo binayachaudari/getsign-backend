@@ -185,6 +185,8 @@ module.exports = {
           boardId: template.board_id,
           columnId: template?.file_column_id,
           file: finalFile,
+          userId: template?.user_id,
+          accountId: template?.account_id,
         });
         return res.status(200).json({ data: 'Contract has been sent!' });
       }
