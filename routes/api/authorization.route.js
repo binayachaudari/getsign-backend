@@ -4,16 +4,11 @@ const {
   validateRequest,
 } = require('../../middleware/validateRequest.middleware');
 const {
-  authorizationValidation,
   authorizationBoardId,
 } = require('../../validators/authorize.validator');
 
-router.post(
-  '/',
-  authorizationValidation(),
-  validateRequest,
-  controller.authorize
-);
+router.get('/callback', controller.authorize);
+
 router.get(
   '/:boardId',
   authorizationBoardId(),
