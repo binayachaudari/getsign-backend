@@ -26,4 +26,13 @@ const storeOrUpdateUser = async (userDetails, token) => {
   return user;
 };
 
-module.exports = { storeOrUpdateUser };
+const isUserAuthenticated = async (userId, accountId) => {
+  const user = await UserModel.findOne({
+    user_id: userId,
+    account_id: accountId,
+  }).exec();
+
+  return user;
+};
+
+module.exports = { storeOrUpdateUser, isUserAuthenticated };
