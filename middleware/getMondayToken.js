@@ -10,7 +10,7 @@ const getMondayToken = async (req, res, next) => {
       return next(new Error("File doesn't exist"));
     }
 
-    setMondayToken(fileDetail.user_id, fileDetail.account_id);
+    await setMondayToken(fileDetail.user_id, fileDetail.account_id);
 
     const res = await me();
 

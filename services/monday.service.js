@@ -89,7 +89,7 @@ const uploadContract = async ({
   userId,
   accountId,
 }) => {
-  setMondayToken(userId, accountId);
+  await setMondayToken(userId, accountId);
   const url = 'https://api.monday.com/v2/file';
   var query = `mutation add_file($file: File!) { add_file_to_column (file: $file, item_id: ${itemId}, column_id: "${columnId}") { id } }`;
   var data = '';
