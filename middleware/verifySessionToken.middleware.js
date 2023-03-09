@@ -11,7 +11,7 @@ const verifySessionToken = async (req, res, next) => {
   const accountId = decoded?.dat?.account_id;
   const user = await isUserAuthenticated(userId, accountId);
 
-  if (!user) {
+  if (!user || !user.accessToken) {
     next({ statusCode: 401, message: 'Unauthorized' });
   }
 
