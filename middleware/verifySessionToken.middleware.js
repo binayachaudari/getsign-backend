@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
-const ApplicationModel = require('../models/Application.model');
 const { isUserAuthenticated } = require('../services/user.service');
+const { setMondayToken } = require('../utils/monday');
 
 const verifySessionToken = async (req, res, next) => {
   let decoded;
@@ -12,21 +12,13 @@ const verifySessionToken = async (req, res, next) => {
   const accountId = decoded?.dat?.account_id;
   const user = await isUserAuthenticated(userId, accountId);
 
-  const applicationStatus = await ApplicationModel.findOne({
-    account_id: accountId,
-  })
-    .sort({ created_at: 'desc' })
-    .exec();
-
-  if (applicationStatus && applicationStatus?.type === 'uninstall') {
-    return next({
-      statusCode: 401,
-      message:
-        'Application has been uninstalled, please re-install and re-authenticate',
-    });
+  try {
+    await setMondayToken(userId, accountId);
+  } catch (err) {
+    return next(err);
   }
 
-  if (!user || !user.accessToken) {
+  if (!user || !user?.accessToken) {
     return next({ statusCode: 401, message: 'Unauthorized' });
   }
 

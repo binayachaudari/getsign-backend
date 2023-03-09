@@ -1,6 +1,6 @@
 const FileDetails = require('../models/FileDetails');
 const { me } = require('../services/monday.service');
-const { monday, setMondayToken } = require('../utils/monday');
+const { setMondayToken } = require('../utils/monday');
 
 const getMondayToken = async (req, res, next) => {
   const { fileId } = req.params;
