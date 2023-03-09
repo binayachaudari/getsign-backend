@@ -49,7 +49,7 @@ if (process.env.NODE_ENV === 'production') {
 
 app.use((err, req, res, next) => {
   console.log(err);
-  res.status(err?.statusCode || 500).json({ message: err.message });
+  return res.status(err?.statusCode || 500).json({ message: err.message });
 });
 
 app.listen(PORT, () => {

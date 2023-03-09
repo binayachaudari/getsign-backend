@@ -17,7 +17,7 @@ const setMondayToken = async (userId, accountId) => {
 
   if (applicationStatus && applicationStatus?.type === 'uninstall') {
     throw new Error({
-      status: 401,
+      statusCode: 401,
       message:
         'Application has been uninstalled, please re-install and re-authenticate',
     });
