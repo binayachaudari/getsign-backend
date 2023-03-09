@@ -1,4 +1,3 @@
-const { isAlreadyAuthenticated } = require('../services/authenticatedBoard');
 const {
   storeOrUpdateUser,
   isUserAuthenticated,
