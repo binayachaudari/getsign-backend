@@ -1,10 +1,8 @@
 const FileDetails = require('../models/FileDetails');
 const FileHistory = require('../models/FileHistory');
-const { isAlreadyAuthenticated } = require('./authenticatedBoard');
 
 const getStoredBoardFile = async (boardId, itemId) => {
   try {
-    const isAuthenticated = await isAlreadyAuthenticated(boardId);
     const alreadySignedFile = await FileHistory.findOne({
       itemId,
       status: { $in: ['signed_by_receiver', 'signed_by_sender'] },
@@ -17,7 +15,6 @@ const getStoredBoardFile = async (boardId, itemId) => {
       });
       return {
         doc,
-        isAuthenticated,
         alreadySignedFile: !!alreadySignedFile?._id,
         hasStartedSigningProcess: !!hasStartedSigningProcess?._id,
       };
@@ -33,7 +30,6 @@ const getStoredBoardFile = async (boardId, itemId) => {
 
     return {
       doc,
-      isAuthenticated,
       alreadySignedFile: !!alreadySignedFile?._id,
       hasStartedSigningProcess: !!hasStartedSigningProcess?.id,
     };
