@@ -8,7 +8,7 @@ const authorizationValidation = () => [
 ];
 
 const authorizationBoardId = () => [
-  param('boardId').trim().not().isEmpty().toInt(),
+  param('userId').trim().not().isEmpty().toInt(),
 ];
 
 module.exports = {

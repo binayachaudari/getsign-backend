@@ -6,17 +6,21 @@ const schema = new mongoose.Schema(
     account_id: {
       type: String,
       required: true,
+      index: true,
     },
     user_id: {
       type: String,
+      required: true,
       required: true,
     },
     board_id: {
       type: Number,
       required: true,
+      required: true,
     },
     item_id: {
       type: Number,
+      required: true,
       required: true,
     },
     file: {

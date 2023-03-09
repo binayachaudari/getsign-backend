@@ -10,7 +10,7 @@ const {
 router.get('/callback', controller.authorize);
 
 router.get(
-  '/:boardId',
+  '/:userId',
   authorizationBoardId(),
   validateRequest,
   controller.isAuthorized
