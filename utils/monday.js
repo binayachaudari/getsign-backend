@@ -41,6 +41,8 @@ const setMondayToken = async (userId, accountId) => {
       message: 'Unauthorized',
     };
   }
+
+  return user?.accessToken;
 };
 
 module.exports = { monday, setMondayToken };
