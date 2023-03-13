@@ -7,6 +7,7 @@ const { embedHistory } = require('./embedDocumentHistory');
 const { setMondayToken } = require('../utils/monday');
 const { getColumnValues, updateStatusColumn } = require('./monday.service');
 const statusMapper = require('../config/statusMapper');
+const { Types } = require('mongoose');
 
 const addFormFields = async (id, payload) => {
   const session = await FileHistory.startSession();
@@ -33,7 +34,7 @@ const addFormFields = async (id, payload) => {
       },
       {
         $match: {
-          fileId: updatedFields._id,
+          fileId: Types.ObjectId(updatedFields._id),
           status: {
             $not: {
               $all: ['signed_by_sender', 'signed_by_receiver'],

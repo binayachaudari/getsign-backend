@@ -3,6 +3,7 @@ const FileDetailsModel = require('../models/FileDetails');
 const FileHistory = require('../models/FileHistory');
 const { setMondayToken } = require('../utils/monday');
 const { updateStatusColumn } = require('./monday.service');
+const { Types } = require('mongoose');
 
 const s3 = new AWS.S3({
   credentials: {
@@ -123,7 +124,7 @@ const deleteFile = async (id) => {
       },
       {
         $match: {
-          fileId: id,
+          fileId: Types.ObjectId(id),
           $and: [
             {
               status: {
