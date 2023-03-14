@@ -8,6 +8,7 @@ const schema = new mongoose.Schema(
     itemId: {
       type: Number,
       required: true,
+      required: true,
     },
     fileId: {
       type: Schema.Types.ObjectId,
@@ -22,6 +23,7 @@ const schema = new mongoose.Schema(
         'signed_by_receiver',
         'viewed',
       ],
+      required: true,
     },
     viewedIpAddress: String,
     receiverSignedIpAddress: String,

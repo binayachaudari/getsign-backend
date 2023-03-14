@@ -4,6 +4,9 @@ const {
   validateRequest,
 } = require('../../middleware/validateRequest.middleware');
 const {
+  verifySessionToken,
+} = require('../../middleware/verifySessionToken.middleware');
+const {
   boardGetBoardFileValidator,
 } = require('../../validators/board.validator');
 
@@ -11,6 +14,7 @@ router.get(
   '/:boardId/:itemId',
   boardGetBoardFileValidator(),
   validateRequest,
+  verifySessionToken,
   controller.getBoardFile
 );
 

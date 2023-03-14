@@ -14,6 +14,7 @@ const schema = new mongoose.Schema(
     user_id: {
       type: String,
       required: true,
+      index: true,
     },
     user_email: {
       type: String,
@@ -30,6 +31,7 @@ const schema = new mongoose.Schema(
     account_id: {
       type: Number,
       required: true,
+      index: true,
     },
     version_data: Object,
     timestamp: String,

@@ -1,21 +1,48 @@
 const mondaySdk = require('monday-sdk-js');
-const AuthenticatedBoardModel = require('../models/AuthenticatedBoard.model');
+const UserModel = require('../models/User.model');
 const monday = mondaySdk();
 
-const setMondayToken = async (boardId) => {
-  const mondayToken = await AuthenticatedBoardModel.findOne({
-    boardId,
+const me = async () => {
+  try {
+    return await monday.api(`{
+  me {
+    id
+  }
+}
+`);
+  } catch (error) {
+    throw error;
+  }
+};
+
+const setMondayToken = async (userId, accountId) => {
+  const user = await UserModel.findOne({
+    user_id: userId,
+    account_id: accountId,
   }).exec();
 
-  if (!mondayToken) {
-    await AuthenticatedBoardModel.deleteMany({ boardId });
-    throw new Error({
-      statusCode: 403,
-      message:
-        'You might have uninstalled the application, please reauthorize monday token',
-    });
+  if (!user || !user?.accessToken) {
+    throw {
+      statusCode: 401,
+      message: 'Unauthorized',
+    };
   }
-  monday.setToken(mondayToken.accessToken);
+
+  monday.setToken(user.accessToken);
+  const res = await me();
+  const mondayAPIError =
+    res.hasOwnProperty('error_message') ||
+    res.hasOwnProperty('error_code') ||
+    res.hasOwnProperty('errors');
+
+  if (mondayAPIError) {
+    throw {
+      statusCode: 401,
+      message: 'Unauthorized',
+    };
+  }
+
+  return user?.accessToken;
 };
 
 module.exports = { monday, setMondayToken };

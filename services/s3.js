@@ -3,6 +3,7 @@ const FileDetailsModel = require('../models/FileDetails');
 const FileHistory = require('../models/FileHistory');
 const { setMondayToken } = require('../utils/monday');
 const { updateStatusColumn } = require('./monday.service');
+const { Types } = require('mongoose');
 
 const s3 = new AWS.S3({
   credentials: {
@@ -105,33 +106,62 @@ const deleteFile = async (id) => {
   let deleted;
   try {
     const template = await FileDetailsModel.findById(id);
-    await setMondayToken(template.board_id);
+    await setMondayToken(template.user_id, template.account_id);
 
-    // get itemId that are already signed by receiver or sender
-    const signedItemIds = await FileHistory.distinct('itemId', {
-      fileId: id,
-      status: { $in: ['signed_by_receiver', 'signed_by_sender'] },
-    });
+    // get all the items not signed by both (sender and receiver)
+    // and not signed by receiver
+    const notSignedByBothAndSender = await FileHistory.aggregate([
+      {
+        $group: {
+          _id: '$itemId',
+          status: {
+            $push: '$status',
+          },
+          fileId: {
+            $first: '$fileId',
+          },
+        },
+      },
+      {
+        $match: {
+          fileId: Types.ObjectId(id),
+          $and: [
+            {
+              status: {
+                $not: {
+                  $all: ['signed_by_sender', 'signed_by_receiver'],
+                },
+              },
+            },
+            {
+              status: {
+                $not: {
+                  $all: ['signed_by_receiver'],
+                },
+              },
+            },
+          ],
+        },
+      },
+    ]);
 
-    // find all itemIds not signed by sender or receiver
-    const inProcessItemIds = await FileHistory.distinct('itemId', {
-      fileId: id,
-      itemId: { $nin: signedItemIds },
-    });
-
-    if (inProcessItemIds?.length > 0) {
-      inProcessItemIds?.forEach(async (item) => {
+    if (notSignedByBothAndSender?.length > 0) {
+      notSignedByBothAndSender?.forEach(async (item) => {
         await updateStatusColumn({
-          itemId: item,
+          itemId: item?._id,
           boardId: template.board_id,
           columnId: template?.status_column_id,
           columnValue: undefined,
+          userId: template?.user_id,
+          accountId: template?.account_id,
         });
       });
 
-      // delete file histories not having ids signed by sender or receiver
-      deleted = await FileHistory.deleteMany({
-        itemId: { $in: inProcessItemIds },
+      const toDeleteHistory = notSignedByBothAndSender.map((item) => item?._id);
+
+      // delete file histories
+      await FileHistory.deleteMany({
+        itemId: { $in: toDeleteHistory },
       }).session(session);
     }
 

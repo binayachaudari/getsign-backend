@@ -22,7 +22,7 @@ const {
   uploadContract,
 } = require('../services/monday.service');
 const { uploadFile, getFile, deleteFile } = require('../services/s3');
-const { monday, setMondayToken } = require('../utils/monday');
+const { setMondayToken } = require('../utils/monday');
 
 module.exports = {
   uploadFile: async (req, res, next) => {
@@ -131,7 +131,7 @@ module.exports = {
         ipAddress: ip,
       });
 
-      await setMondayToken(template.board_id);
+      await setMondayToken(template.user_id, template.account_id);
       const alsoSignedBySender = await FileHistory.findOne({
         fileId: template.id,
         itemId,
@@ -177,12 +177,16 @@ module.exports = {
           boardId: template.board_id,
           columnId: template?.status_column_id,
           columnValue: 'Completed',
+          userId: template?.user_id,
+          accountId: template?.account_id,
         });
         await uploadContract({
           itemId,
           boardId: template.board_id,
           columnId: template?.file_column_id,
           file: finalFile,
+          userId: template?.user_id,
+          accountId: template?.account_id,
         });
         return res.status(200).json({ data: 'Contract has been sent!' });
       }
@@ -192,6 +196,8 @@ module.exports = {
         boardId: template.board_id,
         columnId: template?.status_column_id,
         columnValue: statusMapper[result.status],
+        userId: template?.user_id,
+        accountId: template?.account_id,
       });
 
       return res.json({ data: { ...result } }).status(200);

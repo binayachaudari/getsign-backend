@@ -1,4 +1,3 @@
-const AuthenticatedBoardModel = require('../models/AuthenticatedBoard.model');
 const { monday, setMondayToken } = require('../utils/monday');
 const axios = require('axios');
 
@@ -54,8 +53,10 @@ const updateStatusColumn = async ({
   boardId,
   columnValue,
   columnId,
+  userId,
+  accountId,
 }) => {
-  await setMondayToken(boardId);
+  await setMondayToken(userId, accountId);
   const value = JSON.stringify({
     [columnId]: {
       label: columnValue,
@@ -81,10 +82,14 @@ const updateStatusColumn = async ({
   }
 };
 
-const uploadContract = async ({ itemId, columnId, boardId, file }) => {
-  const mondayToken = await AuthenticatedBoardModel.findOne({
-    boardId,
-  }).exec();
+const uploadContract = async ({
+  itemId,
+  columnId,
+  file,
+  userId,
+  accountId,
+}) => {
+  const accessToken = await setMondayToken(userId, accountId);
   const url = 'https://api.monday.com/v2/file';
   var query = `mutation add_file($file: File!) { add_file_to_column (file: $file, item_id: ${itemId}, column_id: "${columnId}") { id } }`;
   var data = '';
@@ -116,7 +121,7 @@ const uploadContract = async ({ itemId, columnId, boardId, file }) => {
       method: 'post',
       headers: {
         'Content-Type': 'multipart/form-data; boundary=' + boundary,
-        Authorization: mondayToken.accessToken,
+        Authorization: accessToken,
       },
       data: payload,
       maxContentLength: Infinity,

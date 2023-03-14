@@ -7,6 +7,7 @@ const { embedHistory } = require('./embedDocumentHistory');
 const { setMondayToken } = require('../utils/monday');
 const { getColumnValues, updateStatusColumn } = require('./monday.service');
 const statusMapper = require('../config/statusMapper');
+const { Types } = require('mongoose');
 
 const addFormFields = async (id, payload) => {
   const session = await FileHistory.startSession();
@@ -17,7 +18,7 @@ const addFormFields = async (id, payload) => {
       fields: [...payload],
     });
 
-    await setMondayToken(updatedFields.board_id);
+    await setMondayToken(updatedFields.user_id, updatedFields.account_id);
 
     const notSignedByBoth = await FileHistory.aggregate([
       {
@@ -33,7 +34,7 @@ const addFormFields = async (id, payload) => {
       },
       {
         $match: {
-          fileId: updatedFields._id,
+          fileId: Types.ObjectId(updatedFields._id),
           status: {
             $not: {
               $all: ['signed_by_sender', 'signed_by_receiver'],
@@ -51,6 +52,8 @@ const addFormFields = async (id, payload) => {
           boardId: updatedFields.board_id,
           columnId: updatedFields?.status_column_id,
           columnValue: undefined,
+          userId: updatedFields?.user_id,
+          accountId: updatedFields?.account_id,
         });
       });
 
@@ -135,7 +138,7 @@ const signPDF = async ({ id, signatureFields, status, itemId }) => {
   try {
     let pdfDoc;
     const fileDetails = await getFile(id);
-    await setMondayToken(fileDetails.board_id);
+    await setMondayToken(fileDetails.user_id, fileDetails.account_id);
     const valuesToFill = await getColumnValues(itemId);
 
     const values = [
