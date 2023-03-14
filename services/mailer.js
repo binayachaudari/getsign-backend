@@ -37,7 +37,7 @@ const sendRequestToSign = async ({ template, to, itemId, fileId }) => {
       },
       documentName: template.file_name,
       message: template.message,
-      url: `https://jetsign.jtpk.app/sign/${itemId}/${fileId}?receiver=true`,
+      url: `https://getsign.jtpk.app/sign/${itemId}/${fileId}?receiver=true`,
     }),
   });
 };
@@ -49,7 +49,7 @@ const sendSignedDocuments = async (document, to) => {
     subject: `You just signed ${document.name}`,
     html: signedDocument({
       documentName: document.name,
-      url: `https://jetsign.jtpk.app/download/${document.fileId}`,
+      url: `https://getsign.jtpk.app/download/${document.fileId}`,
     }),
     attachments: [
       {

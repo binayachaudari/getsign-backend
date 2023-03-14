@@ -222,7 +222,7 @@ const signPDF = async ({ id, signatureFields, status, itemId }) => {
       return await s3
         .upload({
           Bucket: process.env.BUCKET_NAME,
-          Key: `jet-sign-${id}-${itemId}-${status}-${Date.now().toString()}`,
+          Key: `get-sign-${id}-${itemId}-${status}-${Date.now().toString()}`,
           Body: buffer,
           ContentType: blob.type,
         })
