@@ -1,3 +1,7 @@
+const { config } = require('../../config');
+
+const HOST = config.HOST;
+
 const requestSignature = ({ requestedBy, documentName, message, url }) => {
   return `<head>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,14 +23,14 @@ const requestSignature = ({ requestedBy, documentName, message, url }) => {
             <table style="border-spacing:0;width:100%;text-align:center">
               <tbody><tr>
                 <td style="padding:0">
-                  <img src="https://getsign.jtpk.app/email-icons/logo.png" style="border:0" class="CToWUd" data-bit="iit">
+                  <img src="${HOST}/email-icons/logo.png" style="border:0" class="CToWUd" data-bit="iit">
                 </td>
               </tr>
             </tbody></table>
             <table style="border-spacing:0;width:100%;text-align:center">
               <tbody><tr>
                 <td style="padding:0;padding-top:14px">
-                  <img src="https://getsign.jtpk.app/email-icons/signature.png" style="border:0" class="CToWUd" data-bit="iit">
+                  <img src="${HOST}/email-icons/signature.png" style="border:0" class="CToWUd" data-bit="iit">
                 </td>
               </tr>
             </tbody></table>
@@ -90,14 +94,14 @@ const sendReminder = ({ requestedBy, documentName, message, url }) => {
             <table style="border-spacing:0;width:100%;text-align:center">
               <tbody><tr>
                 <td style="padding:0">
-                  <img src="https://getsign.jtpk.app/email-icons/logo.png" style="border:0" class="CToWUd" data-bit="iit">
+                  <img src="${HOST}/email-icons/logo.png" style="border:0" class="CToWUd" data-bit="iit">
                 </td>
               </tr>
             </tbody></table>
             <table style="border-spacing:0;width:100%;text-align:center">
               <tbody><tr>
                 <td style="padding:0;padding-top:14px">
-                  <img src="https://getsign.jtpk.app/email-icons/remainder.png" style="border:0" class="CToWUd" data-bit="iit">
+                  <img src="${HOST}/email-icons/remainder.png" style="border:0" class="CToWUd" data-bit="iit">
                 </td>
               </tr>
             </tbody></table>
@@ -161,14 +165,14 @@ const signedDocument = ({ documentName, url }) => {
           <table style="border-spacing:0;width:100%;text-align:center">
             <tbody><tr>
               <td style="padding:0">
-                <img src="https://getsign.jtpk.app/email-icons/logo.png" style="border:0" class="CToWUd" data-bit="iit">
+                <img src="${HOST}/email-icons/logo.png" style="border:0" class="CToWUd" data-bit="iit">
               </td>
             </tr>
           </tbody></table>
           <table style="border-spacing:0;width:100%;text-align:center">
             <tbody><tr>
               <td style="padding:0;padding-top:14px">
-                <img src="https://getsign.jtpk.app/email-icons/signed.png" style="border:0" class="CToWUd" data-bit="iit" jslog="138226; u014N:xr6bB; 53:W2ZhbHNlLDJd">
+                <img src="${HOST}/email-icons/signed.png" style="border:0" class="CToWUd" data-bit="iit" jslog="138226; u014N:xr6bB; 53:W2ZhbHNlLDJd">
               </td>
             </tr>
           </tbody></table>

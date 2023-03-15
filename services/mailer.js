@@ -9,6 +9,7 @@ const {
 const { updateStatusColumn, getEmailColumnValue } = require('./monday.service');
 const { setMondayToken } = require('../utils/monday');
 const statusMapper = require('../config/statusMapper');
+const { HOST } = require('../config/config');
 
 config.update({
   credentials: {
@@ -37,7 +38,7 @@ const sendRequestToSign = async ({ template, to, itemId, fileId }) => {
       },
       documentName: template.file_name,
       message: template.message,
-      url: `https://getsign.jtpk.app/sign/${itemId}/${fileId}?receiver=true`,
+      url: `${HOST}/sign/${itemId}/${fileId}?receiver=true`,
     }),
   });
 };
@@ -49,7 +50,7 @@ const sendSignedDocuments = async (document, to) => {
     subject: `You just signed ${document.name}`,
     html: signedDocument({
       documentName: document.name,
-      url: `https://getsign.jtpk.app/download/${document.fileId}`,
+      url: `${HOST}/download/${document.fileId}`,
     }),
     attachments: [
       {
