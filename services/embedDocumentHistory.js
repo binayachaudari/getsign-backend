@@ -78,80 +78,82 @@ module.exports = {
       y: height - 220,
     };
 
-    docHistory.forEach((history) => {
-      switch (history.status) {
-        case 'signed_by_sender':
-        case 'signed_by_receiver':
-          page.drawImage(signed, {
-            x: currentIconPos.x,
-            y: currentIconPos.y,
-          });
-          break;
+    docHistory
+      ?.filter((item) => item.status !== 'resent')
+      .forEach((history) => {
+        switch (history.status) {
+          case 'signed_by_sender':
+          case 'signed_by_receiver':
+            page.drawImage(signed, {
+              x: currentIconPos.x,
+              y: currentIconPos.y,
+            });
+            break;
 
-        case 'sent':
-          page.drawImage(sent, {
-            x: currentIconPos.x,
-            y: currentIconPos.y,
-          });
-          break;
+          case 'sent':
+            page.drawImage(sent, {
+              x: currentIconPos.x,
+              y: currentIconPos.y,
+            });
+            break;
 
-        case 'viewed':
-          page.drawImage(viewed, {
-            x: currentIconPos.x,
-            y: currentIconPos.y,
-          });
-          break;
-      }
-      // updaing current icon pos
-      currentIconPos = {
-        x: currentIconPos.x,
-        y: currentIconPos.y - 100,
-      };
+          case 'viewed':
+            page.drawImage(viewed, {
+              x: currentIconPos.x,
+              y: currentIconPos.y,
+            });
+            break;
+        }
+        // updaing current icon pos
+        currentIconPos = {
+          x: currentIconPos.x,
+          y: currentIconPos.y - 100,
+        };
 
-      // Adding details with icons
-      page.drawText(STATUS_MAPPER[history.status], {
-        x: currentDetailPos.x,
-        y: currentDetailPos.y,
-        size: 18,
+        // Adding details with icons
+        page.drawText(STATUS_MAPPER[history.status], {
+          x: currentDetailPos.x,
+          y: currentDetailPos.y,
+          size: 18,
+        });
+
+        const dateTime = `${new Date(
+          history.created_at
+        ).toLocaleDateString()} ${new Date(
+          history.created_at
+        ).toLocaleTimeString()}`
+          .replace(' ', ' ')
+          .toString();
+
+        page.drawText(`${dateTime} UTC`, {
+          x: currentDetailPos.x,
+          y: currentDetailPos.y - 20,
+          size: 14,
+        });
+
+        switch (history.status) {
+          case 'viewed':
+            page.drawText(`IP ${history.viewedIpAddress}`, {
+              x: currentDetailPos.x,
+              y: currentDetailPos.y - 40,
+              size: 14,
+            });
+            break;
+
+          case 'signed_by_receiver':
+            page.drawText(`IP ${history.receiverSignedIpAddress}`, {
+              x: currentDetailPos.x,
+              y: currentDetailPos.y - 40,
+              size: 14,
+            });
+            break;
+        }
+
+        currentDetailPos = {
+          x: currentDetailPos.x,
+          y: currentDetailPos.y - 100,
+        };
       });
-
-      const dateTime = `${new Date(
-        history.created_at
-      ).toLocaleDateString()} ${new Date(
-        history.created_at
-      ).toLocaleTimeString()}`
-        .replace(' ', ' ')
-        .toString();
-
-      page.drawText(`${dateTime} UTC`, {
-        x: currentDetailPos.x,
-        y: currentDetailPos.y - 20,
-        size: 14,
-      });
-
-      switch (history.status) {
-        case 'viewed':
-          page.drawText(`IP ${history.viewedIpAddress}`, {
-            x: currentDetailPos.x,
-            y: currentDetailPos.y - 40,
-            size: 14,
-          });
-          break;
-
-        case 'signed_by_receiver':
-          page.drawText(`IP ${history.receiverSignedIpAddress}`, {
-            x: currentDetailPos.x,
-            y: currentDetailPos.y - 40,
-            size: 14,
-          });
-          break;
-      }
-
-      currentDetailPos = {
-        x: currentDetailPos.x,
-        y: currentDetailPos.y - 100,
-      };
-    });
 
     return pdfDoc;
   },
