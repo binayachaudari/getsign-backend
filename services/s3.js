@@ -4,6 +4,8 @@ const FileHistory = require('../models/FileHistory');
 const { setMondayToken } = require('../utils/monday');
 const { updateStatusColumn } = require('./monday.service');
 const { Types } = require('mongoose');
+const ApplicationModel = require('../models/Application.model');
+const { backOfficeUploadedDocument } = require('./backoffice.service');
 
 const s3 = new AWS.S3({
   credentials: {
@@ -51,6 +53,15 @@ const uploadFile = async (req) => {
   result.message = prev?.message;
 
   await result.save();
+
+  const appInstallDetails = await ApplicationModel.findOne({
+    type: 'install',
+    account_id: result.account_id,
+  }).sort({ created_at: 'desc' });
+
+  if (appInstallDetails?.back_office_item_id) {
+    await backOfficeUploadedDocument(appInstallDetails.back_office_item_id);
+  }
 
   if (prev?._id) {
     // get itemId that are already signed by receiver or sender
