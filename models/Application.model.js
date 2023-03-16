@@ -33,6 +33,7 @@ const schema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    back_office_item_id: Number,
     version_data: Object,
     timestamp: String,
   },
