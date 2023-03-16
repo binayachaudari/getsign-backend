@@ -38,6 +38,7 @@ const sendRequestToSign = async ({ template, to, itemId, fileId }) => {
       },
       documentName: template.file_name,
       message: template.message,
+      emailTitle: template?.email_title,
       url: `${HOST}/sign/${itemId}/${fileId}?receiver=true`,
     }),
   });

@@ -2,7 +2,13 @@ const { config } = require('../../config');
 
 const HOST = config.HOST;
 
-const requestSignature = ({ requestedBy, documentName, message, url }) => {
+const requestSignature = ({
+  requestedBy,
+  documentName,
+  message,
+  url,
+  emailTitle,
+}) => {
   return `<head>
   <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -61,7 +67,11 @@ const requestSignature = ({ requestedBy, documentName, message, url }) => {
     </center>
     <center style="background-color:white;width:100%;table-layout:fixed;padding:60px 12px">
       <table style="border-spacing:0">
-        <tbody><tr>
+        <tbody>
+        <tr>
+          <td style="padding:0;color:#000;font-weight:400;font-size:16px">${emailTitle}</td>
+        </tr>
+        <tr>
           <td style="padding:0;color:#000">Document: ${documentName}</td>
         </tr>
         <tr>
