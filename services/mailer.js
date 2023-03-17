@@ -10,6 +10,8 @@ const { updateStatusColumn, getEmailColumnValue } = require('./monday.service');
 const { setMondayToken } = require('../utils/monday');
 const statusMapper = require('../config/statusMapper');
 const { HOST } = require('../config/config');
+const ApplicationModel = require('../models/Application.model');
+const { backOfficeSentDocument } = require('./backoffice.service');
 
 config.update({
   credentials: {
@@ -120,6 +122,16 @@ module.exports = {
           userId: template?.user_id,
           accountId: template?.account_id,
         });
+
+        const appInstallDetails = await ApplicationModel.findOne({
+          type: 'install',
+          account_id: template.account_id,
+        }).sort({ created_at: 'desc' });
+
+        if (appInstallDetails?.back_office_item_id) {
+          await backOfficeSentDocument(appInstallDetails.back_office_item_id);
+        }
+
         await session.commitTransaction();
         return mailStatus;
       }

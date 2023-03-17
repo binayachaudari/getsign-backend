@@ -213,8 +213,44 @@ const backOfficeSavedDocument = async (itemId) => {
   return;
 };
 
+const backOfficeSentDocument = async (itemId) => {
+  monday.setToken(backOfficeMondayToken);
+
+  const prevValues = await getItemDetails({
+    itemId: itemId,
+    columnIds: ['color8', 'date9'],
+  });
+
+  const columnValues = prevValues?.data?.items?.[0]?.column_values;
+
+  const requiresUpdate = columnValues.some((item) => {
+    if (item.type === 'color' && typeof item.additional_info === 'string') {
+      const value = JSON.parse(item.additional_info);
+
+      return value.label === null;
+    }
+    return !item?.value;
+  });
+
+  const values = JSON.stringify({
+    color8: {
+      label: 'Yes',
+    },
+    date9: {
+      ...getDateAndTime(),
+    },
+  });
+
+  if (requiresUpdate) {
+    await updateColumnValues(itemId, values);
+  }
+
+  return;
+};
+
 module.exports = {
   backOfficeAddItem,
   backOfficeUploadedDocument,
   backOfficeSavedDocument,
+  backOfficeSentDocument,
 };
