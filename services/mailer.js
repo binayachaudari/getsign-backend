@@ -11,7 +11,10 @@ const { setMondayToken } = require('../utils/monday');
 const statusMapper = require('../config/statusMapper');
 const { HOST } = require('../config/config');
 const ApplicationModel = require('../models/Application.model');
-const { backOfficeSentDocument } = require('./backoffice.service');
+const {
+  backOfficeSentDocument,
+  backOffice5DocumentSent,
+} = require('./backoffice.service');
 
 config.update({
   credentials: {
@@ -130,6 +133,58 @@ module.exports = {
 
         if (appInstallDetails?.back_office_item_id) {
           await backOfficeSentDocument(appInstallDetails.back_office_item_id);
+        }
+
+        const itemSentList = await FileDetails.aggregate([
+          {
+            $match: {
+              account_id: template?.account_id.toString(),
+            },
+          },
+          {
+            $lookup: {
+              from: 'filehistories',
+              localField: '_id',
+              foreignField: 'fileId',
+              as: 'filehistories',
+            },
+          },
+          {
+            $unwind: {
+              path: '$filehistories',
+            },
+          },
+          {
+            $match: {
+              'filehistories.status': 'sent',
+            },
+          },
+          {
+            $group: {
+              _id: '$filehistories.fileId',
+              count: {
+                $sum: 1,
+              },
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              totalCount: {
+                $sum: '$count',
+              },
+            },
+          },
+          {
+            $project: {
+              _id: 0,
+              totalCount: 1,
+            },
+          },
+        ]).session(session);
+
+        if (itemSentList[0].totalCount === 5) {
+          await backOffice5DocumentSent(appInstallDetails.back_office_item_id);
         }
 
         await session.commitTransaction();
