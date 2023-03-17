@@ -11,6 +11,8 @@ const getItemDetails = async ({ itemId, columnIds }) => {
       id
       column_values(ids: $columnIds) {
         value
+        type
+        additional_info
       }
     }
   }
@@ -151,7 +153,14 @@ const backOfficeUploadedDocument = async (itemId) => {
 
   const columnValues = prevValues?.data?.items?.[0]?.column_values;
 
-  const requiresUpdate = columnValues.some((item) => !item?.values);
+  const requiresUpdate = columnValues.some((item) => {
+    if (item.type === 'color' && typeof item.additional_info === 'string') {
+      const value = JSON.parse(item.additional_info);
+
+      return value.label === null;
+    }
+    return !item?.value;
+  });
 
   const values = JSON.stringify({
     status2: {
