@@ -21,7 +21,9 @@ const uploadFile = async (req) => {
 
   const s3Res = await s3
     .upload({
-      Bucket: process.env.BUCKET_NAME,
+      Bucket: process.env.IS_DEV
+        ? `${process.env.BUCKET_NAME}/dev-test`
+        : process.env.BUCKET_NAME,
       Key: `get-sign-${file.name}-${Date.now().toString()}`,
       Body: file.data,
       ContentType: file.mimetype,
