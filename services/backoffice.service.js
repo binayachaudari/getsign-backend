@@ -172,7 +172,42 @@ const backOfficeUploadedDocument = async (itemId) => {
   });
 
   if (requiresUpdate) {
-    const test = await updateColumnValues(itemId, values);
+    await updateColumnValues(itemId, values);
+  }
+
+  return;
+};
+
+const backOfficeSavedDocument = async (itemId) => {
+  monday.setToken(backOfficeMondayToken);
+
+  const prevValues = await getItemDetails({
+    itemId: itemId,
+    columnIds: ['color', 'date40'],
+  });
+
+  const columnValues = prevValues?.data?.items?.[0]?.column_values;
+
+  const requiresUpdate = columnValues.some((item) => {
+    if (item.type === 'color' && typeof item.additional_info === 'string') {
+      const value = JSON.parse(item.additional_info);
+
+      return value.label === null;
+    }
+    return !item?.value;
+  });
+
+  const values = JSON.stringify({
+    color: {
+      label: 'Yes',
+    },
+    date40: {
+      ...getDateAndTime(),
+    },
+  });
+
+  if (requiresUpdate) {
+    await updateColumnValues(itemId, values);
   }
 
   return;
@@ -181,4 +216,5 @@ const backOfficeUploadedDocument = async (itemId) => {
 module.exports = {
   backOfficeAddItem,
   backOfficeUploadedDocument,
+  backOfficeSavedDocument,
 };

@@ -3,11 +3,11 @@ const FileDetails = require('../models/FileDetails');
 const { getFile, s3, getSignedUrl } = require('./s3');
 const fontkit = require('@pdf-lib/fontkit');
 const FileHistory = require('../models/FileHistory');
-const { embedHistory } = require('./embedDocumentHistory');
 const { setMondayToken } = require('../utils/monday');
 const { getColumnValues, updateStatusColumn } = require('./monday.service');
-const statusMapper = require('../config/statusMapper');
 const { Types } = require('mongoose');
+const { backOfficeSavedDocument } = require('./backoffice.service');
+const ApplicationModel = require('../models/Application.model');
 
 const addFormFields = async (id, payload) => {
   const session = await FileHistory.startSession();
@@ -17,6 +17,15 @@ const addFormFields = async (id, payload) => {
       status: 'ready_to_sign',
       fields: [...payload],
     });
+
+    const appInstallDetails = await ApplicationModel.findOne({
+      type: 'install',
+      account_id: updatedFields.account_id,
+    }).sort({ created_at: 'desc' });
+
+    if (appInstallDetails?.back_office_item_id) {
+      await backOfficeSavedDocument(appInstallDetails.back_office_item_id);
+    }
 
     await setMondayToken(updatedFields.user_id, updatedFields.account_id);
 
