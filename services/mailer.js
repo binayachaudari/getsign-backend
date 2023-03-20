@@ -92,6 +92,13 @@ module.exports = {
       const template = await FileDetails.findById(id);
       if (!template) throw new Error('No file with such ID');
 
+      if (!template?.is_email_verified) {
+        throw {
+          statusCode: 400,
+          message: 'Email is not verified',
+        };
+      }
+
       await setMondayToken(template.user_id, template.account_id);
       const emailColumn = await getEmailColumnValue(
         itemId,
