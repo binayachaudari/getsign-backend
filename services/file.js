@@ -18,7 +18,7 @@ const addFormFields = async (id, payload) => {
     const updatedFields = await FileDetails.findByIdAndUpdate(id, {
       status: 'ready_to_sign',
       fields: [...payload],
-    });
+    }).select('-email_verification_token -email_verification_token_expires');
 
     const appInstallDetails = await ApplicationModel.findOne({
       type: 'install',
@@ -271,7 +271,7 @@ const addSenderDetails = async (
 
       await emailVerification(
         updated.email_verification_token,
-        updated.email_address
+        updated.email_address || email_address
       );
     }
 
@@ -285,7 +285,15 @@ const addSenderDetails = async (
 
     updated.save();
 
-    return updated;
+    return {
+      sender_name,
+      email_address,
+      email_title,
+      message,
+      email_column_id,
+      status_column_id,
+      file_column_id,
+    };
   } catch (error) {
     throw error;
   }

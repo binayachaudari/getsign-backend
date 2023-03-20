@@ -9,7 +9,9 @@ const getStoredBoardFile = async (boardId, itemId) => {
     }).exec();
 
     if (alreadySignedFile?.fileId) {
-      const doc = await FileDetails.findById(alreadySignedFile.fileId);
+      const doc = await FileDetails.findById(alreadySignedFile.fileId).select(
+        '-email_verification_token -email_verification_token_expires'
+      );
       const hasStartedSigningProcess = await FileHistory.findOne({
         fileId: doc?._id,
       });
@@ -22,7 +24,9 @@ const getStoredBoardFile = async (boardId, itemId) => {
     const doc = await FileDetails.findOne({
       board_id: boardId,
       is_deleted: false,
-    }).exec();
+    })
+      .select('-email_verification_token -email_verification_token_expires')
+      .exec();
 
     const hasStartedSigningProcess = await FileHistory.findOne({
       fileId: doc?._id,
