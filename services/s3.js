@@ -53,6 +53,7 @@ const uploadFile = async (req) => {
   result.sender_name = prev?.sender_name;
   result.email_title = prev?.email_title;
   result.message = prev?.message;
+  result.is_email_verified = prev?.is_email_verified;
 
   await result.save();
 
