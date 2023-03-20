@@ -5,6 +5,7 @@ const FileHistory = require('../models/FileHistory');
 const {
   requestSignature,
   signedDocument,
+  emailVerification,
 } = require('../utils/emailTemplates/templates');
 const { updateStatusColumn, getEmailColumnValue } = require('./monday.service');
 const { setMondayToken } = require('../utils/monday');
@@ -66,7 +67,23 @@ const sendSignedDocuments = async (document, to) => {
   });
 };
 
+const sendVerificationEmail = async (token, to) => {
+  return await transporter.sendMail({
+    from: `GetSign <${process.env.EMAIL_USERNAME}>`,
+    to,
+    subject: `Verify your email address`,
+    html: emailVerification(`${HOST}/verify-email/${token}`),
+  });
+};
+
 module.exports = {
+  emailVerification: async (token, to) => {
+    try {
+      return await sendVerificationEmail(token, to);
+    } catch (error) {
+      throw error;
+    }
+  },
   emailRequestToSign: async (itemId, id) => {
     const session = await FileHistory.startSession();
     session.startTransaction();

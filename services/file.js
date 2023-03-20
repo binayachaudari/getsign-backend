@@ -8,15 +8,33 @@ const { getColumnValues, updateStatusColumn } = require('./monday.service');
 const { Types } = require('mongoose');
 const { backOfficeSavedDocument } = require('./backoffice.service');
 const ApplicationModel = require('../models/Application.model');
+const crypto = require('crypto');
+const { emailVerification } = require('./mailer');
 
 const addFormFields = async (id, payload) => {
   const session = await FileHistory.startSession();
   session.startTransaction();
   try {
+    const previousData = await FileDetails.findById(id);
+
     const updatedFields = await FileDetails.findByIdAndUpdate(id, {
       status: 'ready_to_sign',
       fields: [...payload],
     });
+
+    if (previousData.email_address !== payload?.email_address) {
+      const verificationToken = crypto.randomBytes(20).toString('hex');
+      const verificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000;
+
+      updatedFields.email_verification_token = verificationToken;
+      updatedFields.email_verification_token_expires = verificationTokenExpires;
+      await updatedFields.save();
+
+      await emailVerification(
+        updatedFields.email_verification_token,
+        updatedFields.email_address
+      );
+    }
 
     const appInstallDetails = await ApplicationModel.findOne({
       type: 'install',
