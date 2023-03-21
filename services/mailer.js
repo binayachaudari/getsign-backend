@@ -16,6 +16,7 @@ const {
   backOfficeSentDocument,
   backOffice5DocumentSent,
 } = require('./backoffice.service');
+const { default: mongoose } = require('mongoose');
 
 config.update({
   credentials: {
@@ -85,7 +86,7 @@ module.exports = {
     }
   },
   emailRequestToSign: async (itemId, id) => {
-    const session = await FileHistory.startSession();
+    const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
@@ -94,7 +95,7 @@ module.exports = {
 
       if (!template?.is_email_verified) {
         throw {
-          statusCode: 400,
+          statusCode: 403,
           message: 'Email is not verified',
         };
       }
