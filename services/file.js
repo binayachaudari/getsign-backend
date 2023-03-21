@@ -3,11 +3,13 @@ const FileDetails = require('../models/FileDetails');
 const { getFile, s3, getSignedUrl } = require('./s3');
 const fontkit = require('@pdf-lib/fontkit');
 const FileHistory = require('../models/FileHistory');
-const { embedHistory } = require('./embedDocumentHistory');
 const { setMondayToken } = require('../utils/monday');
 const { getColumnValues, updateStatusColumn } = require('./monday.service');
-const statusMapper = require('../config/statusMapper');
 const { Types } = require('mongoose');
+const { backOfficeSavedDocument } = require('./backoffice.service');
+const ApplicationModel = require('../models/Application.model');
+const crypto = require('crypto');
+const { emailVerification } = require('./mailer');
 
 const addFormFields = async (id, payload) => {
   const session = await FileHistory.startSession();
@@ -16,7 +18,16 @@ const addFormFields = async (id, payload) => {
     const updatedFields = await FileDetails.findByIdAndUpdate(id, {
       status: 'ready_to_sign',
       fields: [...payload],
-    });
+    }).select('-email_verification_token -email_verification_token_expires');
+
+    const appInstallDetails = await ApplicationModel.findOne({
+      type: 'install',
+      account_id: updatedFields.account_id,
+    }).sort({ created_at: 'desc' });
+
+    if (appInstallDetails?.back_office_item_id) {
+      await backOfficeSavedDocument(appInstallDetails.back_office_item_id);
+    }
 
     await setMondayToken(updatedFields.user_id, updatedFields.account_id);
 
@@ -221,7 +232,9 @@ const signPDF = async ({ id, signatureFields, status, itemId }) => {
 
       return await s3
         .upload({
-          Bucket: process.env.BUCKET_NAME,
+          Bucket: process.env.IS_DEV
+            ? `${process.env.BUCKET_NAME}/dev-test`
+            : process.env.BUCKET_NAME,
           Key: `get-sign-${id}-${itemId}-${status}-${Date.now().toString()}`,
           Body: buffer,
           ContentType: blob.type,
@@ -249,6 +262,20 @@ const addSenderDetails = async (
   try {
     const updated = await FileDetails.findById(id);
 
+    if (updated.email_address !== email_address) {
+      const verificationToken = crypto.randomBytes(20).toString('hex');
+      const verificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000;
+
+      updated.is_email_verified = false;
+      updated.email_verification_token = verificationToken;
+      updated.email_verification_token_expires = verificationTokenExpires;
+
+      await emailVerification(
+        updated.email_verification_token,
+        updated.email_address || email_address
+      );
+    }
+
     updated.sender_name = sender_name;
     updated.email_address = email_address;
     updated.email_title = email_title;
@@ -259,7 +286,15 @@ const addSenderDetails = async (
 
     updated.save();
 
-    return updated;
+    return {
+      sender_name,
+      email_address,
+      email_title,
+      message,
+      email_column_id,
+      status_column_id,
+      file_column_id,
+    };
   } catch (error) {
     throw error;
   }

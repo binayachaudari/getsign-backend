@@ -5,11 +5,18 @@ const FileHistory = require('../models/FileHistory');
 const {
   requestSignature,
   signedDocument,
+  emailVerification,
 } = require('../utils/emailTemplates/templates');
 const { updateStatusColumn, getEmailColumnValue } = require('./monday.service');
 const { setMondayToken } = require('../utils/monday');
 const statusMapper = require('../config/statusMapper');
 const { HOST } = require('../config/config');
+const ApplicationModel = require('../models/Application.model');
+const {
+  backOfficeSentDocument,
+  backOffice5DocumentSent,
+} = require('./backoffice.service');
+const { default: mongoose } = require('mongoose');
 
 config.update({
   credentials: {
@@ -62,14 +69,37 @@ const sendSignedDocuments = async (document, to) => {
   });
 };
 
+const sendVerificationEmail = async (token, to) => {
+  return await transporter.sendMail({
+    from: `GetSign <${process.env.EMAIL_USERNAME}>`,
+    to,
+    subject: `Verify your email address`,
+    html: emailVerification(`${HOST}/verify-email/${token}`),
+  });
+};
+
 module.exports = {
+  emailVerification: async (token, to) => {
+    try {
+      return await sendVerificationEmail(token, to);
+    } catch (error) {
+      throw error;
+    }
+  },
   emailRequestToSign: async (itemId, id) => {
-    const session = await FileHistory.startSession();
+    const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
       const template = await FileDetails.findById(id);
       if (!template) throw new Error('No file with such ID');
+
+      if (!template?.is_email_verified) {
+        throw {
+          statusCode: 403,
+          message: 'Email is not verified',
+        };
+      }
 
       await setMondayToken(template.user_id, template.account_id);
       const emailColumn = await getEmailColumnValue(
@@ -121,6 +151,68 @@ module.exports = {
           userId: template?.user_id,
           accountId: template?.account_id,
         });
+
+        const appInstallDetails = await ApplicationModel.findOne({
+          type: 'install',
+          account_id: template.account_id,
+        }).sort({ created_at: 'desc' });
+
+        if (appInstallDetails?.back_office_item_id) {
+          await backOfficeSentDocument(appInstallDetails.back_office_item_id);
+        }
+
+        const itemSentList = await FileDetails.aggregate([
+          {
+            $match: {
+              account_id: template?.account_id.toString(),
+            },
+          },
+          {
+            $lookup: {
+              from: 'filehistories',
+              localField: '_id',
+              foreignField: 'fileId',
+              as: 'filehistories',
+            },
+          },
+          {
+            $unwind: {
+              path: '$filehistories',
+            },
+          },
+          {
+            $match: {
+              'filehistories.status': 'sent',
+            },
+          },
+          {
+            $group: {
+              _id: '$filehistories.fileId',
+              count: {
+                $sum: 1,
+              },
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              totalCount: {
+                $sum: '$count',
+              },
+            },
+          },
+          {
+            $project: {
+              _id: 0,
+              totalCount: 1,
+            },
+          },
+        ]).session(session);
+
+        if (itemSentList[0].totalCount === 5) {
+          await backOffice5DocumentSent(appInstallDetails.back_office_item_id);
+        }
+
         await session.commitTransaction();
         return mailStatus;
       }

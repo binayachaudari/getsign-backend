@@ -44,6 +44,14 @@ const schema = new mongoose.Schema(
     email_title: String,
     message: String,
     deadline: Number,
+    is_email_verified: {
+      type: Boolean,
+      default: false,
+    },
+    email_verification_token: String,
+    email_verification_token_expires: {
+      type: Date,
+    },
   },
   {
     timestamps: {

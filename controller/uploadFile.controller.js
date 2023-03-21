@@ -1,6 +1,8 @@
 const statusMapper = require('../config/statusMapper');
+const ApplicationModel = require('../models/Application.model');
 const FileDetails = require('../models/FileDetails');
 const FileHistory = require('../models/FileHistory');
+const { backOfficeDocumentSigned } = require('../services/backoffice.service');
 const {
   addFormFields,
   generatePDF,
@@ -181,6 +183,15 @@ module.exports = {
           userId: template?.user_id,
           accountId: template?.account_id,
         });
+        const appInstallDetails = await ApplicationModel.findOne({
+          type: 'install',
+          account_id: template.account_id,
+        }).sort({ created_at: 'desc' });
+
+        if (appInstallDetails?.back_office_item_id) {
+          await backOfficeDocumentSigned(appInstallDetails.back_office_item_id);
+        }
+
         await uploadContract({
           itemId,
           boardId: template.board_id,
