@@ -266,6 +266,7 @@ const addSenderDetails = async (
       const verificationToken = crypto.randomBytes(20).toString('hex');
       const verificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000;
 
+      updated.is_email_verified = false;
       updated.email_verification_token = verificationToken;
       updated.email_verification_token_expires = verificationTokenExpires;
 
