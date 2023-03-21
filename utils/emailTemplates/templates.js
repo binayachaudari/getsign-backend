@@ -53,14 +53,14 @@ const requestSignature = ({
         <tr>
           <td style="padding:0;width:100%;text-align:center">
             <p>
-             ${requestedBy.name} (<span style="color:#0073ea"><a href="${requestedBy.email}" target="_blank">${requestedBy.email}</a></span>)
+             ${requestedBy.name} (<span style="color:#0073ea"><a href="${requestedBy.email}" rel="nofollow noopener noreferrer" target="_blank">${requestedBy.email}</a></span>)
               has requested a signature.
             </p>
           </td>
         </tr>
         <tr>
           <td style="padding:0;width:100%;text-align:center;padding-top:32px">
-            <a href="${url}" style="background-color:#0073ea;padding:12px 24px;font-weight:400;font-size:16px;line-height:24px;border-radius:4px;text-decoration:none;color:white">Review &amp; Sign</a>
+            <a href="${url}" rel="nofollow noopener noreferrer" style="background-color:#0073ea;padding:12px 24px;font-weight:400;font-size:16px;line-height:24px;border-radius:4px;text-decoration:none;color:white">Review &amp; Sign</a>
           </td>
         </tr>
       </tbody></table>
@@ -128,14 +128,14 @@ const sendReminder = ({ requestedBy, documentName, message, url }) => {
         <tr>
           <td style="padding:0;width:100%;text-align:center">
             <p>
-             ${requestedBy.name} (<span style="color:#0073ea"><a href="${requestedBy.email}" target="_blank">${requestedBy.email}</a></span>)
+             ${requestedBy.name} (<span style="color:#0073ea"><a href="${requestedBy.email}" rel="nofollow noopener noreferrer" target="_blank">${requestedBy.email}</a></span>)
               has requested a signature.
             </p>
           </td>
         </tr>
         <tr>
           <td style="padding:0;width:100%;text-align:center;padding-top:32px">
-            <a href="${url}" style="background-color:#0073ea;padding:12px 24px;font-weight:400;font-size:16px;line-height:24px;border-radius:4px;text-decoration:none;color:white">Review &amp; Sign</a>
+            <a href="${url}" rel="nofollow noopener noreferrer" style="background-color:#0073ea;padding:12px 24px;font-weight:400;font-size:16px;line-height:24px;border-radius:4px;text-decoration:none;color:white">Review &amp; Sign</a>
           </td>
         </tr>
       </tbody></table>
@@ -204,7 +204,7 @@ const signedDocument = ({ documentName, url }) => {
       </tr>
       <tr>
         <td style="padding:0;width:100%;text-align:center;padding-top:32px">
-          <a href="${url}" style="background-color:#0073ea;padding:12px 24px;font-weight:400;font-size:16px;line-height:24px;border-radius:4px;text-decoration:none;color:white">View Signed Document</a>
+          <a href="${url}" rel="nofollow noopener noreferrer" style="background-color:#0073ea;padding:12px 24px;font-weight:400;font-size:16px;line-height:24px;border-radius:4px;text-decoration:none;color:white">View Signed Document</a>
         </td>
       </tr>
       <tr>
@@ -270,7 +270,7 @@ const emailVerification = (url) => {
       </tr>
       <tr>
         <td style="padding:0;width:100%;text-align:center;padding-top:32px">
-          <a href="${url}" style="background-color:#0073ea;padding:12px 24px;font-weight:400;font-size:16px;line-height:24px;border-radius:4px;text-decoration:none;color:white">Verify</a>
+          <a href="${url}" rel="nofollow noopener noreferrer" style="background-color:#0073ea;padding:12px 24px;font-weight:400;font-size:16px;line-height:24px;border-radius:4px;text-decoration:none;color:white">Verify</a>
         </td>
       </tr>
       <tr>
