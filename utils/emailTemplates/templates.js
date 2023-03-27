@@ -76,7 +76,7 @@ const requestSignature = ({
                     </tr>
                     <tr>
                         <td style="padding:0;width:100%;text-align:center;padding-top:32px">
-                            <a href="${url}" style="background-color:#0073ea;padding:12px 24px;font-weight:400;font-size:16px;line-height:24px;border-radius:4px;text-decoration:none;color:white">Review &amp; Sign</a>
+                            <a href="${url}" rel="nofollow noopener noreferrer" style="background-color:#0073ea;padding:12px 24px;font-weight:400;font-size:16px;line-height:24px;border-radius:4px;text-decoration:none;color:white">Review &amp; Sign</a>
                         </td>
                     </tr>
                 </tbody>
@@ -171,7 +171,7 @@ const sendReminder = ({ requestedBy, documentName, message, url }) => {
                       </tr>
                       <tr>
                           <td style="padding:0;width:100%;text-align:center;padding-top:32px">
-                              <a href="${url}" style="background-color:#0073ea;padding:12px 24px;font-weight:400;font-size:16px;line-height:24px;border-radius:4px;text-decoration:none;color:white">Review &amp; Sign</a>
+                              <a href="${url}" rel="nofollow noopener noreferrer" style="background-color:#0073ea;padding:12px 24px;font-weight:400;font-size:16px;line-height:24px;border-radius:4px;text-decoration:none;color:white">Review &amp; Sign</a>
                           </td>
                       </tr>
                   </tbody>
@@ -262,7 +262,7 @@ const signedDocument = ({ documentName, url }) => {
                     </tr>
                     <tr>
                         <td style="padding:0;width:100%;text-align:center;padding-top:32px">
-                            <a href="${url}" style="background-color:#0073ea;padding:12px 24px;font-weight:400;font-size:16px;line-height:24px;border-radius:4px;text-decoration:none;color:white">View Signed Document</a>
+                            <a href="${url}" rel="nofollow noopener noreferrer" style="background-color:#0073ea;padding:12px 24px;font-weight:400;font-size:16px;line-height:24px;border-radius:4px;text-decoration:none;color:white">View Signed Document</a>
                         </td>
                     </tr>
                     <tr>
@@ -351,7 +351,7 @@ const emailVerification = (url) => {
                       </tr>
                       <tr>
                           <td style="padding:0;width:100%;text-align:center;padding-top:32px">
-                              <a href="${url}" style="background-color:#0073ea;padding:12px 24px;font-weight:400;font-size:16px;line-height:24px;border-radius:4px;text-decoration:none;color:white">Verify</a>
+                              <a href="${url}" rel="nofollow noopener noreferrer" style="background-color:#0073ea;padding:12px 24px;font-weight:400;font-size:16px;line-height:24px;border-radius:4px;text-decoration:none;color:white">Verify</a>
                           </td>
                       </tr>
                       <tr>
