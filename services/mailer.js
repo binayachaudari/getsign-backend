@@ -18,6 +18,9 @@ const {
 } = require('./backoffice.service');
 const { default: mongoose } = require('mongoose');
 
+const aws = require('@aws-sdk/client-ses');
+const { defaultProvider } = require('@aws-sdk/credential-provider-node');
+
 config.update({
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -26,11 +29,15 @@ config.update({
   region: process.env.AWS_REGION,
 });
 
-let ses = new SES({ apiVersion: '2012-08-10' });
+let ses = new SES({
+  apiVersion: '2010-12-01',
+  region: process.env.AWS_REGION,
+  defaultProvider,
+});
 
 // create Nodemailer SES transporter
 let transporter = nodemailer.createTransport({
-  SES: ses,
+  SES: { ses, aws },
 });
 
 const sendRequestToSign = async ({ template, to, itemId, fileId }) => {
