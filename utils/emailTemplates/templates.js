@@ -82,7 +82,7 @@ const requestSignature = ({
                 </tbody>
             </table>
         </center>
-        <center style="background-color:white;width:100%;table-layout:fixed;padding:60px 12px">
+        <center style="background-color:white;table-layout:fixed;padding:60px 12px">
             <table style="border-spacing:0">
                 <tbody>
                     <tr>
@@ -177,7 +177,7 @@ const sendReminder = ({ requestedBy, documentName, message, url }) => {
                   </tbody>
               </table>
           </center>
-          <center style="background-color:white;width:100%;table-layout:fixed;padding:60px 12px">
+          <center style="background-color:white;table-layout:fixed;padding:60px 12px">
               <table style="border-spacing:0">
                   <tbody>
                       <tr>
