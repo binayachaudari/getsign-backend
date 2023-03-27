@@ -284,7 +284,7 @@ const addSenderDetails = async (
     updated.status_column_id = status_column_id;
     updated.file_column_id = file_column_id;
 
-    updated.save();
+    await updated.save();
 
     return {
       sender_name,

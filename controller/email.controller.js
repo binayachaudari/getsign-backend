@@ -1,4 +1,7 @@
-const { verifyEmailServie } = require('../services/email.service');
+const {
+  verifyEmailServie,
+  resendVerificationEmail,
+} = require('../services/email.service');
 
 const verifyEmail = async (req, res, next) => {
   const { token } = req.params;
@@ -14,6 +17,17 @@ const verifyEmail = async (req, res, next) => {
   }
 };
 
+const resendVerification = async (req, res, next) => {
+  const { fileId } = req.params;
+  try {
+    await resendVerificationEmail(fileId);
+    return res.json({ data: 'Sent verification email' }).status(200);
+  } catch (err) {
+    return next(err);
+  }
+};
+
 module.exports = {
   verifyEmail,
+  resendVerification,
 };
