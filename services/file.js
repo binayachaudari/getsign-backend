@@ -270,10 +270,7 @@ const addSenderDetails = async (
       updated.email_verification_token = verificationToken;
       updated.email_verification_token_expires = verificationTokenExpires;
 
-      await emailVerification(
-        updated.email_verification_token,
-        updated.email_address || email_address
-      );
+      await emailVerification(updated.email_verification_token, email_address);
     }
 
     updated.sender_name = sender_name;
