@@ -44,7 +44,16 @@ const sendRequestToSign = async ({ template, to, itemId, fileId }) => {
   return await transporter.sendMail({
     from: `${template.sender_name} - via GetSign <${process.env.EMAIL_USERNAME}>`,
     to,
-    subject: `${template.file_name} - Signature requested by ${template.sender_name}`,
+    subject: `Signature requested by ${template.sender_name}`,
+    text: `Your signature has been requested!
+    
+    ${template.sender_name} has requested a signature.
+
+
+    ${template?.email_title}
+    Document Name: ${template.file_name}
+    message: ${template.message}
+    `,
     html: requestSignature({
       requestedBy: {
         name: template.sender_name,
@@ -63,6 +72,17 @@ const sendSignedDocuments = async (document, to) => {
     from: `${document.senderName} - via GetSign <${process.env.EMAIL_USERNAME}>`,
     to,
     subject: `You just signed ${document.name}`,
+    text: `You have successfully signed your document!
+    
+    You can view the document as an attachment below (if it's under 25 MB) or by clicking this link. 
+
+    Link: ${HOST}/download/${document.fileId}
+
+    Warning: To prevent others from accessing your document, please do not forward this email.
+
+    Thanks,
+    GetSign.
+    `,
     html: signedDocument({
       documentName: document.name,
       url: `${HOST}/download/${document.fileId}`,
@@ -82,6 +102,15 @@ const sendVerificationEmail = async (token, to) => {
     to,
     subject: `Verify your email address`,
     html: emailVerification(`${HOST}/verify-email/${token}`),
+    text: `Verify your email address and complete the document template set up.
+    
+    verificaiton-link: ${HOST}/verify-email/${token}
+    
+    If this verification request was not created by you, ignore it.
+    
+    Thanks,
+    GetSign.
+    `,
   });
 };
 
