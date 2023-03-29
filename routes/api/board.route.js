@@ -12,9 +12,9 @@ const {
 
 router.get(
   '/:boardId/:itemId',
+  verifySessionToken,
   boardGetBoardFileValidator(),
   validateRequest,
-  verifySessionToken,
   controller.getBoardFile
 );
 
