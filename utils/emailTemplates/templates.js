@@ -13,9 +13,6 @@ const requestSignature = ({
   <html>
 
 <head>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!--[if (gte mso 9)|(IE)]><!-->
     <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
     <style>
         p,
@@ -43,7 +40,7 @@ const requestSignature = ({
                                 <tbody>
                                     <tr>
                                         <td style="padding:0">
-                                            <img src="${HOST}/email-icons/logo.png" style="border:0" class="CToWUd" data-bit="iit">
+                                            <img src="${HOST}/email-icons/logo.png" alt="logo" style="border:0" class="CToWUd" data-bit="iit">
                                         </td>
                                     </tr>
                                 </tbody>
@@ -52,7 +49,7 @@ const requestSignature = ({
                                 <tbody>
                                     <tr>
                                         <td style="padding:0;padding-top:14px">
-                                            <img src="${HOST}/email-icons/signature.png" style="border:0" class="CToWUd" data-bit="iit">
+                                            <img src="${HOST}/email-icons/signature.png" alt="signature icon" style="border:0" class="CToWUd" data-bit="iit">
                                         </td>
                                     </tr>
                                 </tbody>
@@ -70,7 +67,7 @@ const requestSignature = ({
                     <tr>
                         <td style="padding:0;width:100%;text-align:center">
                             <p>
-                                ${requestedBy.name} (<span style="color:#0073ea"><a href="${requestedBy.email}" target="_blank">${requestedBy.email}</a></span>) has requested a signature.
+                                ${requestedBy.name} (<span style="color:#0073ea">${requestedBy.email}</span>) has requested a signature.
                             </p>
                         </td>
                     </tr>
@@ -108,9 +105,6 @@ const sendReminder = ({ requestedBy, documentName, message, url }) => {
   <html>
 
   <head>
-      <link rel="preconnect" href="https://fonts.googleapis.com">
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-      <!--[if (gte mso 9)|(IE)]><!-->
       <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
       <style>
           p,
@@ -138,7 +132,7 @@ const sendReminder = ({ requestedBy, documentName, message, url }) => {
                                   <tbody>
                                       <tr>
                                           <td style="padding:0">
-                                              <img src="${HOST}/email-icons/logo.png" style="border:0" class="CToWUd" data-bit="iit">
+                                              <img src="${HOST}/email-icons/logo.png" alt="logo" style="border:0" class="CToWUd" data-bit="iit">
                                           </td>
                                       </tr>
                                   </tbody>
@@ -147,7 +141,7 @@ const sendReminder = ({ requestedBy, documentName, message, url }) => {
                                   <tbody>
                                       <tr>
                                           <td style="padding:0;padding-top:14px">
-                                              <img src="${HOST}/email-icons/remainder.png" style="border:0" class="CToWUd" data-bit="iit">
+                                              <img src="${HOST}/email-icons/remainder.png" alt="remainder" style="border:0" class="CToWUd" data-bit="iit">
                                           </td>
                                       </tr>
                                   </tbody>
@@ -200,9 +194,6 @@ const signedDocument = ({ documentName, url }) => {
   <html>
 
 <head>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!--[if (gte mso 9)|(IE)]><!-->
     <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
     <style>
         p,
@@ -230,7 +221,7 @@ const signedDocument = ({ documentName, url }) => {
                                 <tbody>
                                     <tr>
                                         <td style="padding:0">
-                                            <img src="${HOST}/email-icons/logo.png" style="border:0" class="CToWUd" data-bit="iit">
+                                            <img src="${HOST}/email-icons/logo.png" alt="logo" style="border:0" class="CToWUd" data-bit="iit">
                                         </td>
                                     </tr>
                                 </tbody>
@@ -239,7 +230,7 @@ const signedDocument = ({ documentName, url }) => {
                                 <tbody>
                                     <tr>
                                         <td style="padding:0;padding-top:14px">
-                                            <img src="${HOST}/email-icons/signed.png" style="border:0" class="CToWUd" data-bit="iit" jslog="138226; u014N:xr6bB; 53:W2ZhbHNlLDJd">
+                                            <img src="${HOST}/email-icons/signed.png" alt="signed" style="border:0" class="CToWUd" data-bit="iit" jslog="138226; u014N:xr6bB; 53:W2ZhbHNlLDJd">
                                         </td>
                                     </tr>
                                 </tbody>
@@ -292,9 +283,6 @@ const emailVerification = (url) => {
   <html>
 
   <head>
-      <link rel="preconnect" href="https://fonts.googleapis.com">
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-      <!--[if (gte mso 9)|(IE)]><!-->
       <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
       <style>
           p,
@@ -322,7 +310,7 @@ const emailVerification = (url) => {
                                   <tbody>
                                       <tr>
                                           <td style="padding:0">
-                                              <img src="${HOST}/email-icons/logo.png" style="border:0" class="CToWUd" data-bit="iit">
+                                              <img src="${HOST}/email-icons/logo.png" alt="logo" style="border:0" class="CToWUd" data-bit="iit">
                                           </td>
                                       </tr>
                                   </tbody>
@@ -331,7 +319,7 @@ const emailVerification = (url) => {
                                   <tbody>
                                       <tr>
                                           <td style="padding:0;padding-top:14px">
-                                              <img src="${HOST}/email-icons/verification.png" style="border:0" class="CToWUd" data-bit="iit" jslog="138226; u014N:xr6bB; 53:W2ZhbHNlLDJd">
+                                              <img src="${HOST}/email-icons/verification.png" alt="verification" style="border:0" class="CToWUd" data-bit="iit" jslog="138226; u014N:xr6bB; 53:W2ZhbHNlLDJd">
                                           </td>
                                       </tr>
                                   </tbody>

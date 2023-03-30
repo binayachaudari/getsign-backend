@@ -4,6 +4,9 @@ const {
   validateRequest,
 } = require('../../middleware/validateRequest.middleware');
 const {
+  verifySessionToken,
+} = require('../../middleware/verifySessionToken.middleware');
+const {
   validateUploadFile,
   validateTemplateDetails,
   validateSenderDetails,
@@ -15,6 +18,7 @@ const {
 
 router.post(
   '/upload-file',
+  verifySessionToken,
   validateUploadFile(),
   validateRequest,
   controller.uploadFile
@@ -27,6 +31,7 @@ router.get(
 );
 router.get(
   '/history/:itemId/:id',
+  verifySessionToken,
   validateItemIdAndIdParam(),
   validateRequest,
   controller.getFileHistory
@@ -39,12 +44,14 @@ router.post(
 );
 router.delete(
   '/:id',
+  verifySessionToken,
   validateIdParam(),
   validateRequest,
   controller.deleteFile
 );
 router.put(
   '/:id',
+  verifySessionToken,
   validateSenderDetails(),
   validateRequest,
   controller.addSenderDetails
@@ -58,6 +65,7 @@ router.post(
 
 router.get(
   '/send-mail/:itemId/:id',
+  verifySessionToken,
   validateItemIdAndIdParam(),
   validateRequest,
   controller.sendPDF
@@ -83,6 +91,7 @@ router.get(
 
 router.get(
   '/contract/:itemId/:fileId',
+  verifySessionToken,
   validateItemIdAndFileId(),
   validateRequest,
   controller.getContract
