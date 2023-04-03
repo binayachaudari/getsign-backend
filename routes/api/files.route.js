@@ -18,9 +18,9 @@ const {
 
 router.post(
   '/upload-file',
-  verifySessionToken,
   validateUploadFile(),
   validateRequest,
+  verifySessionToken,
   controller.uploadFile
 );
 router.get(
