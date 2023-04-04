@@ -133,8 +133,8 @@ const requestSignature = ({
                                       <tr>
                                         <td valign="top" class="mcnTextContent" style="padding: 0px 18px 9px;color: #000000;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;word-break: break-word;font-family: Helvetica;font-size: 16px;line-height: 150%;text-align: left;">
                                           <div style="text-align: center">
-                                            ${requestedBy.name} (<a href="mailto:${requestedBy.email}" target="_blank" style="mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;color: #007c89;font-weight: normal;text-decoration: underline;">${requestedBy.email}) has requested a signature.
-                                          </a></div>
+                                            ${requestedBy.name} (<a href="mailto:${requestedBy.email}" target="_blank" style="mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;color: #007c89;font-weight: normal;text-decoration: underline;">${requestedBy.email}</a>) has requested a signature.
+                                          </div>
                                         </td>
                                       </tr>
                                     </tbody>
