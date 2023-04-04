@@ -12,6 +12,7 @@ const crypto = require('crypto');
 const { emailVerification } = require('./mailer');
 const fs = require('fs');
 const path = require('path');
+require('regenerator-runtime/runtime');
 
 const addFormFields = async (id, payload) => {
   const session = await FileHistory.startSession();
@@ -199,6 +200,13 @@ const signPDF = async ({ id, signatureFields, status, itemId }) => {
     const pages = pdfDoc.getPages();
     pdfDoc.registerFontkit(fontkit);
 
+    const fontBytes = fs.readFileSync(
+      path.join(__dirname, '..', 'utils/fonts/NotoSans-Regular.ttf')
+    );
+    const customFont = await pdfDoc.embedFont(fontBytes, {
+      features: { liga: false },
+    });
+
     const parsedFileDetails = fileDetails.toJSON();
 
     if (parsedFileDetails?.fields) {
@@ -227,6 +235,7 @@ const signPDF = async ({ id, signatureFields, status, itemId }) => {
             currentPage.drawText(value?.text, {
               x: placeHolder.formField.coordinates.x,
               y: placeHolder.formField.coordinates.y,
+              font: customFont,
               size: 11,
             });
         });
