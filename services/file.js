@@ -94,11 +94,11 @@ const generatePDF = async (id, fields) => {
     const pdfDoc = await PDFDocument.load(fileDetails?.file);
     const pages = pdfDoc.getPages();
     pdfDoc.registerFontkit(fontkit);
-    // Load the Noto Sans font
+    // Load the `Arial Unicode MS.ttf`
     const fontBytes = fs.readFileSync(
-      path.join(__dirname, '..', 'utils/fonts/NotoSans-Regular.ttf')
+      path.join(__dirname, '..', 'utils/fonts/Arial Unicode MS.ttf')
     );
-    const customFont = await pdfDoc.embedFont(fontBytes);
+    const customFont = await pdfDoc.embedFont(fontBytes, { subset: true });
 
     const parsedFileDetails = fileDetails.toJSON();
 
@@ -201,10 +201,10 @@ const signPDF = async ({ id, signatureFields, status, itemId }) => {
     pdfDoc.registerFontkit(fontkit);
 
     const fontBytes = fs.readFileSync(
-      path.join(__dirname, '..', 'utils/fonts/NotoSans-Regular.ttf')
+      path.join(__dirname, '..', 'utils/fonts/Arial Unicode MS.ttf')
     );
     const customFont = await pdfDoc.embedFont(fontBytes, {
-      features: { liga: false },
+      subset: true,
     });
 
     const parsedFileDetails = fileDetails.toJSON();
