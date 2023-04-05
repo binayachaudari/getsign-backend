@@ -118,10 +118,10 @@ const generatePDF = async (id, fields) => {
         const value = fields.find((item) => item?.id === placeHolder?.itemId);
 
         if (value) {
-          currentPage.setFont(customFont);
           currentPage.drawText(value?.text, {
             x: placeHolder.formField.coordinates.x,
             y: placeHolder.formField.coordinates.y,
+            font: customFont,
             size: 11,
           });
         }
