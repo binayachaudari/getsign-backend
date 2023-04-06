@@ -10,6 +10,9 @@ const { backOfficeSavedDocument } = require('./backoffice.service');
 const ApplicationModel = require('../models/Application.model');
 const crypto = require('crypto');
 const { emailVerification } = require('./mailer');
+const fs = require('fs');
+const path = require('path');
+require('regenerator-runtime/runtime');
 
 const addFormFields = async (id, payload) => {
   const session = await FileHistory.startSession();
@@ -87,9 +90,15 @@ const addFormFields = async (id, payload) => {
 const generatePDF = async (id, fields) => {
   try {
     const fileDetails = await getFile(id);
+
     const pdfDoc = await PDFDocument.load(fileDetails?.file);
     const pages = pdfDoc.getPages();
     pdfDoc.registerFontkit(fontkit);
+    // Load the `Arial Unicode MS.ttf`
+    const fontBytes = fs.readFileSync(
+      path.join(__dirname, '..', 'utils/fonts/Arial Unicode MS.ttf')
+    );
+    const customFont = await pdfDoc.embedFont(fontBytes, { subset: true });
 
     const parsedFileDetails = fileDetails.toJSON();
 
@@ -108,12 +117,14 @@ const generatePDF = async (id, fields) => {
         // } else {
         const value = fields.find((item) => item?.id === placeHolder?.itemId);
 
-        if (value)
+        if (value) {
           currentPage.drawText(value?.text, {
             x: placeHolder.formField.coordinates.x,
             y: placeHolder.formField.coordinates.y,
+            font: customFont,
             size: 11,
           });
+        }
         // }
       });
 
@@ -189,6 +200,13 @@ const signPDF = async ({ id, signatureFields, status, itemId }) => {
     const pages = pdfDoc.getPages();
     pdfDoc.registerFontkit(fontkit);
 
+    const fontBytes = fs.readFileSync(
+      path.join(__dirname, '..', 'utils/fonts/Arial Unicode MS.ttf')
+    );
+    const customFont = await pdfDoc.embedFont(fontBytes, {
+      subset: true,
+    });
+
     const parsedFileDetails = fileDetails.toJSON();
 
     if (parsedFileDetails?.fields) {
@@ -217,6 +235,7 @@ const signPDF = async ({ id, signatureFields, status, itemId }) => {
             currentPage.drawText(value?.text, {
               x: placeHolder.formField.coordinates.x,
               y: placeHolder.formField.coordinates.y,
+              font: customFont,
               size: 11,
             });
         });
