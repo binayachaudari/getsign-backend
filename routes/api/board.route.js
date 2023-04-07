@@ -18,6 +18,6 @@ router.get(
   controller.getBoardFile
 );
 
-router.get('/:accountId', verifySessionToken, controller.installedItemView);
+router.get('/installed', verifySessionToken, controller.installedItemView);
 
 module.exports = router;

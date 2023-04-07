@@ -5,9 +5,15 @@ const {
 
 module.exports = {
   installedItemView: async (req, res, next) => {
-    const { accountId } = req.params;
     try {
-      await updateBackOfficeInstalledItemView(Number(accountId));
+      await updateBackOfficeInstalledItemView(Number(req?.user?.account_id));
+      res
+        .json({
+          data: {
+            message: 'Status updated for accountId: ' + req?.user?.account_id,
+          },
+        })
+        .status(200);
     } catch (err) {
       next(err);
     }

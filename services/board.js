@@ -8,7 +8,10 @@ const updateBackOfficeInstalledItemView = async (accountId) => {
     const applicationDetails = await ApplicationModel.findOne({
       account_id: accountId,
     });
-    await backOfficeItemViewInstalled(applicationDetails?.back_office_item_id);
+    if (applicationDetails?.back_office_item_id)
+      await backOfficeItemViewInstalled(
+        applicationDetails?.back_office_item_id
+      );
   } catch (err) {
     throw err;
   }
