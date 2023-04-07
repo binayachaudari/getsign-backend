@@ -350,6 +350,16 @@ const backOfficeItemViewInstalled = async (itemId) => {
   return;
 };
 
+const backOfficeUpdateTotalSent = async (itemId, totalCount = 0) => {
+  monday.setToken(backOfficeMondayToken);
+
+  const values = JSON.stringify({
+    numbers5: totalCount,
+  });
+
+  await updateColumnValues(itemId, values);
+};
+
 module.exports = {
   backOfficeAddItem,
   backOfficeUploadedDocument,
@@ -358,4 +368,5 @@ module.exports = {
   backOfficeDocumentSigned,
   backOffice5DocumentSent,
   backOfficeItemViewInstalled,
+  backOfficeUpdateTotalSent,
 };

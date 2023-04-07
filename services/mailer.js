@@ -15,6 +15,7 @@ const ApplicationModel = require('../models/Application.model');
 const {
   backOfficeSentDocument,
   backOffice5DocumentSent,
+  backOfficeUpdateTotalSent,
 } = require('./backoffice.service');
 const { default: mongoose } = require('mongoose');
 
@@ -248,6 +249,12 @@ module.exports = {
         if (itemSentList[0].totalCount === 5) {
           await backOffice5DocumentSent(appInstallDetails.back_office_item_id);
         }
+
+        // Update count if status is sent
+        await backOfficeUpdateTotalSent(
+          appInstallDetails.back_office_item_id,
+          itemSentList[0].totalCount
+        );
 
         await session.commitTransaction();
         return mailStatus;
