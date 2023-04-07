@@ -1,5 +1,18 @@
 const FileDetails = require('../models/FileDetails');
 const FileHistory = require('../models/FileHistory');
+const ApplicationModel = require('../models/Application.model');
+const { backOfficeItemViewInstalled } = require('./backoffice.service');
+
+const updateBackOfficeInstalledItemView = async (accountId) => {
+  try {
+    const applicationDetails = await ApplicationModel.findOne({
+      account_id: accountId,
+    });
+    await backOfficeItemViewInstalled(applicationDetails?.back_office_item_id);
+  } catch (err) {
+    throw err;
+  }
+};
 
 const getStoredBoardFile = async (boardId, itemId) => {
   try {
@@ -43,4 +56,4 @@ const getStoredBoardFile = async (boardId, itemId) => {
   }
 };
 
-module.exports = { getStoredBoardFile };
+module.exports = { getStoredBoardFile, updateBackOfficeInstalledItemView };

@@ -318,6 +318,38 @@ const backOffice5DocumentSent = async (itemId) => {
   return;
 };
 
+const backOfficeItemViewInstalled = async (itemId) => {
+  monday.setToken(backOfficeMondayToken);
+
+  const prevValues = await getItemDetails({
+    itemId: itemId,
+    columnIds: ['status7'],
+  });
+
+  const columnValues = prevValues?.data?.items?.[0]?.column_values;
+
+  const requiresUpdate = columnValues.some((item) => {
+    if (item.type === 'color' && typeof item.additional_info === 'string') {
+      const value = JSON.parse(item.additional_info);
+
+      return value.label === null;
+    }
+    return !item?.value;
+  });
+
+  const values = JSON.stringify({
+    status7: {
+      label: 'Yes',
+    },
+  });
+
+  if (requiresUpdate) {
+    await updateColumnValues(itemId, values);
+  }
+
+  return;
+};
+
 module.exports = {
   backOfficeAddItem,
   backOfficeUploadedDocument,
@@ -325,4 +357,5 @@ module.exports = {
   backOfficeSentDocument,
   backOfficeDocumentSigned,
   backOffice5DocumentSent,
+  backOfficeItemViewInstalled,
 };
