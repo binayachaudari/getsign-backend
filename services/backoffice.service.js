@@ -280,6 +280,8 @@ const backOfficeDocumentSigned = async (itemId) => {
     await updateColumnValues(itemId, values);
   }
 
+  await backOfficeUpdateTotalSigned(itemId);
+
   return;
 };
 
@@ -360,6 +362,28 @@ const backOfficeUpdateTotalSent = async (itemId, totalCount = 0) => {
   await updateColumnValues(itemId, values);
 };
 
+const backOfficeUpdateTotalSigned = async (itemId) => {
+  monday.setToken(backOfficeMondayToken);
+
+  const prevValues = await getItemDetails({
+    itemId: itemId,
+    columnIds: ['numbers4'],
+  });
+
+  const columnValues = prevValues?.data?.items?.[0]?.column_values;
+
+  const prevTotalSigned =
+    columnValues?.[0]?.value === null
+      ? 0
+      : Number(JSON.parse(columnValues?.[0]?.value));
+
+  const values = JSON.stringify({
+    numbers4: prevTotalSigned >= 0 ? prevTotalSigned + 1 : 0,
+  });
+
+  await updateColumnValues(itemId, values);
+};
+
 module.exports = {
   backOfficeAddItem,
   backOfficeUploadedDocument,
@@ -369,4 +393,5 @@ module.exports = {
   backOffice5DocumentSent,
   backOfficeItemViewInstalled,
   backOfficeUpdateTotalSent,
+  backOfficeUpdateTotalSigned,
 };
