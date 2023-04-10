@@ -44,6 +44,7 @@ let transporter = nodemailer.createTransport({
 const sendRequestToSign = async ({ template, to, itemId, fileId }) => {
   return await transporter.sendMail({
     from: `${template.sender_name} - via GetSign <${process.env.EMAIL_USERNAME}>`,
+    replyTo: template.email_address,
     to,
     subject: `Signature requested by ${template.sender_name}`,
     text: `Your signature has been requested!
@@ -71,6 +72,7 @@ const sendRequestToSign = async ({ template, to, itemId, fileId }) => {
 const sendSignedDocuments = async (document, to) => {
   return await transporter.sendMail({
     from: `${document.senderName} - via GetSign <${process.env.EMAIL_USERNAME}>`,
+    replyTo: document.senderEmail,
     to,
     subject: `You just signed ${document.name}`,
     text: `You have successfully signed your document!
