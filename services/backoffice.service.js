@@ -280,6 +280,8 @@ const backOfficeDocumentSigned = async (itemId) => {
     await updateColumnValues(itemId, values);
   }
 
+  await backOfficeUpdateTotalSigned(itemId);
+
   return;
 };
 
@@ -318,6 +320,70 @@ const backOffice5DocumentSent = async (itemId) => {
   return;
 };
 
+const backOfficeItemViewInstalled = async (itemId) => {
+  monday.setToken(backOfficeMondayToken);
+
+  const prevValues = await getItemDetails({
+    itemId: itemId,
+    columnIds: ['status7'],
+  });
+
+  const columnValues = prevValues?.data?.items?.[0]?.column_values;
+
+  const requiresUpdate = columnValues.some((item) => {
+    if (item.type === 'color' && typeof item.additional_info === 'string') {
+      const value = JSON.parse(item.additional_info);
+
+      return value.label === null;
+    }
+    return !item?.value;
+  });
+
+  const values = JSON.stringify({
+    status7: {
+      label: 'Yes',
+    },
+  });
+
+  if (requiresUpdate) {
+    await updateColumnValues(itemId, values);
+  }
+
+  return;
+};
+
+const backOfficeUpdateTotalSent = async (itemId, totalCount = 0) => {
+  monday.setToken(backOfficeMondayToken);
+
+  const values = JSON.stringify({
+    numbers5: totalCount,
+  });
+
+  await updateColumnValues(itemId, values);
+};
+
+const backOfficeUpdateTotalSigned = async (itemId) => {
+  monday.setToken(backOfficeMondayToken);
+
+  const prevValues = await getItemDetails({
+    itemId: itemId,
+    columnIds: ['numbers4'],
+  });
+
+  const columnValues = prevValues?.data?.items?.[0]?.column_values;
+
+  const prevTotalSigned =
+    columnValues?.[0]?.value === null
+      ? 0
+      : Number(JSON.parse(columnValues?.[0]?.value));
+
+  const values = JSON.stringify({
+    numbers4: prevTotalSigned >= 0 ? prevTotalSigned + 1 : 0,
+  });
+
+  await updateColumnValues(itemId, values);
+};
+
 module.exports = {
   backOfficeAddItem,
   backOfficeUploadedDocument,
@@ -325,4 +391,7 @@ module.exports = {
   backOfficeSentDocument,
   backOfficeDocumentSigned,
   backOffice5DocumentSent,
+  backOfficeItemViewInstalled,
+  backOfficeUpdateTotalSent,
+  backOfficeUpdateTotalSigned,
 };

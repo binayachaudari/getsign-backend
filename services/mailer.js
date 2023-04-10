@@ -15,6 +15,7 @@ const ApplicationModel = require('../models/Application.model');
 const {
   backOfficeSentDocument,
   backOffice5DocumentSent,
+  backOfficeUpdateTotalSent,
 } = require('./backoffice.service');
 const { default: mongoose } = require('mongoose');
 
@@ -43,6 +44,7 @@ let transporter = nodemailer.createTransport({
 const sendRequestToSign = async ({ template, to, itemId, fileId }) => {
   return await transporter.sendMail({
     from: `${template.sender_name} - via GetSign <${process.env.EMAIL_USERNAME}>`,
+    replyTo: template.email_address,
     to,
     subject: `Signature requested by ${template.sender_name}`,
     text: `Your signature has been requested!
@@ -70,6 +72,7 @@ const sendRequestToSign = async ({ template, to, itemId, fileId }) => {
 const sendSignedDocuments = async (document, to) => {
   return await transporter.sendMail({
     from: `${document.senderName} - via GetSign <${process.env.EMAIL_USERNAME}>`,
+    replyTo: document.senderEmail,
     to,
     subject: `You just signed ${document.name}`,
     text: `You have successfully signed your document!
@@ -179,23 +182,10 @@ module.exports = {
       });
 
       if (mailStatus?.messageId) {
-        await updateStatusColumn({
-          itemId: itemId,
-          boardId: template.board_id,
-          columnId: template?.status_column_id,
-          columnValue: statusMapper[newSentHistory[0].status],
-          userId: template?.user_id,
-          accountId: template?.account_id,
-        });
-
         const appInstallDetails = await ApplicationModel.findOne({
           type: 'install',
           account_id: template.account_id,
         }).sort({ created_at: 'desc' });
-
-        if (appInstallDetails?.back_office_item_id) {
-          await backOfficeSentDocument(appInstallDetails.back_office_item_id);
-        }
 
         const itemSentList = await FileDetails.aggregate([
           {
@@ -245,11 +235,31 @@ module.exports = {
           },
         ]).session(session);
 
-        if (itemSentList[0].totalCount === 5) {
+        await session.commitTransaction();
+
+        await updateStatusColumn({
+          itemId: itemId,
+          boardId: template.board_id,
+          columnId: template?.status_column_id,
+          columnValue: statusMapper[newSentHistory[0].status],
+          userId: template?.user_id,
+          accountId: template?.account_id,
+        });
+
+        if (appInstallDetails?.back_office_item_id) {
+          await backOfficeSentDocument(appInstallDetails.back_office_item_id);
+        }
+
+        if (itemSentList[0].totalCount >= 5) {
           await backOffice5DocumentSent(appInstallDetails.back_office_item_id);
         }
 
-        await session.commitTransaction();
+        // Update count if status is sent
+        await backOfficeUpdateTotalSent(
+          appInstallDetails.back_office_item_id,
+          itemSentList[0].totalCount
+        );
+
         return mailStatus;
       }
 

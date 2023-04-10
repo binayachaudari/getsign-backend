@@ -172,6 +172,7 @@ module.exports = {
             itemId,
             fileId: result._id,
             senderName: template.sender_name,
+            senderEmail: template.email_address,
           },
           [template.email_address, to]
         );
