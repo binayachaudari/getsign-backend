@@ -182,23 +182,10 @@ module.exports = {
       });
 
       if (mailStatus?.messageId) {
-        await updateStatusColumn({
-          itemId: itemId,
-          boardId: template.board_id,
-          columnId: template?.status_column_id,
-          columnValue: statusMapper[newSentHistory[0].status],
-          userId: template?.user_id,
-          accountId: template?.account_id,
-        });
-
         const appInstallDetails = await ApplicationModel.findOne({
           type: 'install',
           account_id: template.account_id,
         }).sort({ created_at: 'desc' });
-
-        if (appInstallDetails?.back_office_item_id) {
-          await backOfficeSentDocument(appInstallDetails.back_office_item_id);
-        }
 
         const itemSentList = await FileDetails.aggregate([
           {
@@ -248,6 +235,21 @@ module.exports = {
           },
         ]).session(session);
 
+        await session.commitTransaction();
+
+        await updateStatusColumn({
+          itemId: itemId,
+          boardId: template.board_id,
+          columnId: template?.status_column_id,
+          columnValue: statusMapper[newSentHistory[0].status],
+          userId: template?.user_id,
+          accountId: template?.account_id,
+        });
+
+        if (appInstallDetails?.back_office_item_id) {
+          await backOfficeSentDocument(appInstallDetails.back_office_item_id);
+        }
+
         if (itemSentList[0].totalCount >= 5) {
           await backOffice5DocumentSent(appInstallDetails.back_office_item_id);
         }
@@ -258,7 +260,6 @@ module.exports = {
           itemSentList[0].totalCount
         );
 
-        await session.commitTransaction();
         return mailStatus;
       }
 
