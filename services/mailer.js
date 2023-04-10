@@ -248,7 +248,7 @@ module.exports = {
           },
         ]).session(session);
 
-        if (itemSentList[0].totalCount === 5) {
+        if (itemSentList[0].totalCount >= 5) {
           await backOffice5DocumentSent(appInstallDetails.back_office_item_id);
         }
 
