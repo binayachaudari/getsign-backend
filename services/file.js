@@ -12,12 +12,14 @@ const crypto = require('crypto');
 const { emailVerification } = require('./mailer');
 const fs = require('fs');
 const path = require('path');
+const { arraysAreEqual } = require('../utils/arrays');
 require('regenerator-runtime/runtime');
 
 const addFormFields = async (id, payload) => {
   const session = await FileHistory.startSession();
   session.startTransaction();
   try {
+    const oldFields = await FileDetails.findById(id);
     const updatedFields = await FileDetails.findByIdAndUpdate(id, {
       status: 'ready_to_sign',
       fields: [...payload],
@@ -34,49 +36,51 @@ const addFormFields = async (id, payload) => {
 
     await setMondayToken(updatedFields.user_id, updatedFields.account_id);
 
-    const notSignedByBoth = await FileHistory.aggregate([
-      {
-        $group: {
-          _id: '$itemId',
-          status: {
-            $push: '$status',
-          },
-          fileId: {
-            $first: '$fileId',
-          },
-        },
-      },
-      {
-        $match: {
-          fileId: Types.ObjectId(updatedFields._id),
-          status: {
-            $not: {
-              $all: ['signed_by_sender', 'signed_by_receiver'],
+    if (!arraysAreEqual(payload || [], oldFields?.fields || [])) {
+      const notSignedByBoth = await FileHistory.aggregate([
+        {
+          $group: {
+            _id: '$itemId',
+            status: {
+              $push: '$status',
+            },
+            fileId: {
+              $first: '$fileId',
             },
           },
         },
-      },
-    ]);
+        {
+          $match: {
+            fileId: Types.ObjectId(updatedFields._id),
+            status: {
+              $not: {
+                $all: ['signed_by_sender', 'signed_by_receiver'],
+              },
+            },
+          },
+        },
+      ]);
 
-    if (notSignedByBoth?.length > 0) {
-      notSignedByBoth?.forEach(async (item) => {
-        // updating status column
-        await updateStatusColumn({
-          itemId: item?._id,
-          boardId: updatedFields.board_id,
-          columnId: updatedFields?.status_column_id,
-          columnValue: undefined,
-          userId: updatedFields?.user_id,
-          accountId: updatedFields?.account_id,
+      if (notSignedByBoth?.length > 0) {
+        notSignedByBoth?.forEach(async (item) => {
+          // updating status column
+          await updateStatusColumn({
+            itemId: item?._id,
+            boardId: updatedFields.board_id,
+            columnId: updatedFields?.status_column_id,
+            columnValue: undefined,
+            userId: updatedFields?.user_id,
+            accountId: updatedFields?.account_id,
+          });
         });
-      });
 
-      const notSignedByBothItemIds = notSignedByBoth.map((item) => item?._id);
+        const notSignedByBothItemIds = notSignedByBoth.map((item) => item?._id);
 
-      // delete history
-      await FileHistory.deleteMany({
-        itemId: { $in: notSignedByBothItemIds },
-      });
+        // delete history
+        await FileHistory.deleteMany({
+          itemId: { $in: notSignedByBothItemIds },
+        });
+      }
     }
 
     return updatedFields;
