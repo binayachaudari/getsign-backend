@@ -8,3 +8,5 @@ function arraysAreEqual(array1, array2) {
     return !!obj2; // convert obj2 to a boolean value
   });
 }
+
+module.exports = { arraysAreEqual };
