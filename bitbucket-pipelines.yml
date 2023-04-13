@@ -1,0 +1,18 @@
+image: node:18
+
+pipelines:
+  branches:
+    dev:
+      - parallel:
+          - step:
+              name: Build
+              caches:
+                - node
+              script:
+                - yarn --prod --frozen-lockfile
+          - step:
+              name: Push to dev environment
+              script:
+                - ssh -tt $SERVER
+                - cd /var/www/GetSign-Dev/jetsign-backend/
+                - cat package.json
