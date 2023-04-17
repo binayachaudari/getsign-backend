@@ -2,21 +2,14 @@
 
 echo "Deplpyment Group is: $DEPLOYMENT_GROUP_NAME";
 
-if [ "$DEPLOYMENT_GROUP_NAME" == "GetSignBackEndCICDDev" ]; then
-  cd /var/www//var/www/GetSign-Dev/jetsign-backend
-fi
+sudo /bin/bash
+# sudo apt-get update
+# curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+# sudo apt-get install -y nodejs
+# sudo apt-get install npm  -y
+# sudo npm install -g yarn 
 
-if [ "$DEPLOYMENT_GROUP_NAME" == "GetSignBackEndCICDProd" ]; then
-  cd /home/ubuntu/GetSign/jetsign-backend
-fi
-
-
-sudo apt-get update
-sudo apt-get install -y nodejs
-sudo apt-get install npm  -y
-sudo npm install -g yarn 
-
-yarn global add pm2
+# sudo yarn global add pm2
 
 echo "Node Version"
 sudo node -v
