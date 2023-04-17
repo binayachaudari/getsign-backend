@@ -12,4 +12,6 @@ if [ "$DEPLOYMENT_GROUP_NAME" == "GetSignBackEndCICDProd"]; then
   sudo pm2 restart server
 fi
 
+sudo pm2 status
+
 
