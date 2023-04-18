@@ -2,7 +2,7 @@ version: 0.0
 os: linux
 files:
   - source: /
-    destination: /var/www/GetSign-Dev/jetsign-backend
+    destination: /var/www/GetSign-Dev/application
 hooks:
   BeforeInstall:
     - location: scripts/before_install.sh
