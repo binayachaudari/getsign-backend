@@ -44,6 +44,7 @@ const uploadFile = async (req) => {
     item_id: body.item_id,
     user_id: body.user_id,
     file_name: file.name,
+    itemViewInstanceId: body.instanceId,
   });
 
   result.email_address = prev?.email_address;

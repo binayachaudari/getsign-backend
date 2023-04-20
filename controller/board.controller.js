@@ -2,6 +2,7 @@ const {
   getStoredBoardFile,
   updateBackOfficeInstalledItemView,
   getAvailableFilesForBoard,
+  updateInstanceId,
 } = require('../services/board');
 
 module.exports = {
@@ -34,6 +35,18 @@ module.exports = {
   },
   setInstanceId: async (req, res, next) => {
     try {
+      const { fileId } = req.params;
+      const { instanceId } = req.body;
+      const result = await updateInstanceId(fileId, instanceId);
+      return res
+        .json({
+          data: {
+            _id: result._id,
+            file_name: result.file_name,
+            instanceId: result.itemViewInstanceId,
+          },
+        })
+        .status(200);
     } catch (err) {
       next(err);
     }

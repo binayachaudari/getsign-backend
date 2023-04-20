@@ -18,12 +18,12 @@ router.get(
   controller.getBoardFile
 );
 
-router.get(
-  '/:boardId',
+router.get('/:boardId', verifySessionToken, controller.getFiles);
+
+router.put(
+  '/update-instance/:fileId',
   verifySessionToken,
-  boardGetBoardFileValidator(),
-  validateRequest,
-  controller.getFiles
+  controller.setInstanceId
 );
 
 router.get('/installed', verifySessionToken, controller.installedItemView);

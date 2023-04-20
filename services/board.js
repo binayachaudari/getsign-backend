@@ -28,6 +28,18 @@ const getAvailableFilesForBoard = async (boardId) => {
   }
 };
 
+const updateInstanceId = async (fileId, instanceId) => {
+  try {
+    return await FileDetails.findByIdAndUpdate(fileId, {
+      $set: {
+        itemViewInstanceId: instanceId,
+      },
+    });
+  } catch (err) {
+    throw err;
+  }
+};
+
 const getStoredBoardFile = async (boardId, itemId, instanceId) => {
   try {
     const doc = await FileDetails.findOne({
@@ -76,5 +88,6 @@ const getStoredBoardFile = async (boardId, itemId, instanceId) => {
 module.exports = {
   getStoredBoardFile,
   getAvailableFilesForBoard,
+  updateInstanceId,
   updateBackOfficeInstalledItemView,
 };
