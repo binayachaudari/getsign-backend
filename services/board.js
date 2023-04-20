@@ -19,8 +19,17 @@ const updateBackOfficeInstalledItemView = async (accountId) => {
 
 const getStoredBoardFile = async (boardId, itemId, instanceId) => {
   try {
+    const doc = await FileDetails.findOne({
+      board_id: boardId,
+      itemViewInstanceId: instanceId,
+      is_deleted: false,
+    })
+      .select('-email_verification_token -email_verification_token_expires')
+      .exec();
+
     const alreadySignedFile = await FileHistory.findOne({
       itemId,
+      fileId: doc?._id,
       status: { $in: ['signed_by_receiver', 'signed_by_sender'] },
     }).exec();
 
@@ -37,14 +46,6 @@ const getStoredBoardFile = async (boardId, itemId, instanceId) => {
         hasStartedSigningProcess: !!hasStartedSigningProcess?._id,
       };
     }
-
-    const doc = await FileDetails.findOne({
-      board_id: boardId,
-      itemViewInstanceId: instanceId,
-      is_deleted: false,
-    })
-      .select('-email_verification_token -email_verification_token_expires')
-      .exec();
 
     const hasStartedSigningProcess = await FileHistory.findOne({
       fileId: doc?._id,

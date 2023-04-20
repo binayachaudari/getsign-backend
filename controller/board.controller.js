@@ -26,7 +26,7 @@ module.exports = {
       const boardDetails = await getStoredBoardFile(
         boardId,
         itemId,
-        instanceId
+        Number(instanceId)
       );
       return res
         .json({
