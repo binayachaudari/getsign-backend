@@ -52,6 +52,10 @@ const schema = new mongoose.Schema(
     email_verification_token_expires: {
       type: Date,
     },
+    itemViewInstanceId: {
+      type: Number,
+      requred: true,
+    },
   },
   {
     timestamps: {

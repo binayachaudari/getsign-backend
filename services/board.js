@@ -17,7 +17,7 @@ const updateBackOfficeInstalledItemView = async (accountId) => {
   }
 };
 
-const getStoredBoardFile = async (boardId, itemId) => {
+const getStoredBoardFile = async (boardId, itemId, instanceId) => {
   try {
     const alreadySignedFile = await FileHistory.findOne({
       itemId,
@@ -37,8 +37,10 @@ const getStoredBoardFile = async (boardId, itemId) => {
         hasStartedSigningProcess: !!hasStartedSigningProcess?._id,
       };
     }
+
     const doc = await FileDetails.findOne({
       board_id: boardId,
+      itemViewInstanceId: instanceId,
       is_deleted: false,
     })
       .select('-email_verification_token -email_verification_token_expires')

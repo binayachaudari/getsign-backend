@@ -20,9 +20,14 @@ module.exports = {
   },
   getBoardFile: async (req, res, next) => {
     const { boardId, itemId } = req.params;
+    const { instanceId } = req.query;
 
     try {
-      const boardDetails = await getStoredBoardFile(boardId, itemId);
+      const boardDetails = await getStoredBoardFile(
+        boardId,
+        itemId,
+        instanceId
+      );
       return res
         .json({
           data: { ...boardDetails, isAuthenticated: req.isAuthenticated },
