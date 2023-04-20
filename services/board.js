@@ -17,6 +17,17 @@ const updateBackOfficeInstalledItemView = async (accountId) => {
   }
 };
 
+const getAvailableFilesForBoard = async (boardId) => {
+  try {
+    return FileDetails.find({
+      board_id: boardId,
+      is_deleted: false,
+    }).select('_id file_name');
+  } catch (err) {
+    throw err;
+  }
+};
+
 const getStoredBoardFile = async (boardId, itemId, instanceId) => {
   try {
     const doc = await FileDetails.findOne({
@@ -62,4 +73,8 @@ const getStoredBoardFile = async (boardId, itemId, instanceId) => {
   }
 };
 
-module.exports = { getStoredBoardFile, updateBackOfficeInstalledItemView };
+module.exports = {
+  getStoredBoardFile,
+  getAvailableFilesForBoard,
+  updateBackOfficeInstalledItemView,
+};

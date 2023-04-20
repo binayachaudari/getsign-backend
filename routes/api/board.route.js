@@ -18,6 +18,14 @@ router.get(
   controller.getBoardFile
 );
 
+router.get(
+  '/:boardId',
+  verifySessionToken,
+  boardGetBoardFileValidator(),
+  validateRequest,
+  controller.getFiles
+);
+
 router.get('/installed', verifySessionToken, controller.installedItemView);
 
 module.exports = router;

@@ -1,6 +1,7 @@
 const {
   getStoredBoardFile,
   updateBackOfficeInstalledItemView,
+  getAvailableFilesForBoard,
 } = require('../services/board');
 
 module.exports = {
@@ -14,6 +15,25 @@ module.exports = {
           },
         })
         .status(200);
+    } catch (err) {
+      next(err);
+    }
+  },
+  getFiles: async (req, res, next) => {
+    try {
+      const { boardId } = req.params;
+      const result = await getAvailableFilesForBoard(boardId);
+      return res
+        .json({
+          data: result,
+        })
+        .status(200);
+    } catch (err) {
+      next(err);
+    }
+  },
+  setInstanceId: async (req, res, next) => {
+    try {
     } catch (err) {
       next(err);
     }
