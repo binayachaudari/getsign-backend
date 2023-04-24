@@ -33,6 +33,7 @@ const updateInstanceId = async (fileId, instanceId) => {
     return await FileDetails.findByIdAndUpdate(fileId, {
       $set: {
         itemViewInstanceId: instanceId,
+        status_column_id: null,
       },
     });
   } catch (err) {

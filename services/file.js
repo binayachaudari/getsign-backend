@@ -285,6 +285,19 @@ const addSenderDetails = async (
   try {
     const updated = await FileDetails.findById(id);
 
+    const statusColumnAlreadyUsed = await FileDetails.find({
+      board_id: updated?.board_id,
+      status_column_id: status_column_id,
+      itemViewInstanceId: { $ne: null },
+    });
+
+    if (statusColumnAlreadyUsed) {
+      throw {
+        statusCode: 400,
+        message: 'Status column already used',
+      };
+    }
+
     if (updated.email_address !== email_address) {
       const verificationToken = crypto.randomBytes(20).toString('hex');
       const verificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000;
