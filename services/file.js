@@ -291,7 +291,7 @@ const addSenderDetails = async (
       itemViewInstanceId: { $ne: null },
     });
 
-    if (statusColumnAlreadyUsed) {
+    if (statusColumnAlreadyUsed.length) {
       throw {
         statusCode: 400,
         message: 'Status column already used',
