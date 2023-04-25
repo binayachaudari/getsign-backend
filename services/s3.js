@@ -109,6 +109,8 @@ const getFile = async (id) => {
 
     fileDetails.file = `data:${contentType};base64,${base64String}`;
 
+    delete fileDetails.email_verification_token;
+    delete fileDetails.email_verification_token_expires;
     return fileDetails;
   } catch (error) {
     throw error;
