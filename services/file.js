@@ -289,6 +289,7 @@ const addSenderDetails = async (
       board_id: updated?.board_id,
       status_column_id: status_column_id,
       itemViewInstanceId: { $ne: null },
+      _id: { $ne: Types.ObjectId(id) },
     });
 
     if (statusColumnAlreadyUsed.length) {
