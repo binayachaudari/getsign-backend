@@ -290,6 +290,7 @@ const addSenderDetails = async (
       status_column_id: status_column_id,
       itemViewInstanceId: { $ne: null },
       _id: { $ne: Types.ObjectId(id) },
+      is_deleted: false,
     });
 
     if (statusColumnAlreadyUsed.length) {
