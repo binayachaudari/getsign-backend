@@ -63,6 +63,8 @@ router.post(
   controller.addSignature
 );
 
+router.get('/generate-preview/:itemId/:fileId', controller.generatePreview);
+
 router.get(
   '/send-mail/:itemId/:id',
   verifySessionToken,

@@ -16,6 +16,7 @@ const {
   getFinalContract,
   getFileToSignSender,
   downloadContract,
+  generateFilePreview,
 } = require('../services/fileHistory');
 const { emailRequestToSign, sendFinalContract } = require('../services/mailer');
 const {
@@ -297,6 +298,16 @@ module.exports = {
     const { id } = req.params;
     try {
       const result = await getFinalContract(id);
+      return res.json({ data: result }).status(200);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  generatePreview: async (req, res, next) => {
+    const { itemId, fileId } = req.params;
+    try {
+      const result = await generateFilePreview(fileId, itemId);
       return res.json({ data: result }).status(200);
     } catch (error) {
       next(error);

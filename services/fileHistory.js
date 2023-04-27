@@ -325,6 +325,31 @@ const getFinalContract = async (id, withPdfBytes) => {
   }
 };
 
+const generateFilePreview = async (fileId, itemId) => {
+  try {
+    const fileDetails = await FileDetails.findById(fileId);
+    await setMondayToken(fileDetails.user_id, fileDetails.account_id);
+    const columnValues = await getColumnValues(itemId);
+    const formValues = [
+      ...(columnValues?.data?.items?.[0]?.column_values || []),
+      {
+        id: 'item-name',
+        text: columnValues?.data?.items?.[0]?.name || '',
+        title: 'Item Name',
+        type: 'text',
+      },
+    ];
+
+    const generatedPDF = await generatePDF(fileId, formValues);
+    return {
+      fileId,
+      ...generatedPDF,
+    };
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
   addFileHistory,
   getFileHistory,
@@ -333,4 +358,5 @@ module.exports = {
   getFileToSignReceiver,
   getFinalContract,
   downloadContract,
+  generateFilePreview,
 };
