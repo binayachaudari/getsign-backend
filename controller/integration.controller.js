@@ -1,19 +1,20 @@
-async function autoSend(req, res, next) {
-  console.log(JSON.stringify(req.body));
-  res.send({ data: req.body }).status(200);
-}
+const { getFileToAutoSend } = require('../services/integrations.service');
 
-async function autoSendSubscribe(req, res, next) {
-  console.log(JSON.stringify(req.body));
-  res.send({ data: req.body }).status(200);
-}
-async function autoSendUnsubscribe(req, res, next) {
-  console.log(JSON.stringify(req.body));
-  res.send({ data: req.body }).status(200);
+async function autoSend(req, res, next) {
+  try {
+    const payload = req?.body?.payload;
+    const itemId = payload?.inputFields?.itemId;
+    const boardId = payload?.inputFields?.boardId;
+    const columnId = payload?.inputFields?.columnId;
+
+    const result = await getFileToAutoSend(itemId, boardId, columnId);
+
+    res.send({ data: result }).status(200);
+  } catch (error) {
+    next(error);
+  }
 }
 
 module.exports = {
   autoSend,
-  autoSendSubscribe,
-  autoSendUnsubscribe,
 };
