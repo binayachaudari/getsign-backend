@@ -261,10 +261,10 @@ module.exports = {
         );
 
         return mailStatus;
+      } else {
+        await session.abortTransaction();
+        session.endSession();
       }
-
-      await session.abortTransaction();
-      session.endSession();
     } catch (err) {
       await session.abortTransaction();
       session.endSession();

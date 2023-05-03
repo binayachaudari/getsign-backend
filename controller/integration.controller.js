@@ -2,6 +2,7 @@ const { getFileToAutoSend } = require('../services/integrations.service');
 
 async function autoSend(req, res, next) {
   try {
+    console.log(JSON.stringify(req.body));
     const payload = req?.body?.payload;
     const itemId = payload?.inputFields?.itemId;
     const boardId = payload?.inputFields?.boardId;
@@ -10,13 +11,15 @@ async function autoSend(req, res, next) {
     const previousColumnValue = payload?.inputFields?.previousColumnValue;
 
     if (columnValue?.label?.index === previousColumnValue?.label?.index) {
-      return res.send({ data: 'Same status as previous.' }).status(200);
+      return res.status(200).send({});
     }
 
     const result = await getFileToAutoSend(itemId, boardId, columnId);
+    console.log(result);
 
-    res.send({ data: result }).status(200);
+    return res.status(200).send({});
   } catch (error) {
+    console.log(error);
     next(error);
   }
 }
