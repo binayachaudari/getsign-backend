@@ -6,6 +6,12 @@ async function autoSend(req, res, next) {
     const itemId = payload?.inputFields?.itemId;
     const boardId = payload?.inputFields?.boardId;
     const columnId = payload?.inputFields?.columnId;
+    const columnValue = payload?.inputFields?.columnValue;
+    const previousColumnValue = payload?.inputFields?.previousColumnValue;
+
+    if (columnValue?.label?.index === previousColumnValue?.label?.index) {
+      return res.send({ data: 'Same status as previous.' }).status(200);
+    }
 
     const result = await getFileToAutoSend(itemId, boardId, columnId);
 
