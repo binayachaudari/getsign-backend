@@ -2,7 +2,6 @@ const { getFileToAutoSend } = require('../services/integrations.service');
 
 async function autoSend(req, res, next) {
   try {
-    console.log(JSON.stringify(req.body));
     const payload = req?.body?.payload;
     const itemId = payload?.inputFields?.itemId;
     const boardId = payload?.inputFields?.boardId;
@@ -14,12 +13,11 @@ async function autoSend(req, res, next) {
       return res.status(200).send({});
     }
 
-    const result = await getFileToAutoSend(itemId, boardId, columnId);
-    console.log(result);
+    await getFileToAutoSend(itemId, boardId, columnId);
 
     return res.status(200).send({});
   } catch (error) {
-    console.log(error);
+    console.error(error);
     next(error);
   }
 }
