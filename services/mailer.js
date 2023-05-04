@@ -235,8 +235,6 @@ module.exports = {
           },
         ]).session(session);
 
-        await session.commitTransaction();
-
         await updateStatusColumn({
           itemId: itemId,
           boardId: template.board_id,
@@ -248,23 +246,24 @@ module.exports = {
 
         if (appInstallDetails?.back_office_item_id) {
           await backOfficeSentDocument(appInstallDetails.back_office_item_id);
+
+          if (itemSentList[0].totalCount >= 5) {
+            await backOffice5DocumentSent(
+              appInstallDetails.back_office_item_id
+            );
+          }
+          // Update count if status is sent
+          await backOfficeUpdateTotalSent(
+            appInstallDetails.back_office_item_id,
+            itemSentList[0].totalCount
+          );
         }
 
-        if (itemSentList[0].totalCount >= 5) {
-          await backOffice5DocumentSent(appInstallDetails.back_office_item_id);
-        }
-
-        // Update count if status is sent
-        await backOfficeUpdateTotalSent(
-          appInstallDetails.back_office_item_id,
-          itemSentList[0].totalCount
-        );
-
+        await session.commitTransaction();
         return mailStatus;
-      } else {
-        await session.abortTransaction();
-        session.endSession();
       }
+      await session.abortTransaction();
+      session.endSession();
     } catch (err) {
       await session.abortTransaction();
       session.endSession();
