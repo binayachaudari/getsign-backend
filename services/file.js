@@ -13,6 +13,7 @@ const { emailVerification } = require('./mailer');
 const fs = require('fs');
 const path = require('path');
 const { arraysAreEqual } = require('../utils/arrays');
+const statusMapper = require('../config/statusMapper');
 require('regenerator-runtime/runtime');
 
 const addFormFields = async (id, payload) => {
@@ -299,6 +300,26 @@ const addSenderDetails = async (
         message: 'Status column already used',
       };
     }
+
+    for (const [key, value] of Object.entries(statusMapper)) {
+      await updateStatusColumn({
+        itemId: updated.item_id,
+        boardId: updated.board_id,
+        columnId: status_column_id,
+        columnValue: value,
+        userId: updated?.user_id,
+        accountId: updated?.account_id,
+      });
+    }
+
+    await updateStatusColumn({
+      itemId: updated.item_id,
+      boardId: updated.board_id,
+      columnId: status_column_id,
+      columnValue: null,
+      userId: updated?.user_id,
+      accountId: updated?.account_id,
+    });
 
     if (updated.email_address !== email_address) {
       const verificationToken = crypto.randomBytes(20).toString('hex');

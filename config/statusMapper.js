@@ -5,4 +5,5 @@ module.exports = {
   viewed: 'Viewed',
   signed_by_sender: 'Signed By Sender',
   signed_by_receiver: 'Signed By Receiver',
+  send_via_integration: 'Send (via integration)',
 };
