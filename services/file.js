@@ -301,25 +301,25 @@ const addSenderDetails = async (
       };
     }
 
-    for (const [key, value] of Object.entries(statusMapper)) {
-      await updateStatusColumn({
-        itemId: updated.item_id,
-        boardId: updated.board_id,
-        columnId: status_column_id,
-        columnValue: value,
-        userId: updated?.user_id,
-        accountId: updated?.account_id,
-      });
-    }
+    // for (const [key, value] of Object.entries(statusMapper)) {
+    //   await updateStatusColumn({
+    //     itemId: updated.item_id,
+    //     boardId: updated.board_id,
+    //     columnId: status_column_id,
+    //     columnValue: value,
+    //     userId: updated?.user_id,
+    //     accountId: updated?.account_id,
+    //   });
+    // }
 
-    await updateStatusColumn({
-      itemId: updated.item_id,
-      boardId: updated.board_id,
-      columnId: status_column_id,
-      columnValue: null,
-      userId: updated?.user_id,
-      accountId: updated?.account_id,
-    });
+    // await updateStatusColumn({
+    //   itemId: updated.item_id,
+    //   boardId: updated.board_id,
+    //   columnId: status_column_id,
+    //   columnValue: null,
+    //   userId: updated?.user_id,
+    //   accountId: updated?.account_id,
+    // });
 
     if (updated.email_address !== email_address) {
       const verificationToken = crypto.randomBytes(20).toString('hex');
