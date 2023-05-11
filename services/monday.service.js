@@ -163,6 +163,7 @@ const getColumnDetails = async (itemId, columnIds) => {
           columns (ids:$columnIds) {
             id
             title
+            type
             settings_str
           }
         }
@@ -519,7 +520,6 @@ const getSpecificColumnValue = async (itemId, columnIds) => {
   );
 
   const column = res?.data?.items?.[0]?.column_values?.[0];
-  console.log(getFieldValue(column));
   return getFieldValue(column);
 };
 

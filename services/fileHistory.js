@@ -371,7 +371,15 @@ const generateFilePreview = async (fileId, itemId) => {
         for (const item of columnValues?.data?.items?.[0]?.column_values) {
           if (parsedColumn.formulaColumns.includes(item.id)) {
             const columnValue = await getSpecificColumnValue(itemId, item.id);
-            formulaColumnValues.set(item, columnValue);
+            formulaColumnValues.set(
+              {
+                ...item,
+                columnId: column?.id,
+                columnType: column?.type,
+                columnTitle: column?.title,
+              },
+              columnValue
+            );
           }
         }
       }
@@ -405,10 +413,20 @@ const generateFilePreview = async (fileId, itemId) => {
           ? finalFormulaValue
           : toFixed(finalFormulaValue);
 
-        formValues.push({
-          ...key,
-          text: finalFormulaValue,
-        });
+        const alreadyExistsIdx = formValues.findIndex(
+          (formValue) => formValue.id === key?.columnId
+        );
+
+        if (alreadyExistsIdx > -1) {
+          formValues[alreadyExistsIdx].text = finalFormulaValue;
+        } else {
+          formValues.push({
+            id: key?.columnId,
+            type: key?.columnType,
+            title: key?.columnTitle,
+            text: finalFormulaValue,
+          });
+        }
       }
     }
 
