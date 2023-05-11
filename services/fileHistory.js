@@ -9,8 +9,17 @@ const {
   updateStatusColumn,
   getColumnValues,
   getEmailColumnValue,
+  getColumnDetails,
+  getSpecificColumnValue,
 } = require('./monday.service');
 const { s3, getSignedUrl } = require('./s3');
+const {
+  getFormulaColumns,
+  parseFormulaColumnIds,
+  renameFunctions,
+} = require('../utils/formula');
+const HyperFormula = require('../utils/hyperFormula');
+const { toFixed } = require('../utils/number');
 
 const addFileHistory = async ({
   id,
@@ -339,6 +348,69 @@ const generateFilePreview = async (fileId, itemId) => {
         type: 'text',
       },
     ];
+
+    // Formula column
+    const formulaColumnValues = new Map();
+
+    const formulaColumns = getFormulaColumns(
+      columnValues?.data?.items?.[0]?.column_values || []
+    );
+
+    if (formulaColumns.length > 0) {
+      const columnDetailsResponse = await getColumnDetails(
+        itemId,
+        formulaColumns?.map((column) => column?.id)
+      );
+      const columnDetails =
+        columnDetailsResponse?.data?.items?.[0]?.board?.columns || [];
+
+      let finalFormula;
+      for (const column of columnDetails) {
+        const parsedColumn = parseFormulaColumnIds(column?.settings_str);
+        finalFormula = parsedColumn.formula;
+        for (const item of columnValues?.data?.items?.[0]?.column_values) {
+          if (parsedColumn.formulaColumns.includes(item.id)) {
+            const columnValue = await getSpecificColumnValue(itemId, item.id);
+            formulaColumnValues.set(item, columnValue);
+          }
+        }
+      }
+      const formulaColumnsKeys = Array.from(formulaColumnValues.keys());
+      for (let index = 0; index < formulaColumnsKeys.length; index++) {
+        const key = formulaColumnsKeys[index];
+        const chr = String.fromCharCode(97 + index).toUpperCase();
+        const globalRegex = new RegExp(`{${key?.id}}`, 'g');
+        finalFormula = finalFormula.replace(globalRegex, `${chr}1`);
+
+        finalFormula = '=' + finalFormula.replace(/'/g, '"');
+        finalFormula = renameFunctions(finalFormula);
+
+        // Hyper Formula Plugin
+        const formulaRow = [
+          ...Array.from(formulaColumnValues.values()),
+          finalFormula,
+        ];
+
+        const hfInstance = HyperFormula.buildFromArray([formulaRow], {
+          licenseKey: 'gpl-v3',
+          useColumnIndex: true,
+          smartRounding: false,
+        });
+        let finalFormulaValue = hfInstance.getCellValue({
+          sheet: 0,
+          col: formulaRow.length - 1,
+          row: 0,
+        });
+        finalFormulaValue = isNaN(finalFormulaValue)
+          ? finalFormulaValue
+          : toFixed(finalFormulaValue);
+
+        formValues.push({
+          ...key,
+          text: finalFormulaValue,
+        });
+      }
+    }
 
     const generatedPDF = await generatePDF(fileId, formValues);
     return {
