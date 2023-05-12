@@ -373,22 +373,20 @@ const generateFilePreview = async (fileId, itemId) => {
             const columnValue = await getSpecificColumnValue(itemId, item.id);
             formulaColumnValues.set(
               {
-                ...item,
-                columnId: column?.id,
-                columnType: column?.type,
-                columnTitle: column?.title,
+                id: item.id,
               },
               columnValue
             );
           }
         }
-      }
-      const formulaColumnsKeys = Array.from(formulaColumnValues.keys());
-      for (let index = 0; index < formulaColumnsKeys.length; index++) {
-        const key = formulaColumnsKeys[index];
-        const chr = String.fromCharCode(97 + index).toUpperCase();
-        const globalRegex = new RegExp(`{${key?.id}}`, 'g');
-        finalFormula = finalFormula.replace(globalRegex, `${chr}1`);
+
+        const formulaColumnsKeys = Array.from(formulaColumnValues.keys());
+        for (let index = 0; index < formulaColumnsKeys.length; index++) {
+          const key = formulaColumnsKeys[index];
+          const chr = String.fromCharCode(97 + index).toUpperCase();
+          const globalRegex = new RegExp(`{${key?.id}}`, 'g');
+          finalFormula = finalFormula.replace(globalRegex, `${chr}1`);
+        }
 
         finalFormula = '=' + finalFormula.replace(/'/g, '"');
         finalFormula = renameFunctions(finalFormula);
@@ -414,16 +412,14 @@ const generateFilePreview = async (fileId, itemId) => {
           : toFixed(finalFormulaValue);
 
         const alreadyExistsIdx = formValues.findIndex(
-          (formValue) => formValue.id === key?.columnId
+          (formValue) => formValue.id === column?.id
         );
 
         if (alreadyExistsIdx > -1) {
           formValues[alreadyExistsIdx].text = finalFormulaValue;
         } else {
           formValues.push({
-            id: key?.columnId,
-            type: key?.columnType,
-            title: key?.columnTitle,
+            ...column,
             text: finalFormulaValue,
           });
         }
