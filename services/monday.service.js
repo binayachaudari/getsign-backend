@@ -208,6 +208,10 @@ function getFieldValue(column, itemId, searchMode = true) {
       column.value != null ? column.value.replace('"', '') : column.value;
   }
 
+  const additional_info = column.additional_info
+    ? JSON.parse(column.additional_info)
+    : null;
+
   // Handle status
   if (type === 'color') {
     const additional_info = column.additional_info
@@ -344,9 +348,19 @@ function getFieldValue(column, itemId, searchMode = true) {
   } else if (type === 'numeric') {
     value = column.value ? jsonObj : '0';
     if (searchMode) {
-      value = `${jsonObj != null ? jsonObj : ''}`;
+      value = `${
+        jsonObj != null
+          ? jsonObj +
+            (additional_info?.symbol === '%' ? additional_info?.symbol : '')
+          : ''
+      }`;
     } else {
-      value = JSON.stringify(jsonObj != null ? jsonObj : '');
+      value = JSON.stringify(
+        jsonObj != null
+          ? jsonObj +
+              (additional_info?.symbol === '%' ? additional_info?.symbol : '')
+          : ''
+      );
     }
   } else if (type === 'pulse-id') {
     jsonObj = itemId || jsonObj.text;
