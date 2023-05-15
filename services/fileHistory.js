@@ -419,13 +419,13 @@ const generateFilePreview = async (fileId, itemId) => {
 
         if (alreadyExistsIdx > -1) {
           formValues[alreadyExistsIdx].text = parsedFormula.symbol
-            ? `${parsedFormula?.symbol} ${finalFormulaValue}`
+            ? `${parsedFormula?.symbol}${finalFormulaValue}`
             : finalFormulaValue;
         } else {
           formValues.push({
             ...column,
             text: parsedFormula.symbol
-              ? `${parsedFormula?.symbol} ${finalFormulaValue}`
+              ? `${parsedFormula?.symbol}${finalFormulaValue}`
               : finalFormulaValue,
           });
         }
