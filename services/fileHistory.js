@@ -20,6 +20,7 @@ const {
 } = require('../utils/formula');
 const HyperFormula = require('../utils/hyperFormula');
 const { toFixed } = require('../utils/number');
+const { formulaeParser } = require('../utils/mondayFormulaConverter');
 
 const addFileHistory = async ({
   id,
@@ -390,11 +391,12 @@ const generateFilePreview = async (fileId, itemId) => {
 
         finalFormula = '=' + finalFormula.replace(/'/g, '"');
         finalFormula = renameFunctions(finalFormula);
+        const parsedFormula = formulaeParser(finalFormula);
 
         // Hyper Formula Plugin
         const formulaRow = [
           ...Array.from(formulaColumnValues.values()),
-          finalFormula,
+          parsedFormula.formula,
         ];
 
         const hfInstance = HyperFormula.buildFromArray([formulaRow], {
@@ -416,11 +418,15 @@ const generateFilePreview = async (fileId, itemId) => {
         );
 
         if (alreadyExistsIdx > -1) {
-          formValues[alreadyExistsIdx].text = finalFormulaValue;
+          formValues[alreadyExistsIdx].text = parsedFormula.symbol
+            ? `${parsedFormula?.symbol} ${finalFormulaValue}`
+            : finalFormulaValue;
         } else {
           formValues.push({
             ...column,
-            text: finalFormulaValue,
+            text: parsedFormula.symbol
+              ? `${parsedFormula?.symbol} ${finalFormulaValue}`
+              : finalFormulaValue,
           });
         }
       }
