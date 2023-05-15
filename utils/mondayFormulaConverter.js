@@ -20,7 +20,10 @@ const formulaeParser = (formula) => {
       formula,
     };
   } else {
-    console.log('Invalid formula format');
+    return {
+      symbol: null,
+      formula,
+    };
   }
 };
 
