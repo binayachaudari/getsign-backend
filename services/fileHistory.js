@@ -2,7 +2,7 @@ const { PDFDocument } = require('pdf-lib');
 const statusMapper = require('../config/statusMapper');
 const FileDetails = require('../models/FileDetails');
 const FileHistory = require('../models/FileHistory');
-const { setMondayToken } = require('../utils/monday');
+const { setMondayToken, getUserDetails } = require('../utils/monday');
 const { embedHistory } = require('./embedDocumentHistory');
 const { signPDF, generatePDF } = require('./file');
 const {
