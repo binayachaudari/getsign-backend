@@ -45,6 +45,7 @@ module.exports = {
             context?.updateTokenUserId,
             result.access_token
           );
+          return;
         }
 
         user = await storeOrUpdateUser(context, result.access_token);
