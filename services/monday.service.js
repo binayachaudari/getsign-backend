@@ -195,8 +195,60 @@ const getEmailColumnValue = async (itemId, emailColId) => {
   );
 };
 
+const getUsers = async (usersIds) => {
+  try {
+    const users = await monday.api(`query { users (ids: ${usersIds}) {
+                id, name
+            }}`);
+
+    if (
+      users.hasOwnProperty('error_message') ||
+      users.hasOwnProperty('error_code') ||
+      users.hasOwnProperty('errors')
+    ) {
+      throw {
+        status: 403,
+        message: users?.errors?.[0]?.message,
+      };
+    }
+    if (users && users.data && users.data.users) {
+      return users.data.users;
+    }
+    return null;
+  } catch (error) {
+    console.log('Error while get user', error.message);
+    throw error;
+  }
+};
+
+// Get team data by id
+const getTeams = async (teamsIds) => {
+  try {
+    const teams = await monday.api(`query { teams (ids: ${teamsIds}) {
+                id, name
+            }}`);
+    if (
+      teams.hasOwnProperty('error_message') ||
+      teams.hasOwnProperty('error_code') ||
+      teams.hasOwnProperty('errors')
+    ) {
+      throw {
+        status: 403,
+        message: teams?.errors?.[0]?.message,
+      };
+    }
+    if (teams && teams.data && teams.data.teams) {
+      return teams.data.teams;
+    }
+    return null;
+  } catch (error) {
+    console.log('Error while get teams', error.message);
+    throw error;
+  }
+};
+
 // Get field value and handle many column types
-function getFieldValue(column, itemId, searchMode = true) {
+async function getFieldValue(column, itemId, searchMode = true) {
   let value = '';
   let jsonObj = '';
   const { type } = column;
@@ -285,29 +337,29 @@ function getFieldValue(column, itemId, searchMode = true) {
     }
 
     if (searchMode) {
-      // if (personsIds.length > 0) {
-      //   const mondayUsers = await Monday.getUsers(JSON.stringify(personsIds));
-      //   if (mondayUsers) {
-      //     for (let index = 0; index < mondayUsers.length; index++) {
-      //       const user = mondayUsers[index];
-      //       personsAndTeamsNames.push(user.name);
-      //     }
-      //   }
-      // }
-      // if (teamsIds.length > 0) {
-      //   const mondayTeams = await Monday.getTeams(JSON.stringify(teamsIds));
-      //   if (mondayTeams) {
-      //     for (let index = 0; index < mondayTeams.length; index++) {
-      //       const team = mondayTeams[index];
-      //       personsAndTeamsNames.push(team.name);
-      //     }
-      //   }
-      // }
-      // value = personsAndTeamsNames.toString();
+      if (personsIds.length > 0) {
+        const mondayUsers = await getUsers(JSON.stringify(personsIds));
+        if (mondayUsers) {
+          for (let index = 0; index < mondayUsers.length; index++) {
+            const user = mondayUsers[index];
+            personsAndTeamsNames.push(user.name);
+          }
+        }
+      }
+      if (teamsIds.length > 0) {
+        const mondayTeams = await getTeams(JSON.stringify(teamsIds));
+        if (mondayTeams) {
+          for (let index = 0; index < mondayTeams.length; index++) {
+            const team = mondayTeams[index];
+            personsAndTeamsNames.push(team.name);
+          }
+        }
+      }
+      value = personsAndTeamsNames.toString();
     } else {
-      // if (personsAndTeamsObj.length > 0) {
-      value = JSON.stringify({ personsAndTeams: personsAndTeamsObj });
-      // }
+      if (personsAndTeamsObj.length > 0) {
+        value = JSON.stringify({ personsAndTeams: personsAndTeamsObj });
+      }
     }
     // Handle Phone
   } else if (type === 'phone') {

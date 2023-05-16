@@ -336,9 +336,11 @@ const getFinalContract = async (id, withPdfBytes) => {
 };
 
 const generateFilePreview = async (fileId, itemId) => {
+  let user;
   try {
     const fileDetails = await FileDetails.findById(fileId);
     await setMondayToken(fileDetails.user_id, fileDetails.account_id);
+    user = await getUserDetails(fileDetails.user_id, fileDetails.account_id);
     const columnValues = await getColumnValues(itemId);
     const formValues = [
       ...(columnValues?.data?.items?.[0]?.column_values || []),
@@ -438,6 +440,14 @@ const generateFilePreview = async (fileId, itemId) => {
       ...generatedPDF,
     };
   } catch (error) {
+    if (user) {
+      if (typeof error === 'object') {
+        throw {
+          ...error,
+          userId: user?._id,
+        };
+      }
+    }
     throw error;
   }
 };

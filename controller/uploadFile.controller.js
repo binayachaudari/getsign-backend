@@ -310,6 +310,12 @@ module.exports = {
       const result = await generateFilePreview(fileId, itemId);
       return res.json({ data: result }).status(200);
     } catch (error) {
+      if (error?.status === 403 && error?.userId) {
+        return res.redirect(
+          '/re-authenticate?context=' +
+            JSON.stringify({ updateTokenUserId: error?.userId })
+        );
+      }
       next(error);
     }
   },
