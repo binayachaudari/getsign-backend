@@ -411,7 +411,7 @@ const generateFilePreview = async (fileId, itemId) => {
         });
         finalFormulaValue = isNaN(finalFormulaValue)
           ? finalFormulaValue
-          : toFixed(finalFormulaValue);
+          : toFixed(finalFormulaValue, 2);
 
         const alreadyExistsIdx = formValues.findIndex(
           (formValue) => formValue.id === column?.id
