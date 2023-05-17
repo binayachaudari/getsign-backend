@@ -7,6 +7,7 @@ const {
   addFormFields,
   generatePDF,
   addSenderDetails,
+  generatePDFWithGivenPlaceholders,
 } = require('../services/file');
 const {
   addFileHistory,
@@ -308,6 +309,26 @@ module.exports = {
     const { itemId, fileId } = req.params;
     try {
       const result = await generateFilePreview(fileId, itemId);
+      return res.json({ data: result }).status(200);
+    } catch (error) {
+      if (error?.status === 403 && error?.userId) {
+        return res.redirect(
+          '/re-authenticate?context=' +
+            JSON.stringify({ updateTokenUserId: error?.userId })
+        );
+      }
+      next(error);
+    }
+  },
+
+  generateRealtimeFilePreview: async (req, res, next) => {
+    const { itemId, fileId, placeholders } = req.params;
+    try {
+      const result = await generatePDFWithGivenPlaceholders(
+        fileId,
+        itemId,
+        placeholders
+      );
       return res.json({ data: result }).status(200);
     } catch (error) {
       if (error?.status === 403 && error?.userId) {
