@@ -18,6 +18,7 @@ const {
   getFileToSignSender,
   downloadContract,
   generateFilePreview,
+  generateFilePreviewWithPlaceholders,
 } = require('../services/fileHistory');
 const { emailRequestToSign, sendFinalContract } = require('../services/mailer');
 const {
@@ -322,12 +323,13 @@ module.exports = {
   },
 
   generateRealtimeFilePreview: async (req, res, next) => {
-    const { itemId, fileId, placeholders } = req.params;
+    const { itemId, fileId } = req.params;
+    const { placeholders } = req.body;
     try {
-      const result = await generatePDFWithGivenPlaceholders(
+      const result = await generateFilePreviewWithPlaceholders(
         fileId,
         itemId,
-        placeholders
+        placeholders || []
       );
       return res.json({ data: result }).status(200);
     } catch (error) {
