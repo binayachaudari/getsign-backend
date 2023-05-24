@@ -123,11 +123,15 @@ const generatePDF = async (id, fields) => {
         const value = fields.find((item) => item?.id === placeHolder?.itemId);
 
         if (value) {
+          const paddingX = -6;
+          const fontSize = placeHolder?.fontSize || 11;
+          const scalingFactor = 0.75;
+          const paddingY = 22.8 - (fontSize - 11) * scalingFactor;
           currentPage.drawText(value?.text, {
-            x: placeHolder.formField.coordinates.x,
-            y: placeHolder.formField.coordinates.y,
+            x: placeHolder.formField.coordinates.x + paddingX,
+            y: placeHolder.formField.coordinates.y + paddingY,
             font: customFont,
-            size: 11,
+            size: fontSize,
           });
         }
         // }
@@ -236,13 +240,18 @@ const signPDF = async ({ id, signatureFields, status, itemId }) => {
 
           const value = values.find((item) => item?.id === placeHolder?.itemId);
 
-          if (value)
+          if (value){
+            const paddingX = -6;
+            const fontSize = placeHolder?.fontSize || 11;
+            const scalingFactor = 0.75;
+            const paddingY = 22.8 - (fontSize - 11) * scalingFactor;
             currentPage.drawText(value?.text, {
-              x: placeHolder.formField.coordinates.x,
-              y: placeHolder.formField.coordinates.y,
+              x: placeHolder.formField.coordinates.x + paddingX,
+              y: placeHolder.formField.coordinates.y + paddingY,
               font: customFont,
-              size: 11,
+              size: fontSize,
             });
+          }
         });
       }
 
