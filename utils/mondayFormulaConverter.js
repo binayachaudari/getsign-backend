@@ -6,7 +6,7 @@ const formulaeParser = (formula) => {
   const matches = formula.match(regex);
 
   if (matches && matches.length === 3) {
-    const symbol = matches[1];
+    const symbol = matches[1]?.toLowerCase();
     const calculation = matches[2];
 
     if (symbolMapper.get(symbol)) {

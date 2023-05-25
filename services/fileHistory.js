@@ -570,7 +570,7 @@ const generateFilePreviewWithPlaceholders = async (
     };
   } catch (error) {
     if (user) {
-      if (typeof error === 'object') {
+      if (typeof error === 'object' && error?.statusCode === 401) {
         throw {
           ...error,
           userId: user?._id,

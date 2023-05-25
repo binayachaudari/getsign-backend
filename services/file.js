@@ -1,4 +1,4 @@
-const { PDFDocument } = require('pdf-lib');
+const { PDFDocument, rgb } = require('pdf-lib');
 const FileDetails = require('../models/FileDetails');
 const { getFile, s3, getSignedUrl } = require('./s3');
 const fontkit = require('@pdf-lib/fontkit');
@@ -157,6 +157,7 @@ const generatePDF = async (id, fields) => {
 
 const generatePDFWithGivenPlaceholders = async (id, placeholders, values) => {
   try {
+    const ERROR_COLOR = [220 / 255, 38 / 255, 38 / 255];
     const fileDetails = await getFile(id);
 
     const pdfDoc = await PDFDocument.load(fileDetails?.file);
@@ -176,11 +177,26 @@ const generatePDFWithGivenPlaceholders = async (id, placeholders, values) => {
 
         const value = values.find((item) => item?.id === placeHolder?.itemId);
 
+        const calculationError =
+          typeof value?.text === 'object' && value?.type === 'formula';
+
         if (value) {
           const paddingX = -6;
           const fontSize = placeHolder?.fontSize || 11;
           const scalingFactor = 0.75;
           const paddingY = 22.8 - (fontSize - 11) * scalingFactor;
+
+          if (calculationError) {
+            console.error('Calculation Error', value);
+            return currentPage.drawText('Error, Cannot Calculate', {
+              color: rgb(0.86, 0.14, 0.14),
+              x: placeHolder.formField.coordinates.x + paddingX,
+              y: placeHolder.formField.coordinates.y + paddingY,
+              font: customFont,
+              size: fontSize,
+            });
+          }
+
           currentPage.drawText(value?.text, {
             x: placeHolder.formField.coordinates.x + paddingX,
             y: placeHolder.formField.coordinates.y + paddingY,
@@ -293,7 +309,7 @@ const signPDF = async ({ id, signatureFields, status, itemId }) => {
 
           const value = values.find((item) => item?.id === placeHolder?.itemId);
 
-          if (value){
+          if (value) {
             const paddingX = -6;
             const fontSize = placeHolder?.fontSize || 11;
             const scalingFactor = 0.75;
