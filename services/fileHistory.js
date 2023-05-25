@@ -2,15 +2,29 @@ const { PDFDocument } = require('pdf-lib');
 const statusMapper = require('../config/statusMapper');
 const FileDetails = require('../models/FileDetails');
 const FileHistory = require('../models/FileHistory');
-const { setMondayToken } = require('../utils/monday');
+const { setMondayToken, getUserDetails } = require('../utils/monday');
 const { embedHistory } = require('./embedDocumentHistory');
-const { signPDF, generatePDF } = require('./file');
+const {
+  signPDF,
+  generatePDF,
+  generatePDFWithGivenPlaceholders,
+} = require('./file');
 const {
   updateStatusColumn,
   getColumnValues,
   getEmailColumnValue,
+  getColumnDetails,
+  getSpecificColumnValue,
 } = require('./monday.service');
 const { s3, getSignedUrl } = require('./s3');
+const {
+  getFormulaColumns,
+  parseFormulaColumnIds,
+  renameFunctions,
+} = require('../utils/formula');
+const HyperFormula = require('../utils/hyperFormula');
+const { toFixed } = require('../utils/number');
+const { formulaeParser } = require('../utils/mondayFormulaConverter');
 
 const addFileHistory = async ({
   id,
@@ -326,9 +340,11 @@ const getFinalContract = async (id, withPdfBytes) => {
 };
 
 const generateFilePreview = async (fileId, itemId) => {
+  let user;
   try {
     const fileDetails = await FileDetails.findById(fileId);
     await setMondayToken(fileDetails.user_id, fileDetails.account_id);
+    user = await getUserDetails(fileDetails.user_id, fileDetails.account_id);
     const columnValues = await getColumnValues(itemId);
     const formValues = [
       ...(columnValues?.data?.items?.[0]?.column_values || []),
@@ -340,12 +356,227 @@ const generateFilePreview = async (fileId, itemId) => {
       },
     ];
 
+    // Formula column
+    const formulaColumnValues = new Map();
+
+    const formulaColumns = getFormulaColumns(
+      columnValues?.data?.items?.[0]?.column_values || []
+    );
+
+    if (formulaColumns.length > 0) {
+      const columnDetailsResponse = await getColumnDetails(
+        itemId,
+        formulaColumns?.map((column) => column?.id)
+      );
+      const columnDetails =
+        columnDetailsResponse?.data?.items?.[0]?.board?.columns || [];
+
+      let finalFormula;
+      for (const column of columnDetails) {
+        const parsedColumn = parseFormulaColumnIds(column?.settings_str);
+        finalFormula = parsedColumn.formula;
+        for (const item of columnValues?.data?.items?.[0]?.column_values) {
+          if (parsedColumn.formulaColumns.includes(item.id)) {
+            const columnValue = await getSpecificColumnValue(itemId, item.id);
+            formulaColumnValues.set(
+              {
+                id: item.id,
+              },
+              columnValue
+            );
+          }
+        }
+
+        const formulaColumnsKeys = Array.from(formulaColumnValues.keys());
+        for (let index = 0; index < formulaColumnsKeys.length; index++) {
+          const key = formulaColumnsKeys[index];
+          const chr = String.fromCharCode(97 + index).toUpperCase();
+          const globalRegex = new RegExp(`{${key?.id}}`, 'g');
+          finalFormula = finalFormula.replace(globalRegex, `${chr}1`);
+        }
+
+        finalFormula = '=' + finalFormula.replace(/'/g, '"');
+        finalFormula = renameFunctions(finalFormula);
+        const parsedFormula = formulaeParser(finalFormula);
+
+        // Hyper Formula Plugin
+        const formulaRow = [
+          ...Array.from(formulaColumnValues.values()),
+          parsedFormula.formula,
+        ];
+
+        const hfInstance = HyperFormula.buildFromArray([formulaRow], {
+          licenseKey: 'gpl-v3',
+          useColumnIndex: true,
+          smartRounding: false,
+        });
+        let finalFormulaValue = hfInstance.getCellValue({
+          sheet: 0,
+          col: formulaRow.length - 1,
+          row: 0,
+        });
+        finalFormulaValue = isNaN(finalFormulaValue)
+          ? finalFormulaValue
+          : toFixed(finalFormulaValue, 2);
+
+        const alreadyExistsIdx = formValues.findIndex(
+          (formValue) => formValue.id === column?.id
+        );
+
+        if (alreadyExistsIdx > -1) {
+          formValues[alreadyExistsIdx].text = parsedFormula.symbol
+            ? `${parsedFormula?.symbol}${finalFormulaValue}`
+            : finalFormulaValue;
+        } else {
+          formValues.push({
+            ...column,
+            text: parsedFormula.symbol
+              ? `${parsedFormula?.symbol}${finalFormulaValue}`
+              : finalFormulaValue,
+          });
+        }
+      }
+    }
+
     const generatedPDF = await generatePDF(fileId, formValues);
     return {
       fileId,
       ...generatedPDF,
     };
   } catch (error) {
+    if (user) {
+      if (typeof error === 'object') {
+        throw {
+          ...error,
+          userId: user?._id,
+        };
+      }
+    }
+    throw error;
+  }
+};
+
+const generateFilePreviewWithPlaceholders = async (
+  fileId,
+  itemId,
+  placeholders
+) => {
+  let user;
+  try {
+    const fileDetails = await FileDetails.findById(fileId);
+    await setMondayToken(fileDetails.user_id, fileDetails.account_id);
+    user = await getUserDetails(fileDetails.user_id, fileDetails.account_id);
+    const columnValues = await getColumnValues(itemId);
+    const formValues = [
+      ...(columnValues?.data?.items?.[0]?.column_values || []),
+      {
+        id: 'item-name',
+        text: columnValues?.data?.items?.[0]?.name || '',
+        title: 'Item Name',
+        type: 'text',
+      },
+    ];
+
+    // Formula column
+    const formulaColumnValues = new Map();
+
+    const formulaColumns = getFormulaColumns(
+      columnValues?.data?.items?.[0]?.column_values || []
+    );
+
+    if (formulaColumns.length > 0) {
+      const columnDetailsResponse = await getColumnDetails(
+        itemId,
+        formulaColumns?.map((column) => column?.id)
+      );
+      const columnDetails =
+        columnDetailsResponse?.data?.items?.[0]?.board?.columns || [];
+
+      let finalFormula;
+      for (const column of columnDetails) {
+        const parsedColumn = parseFormulaColumnIds(column?.settings_str);
+        finalFormula = parsedColumn.formula;
+        for (const item of columnValues?.data?.items?.[0]?.column_values) {
+          if (parsedColumn.formulaColumns.includes(item.id)) {
+            const columnValue = await getSpecificColumnValue(itemId, item.id);
+            formulaColumnValues.set(
+              {
+                id: item.id,
+              },
+              columnValue
+            );
+          }
+        }
+
+        const formulaColumnsKeys = Array.from(formulaColumnValues.keys());
+        for (let index = 0; index < formulaColumnsKeys.length; index++) {
+          const key = formulaColumnsKeys[index];
+          const chr = String.fromCharCode(97 + index).toUpperCase();
+          const globalRegex = new RegExp(`{${key?.id}}`, 'g');
+          finalFormula = finalFormula.replace(globalRegex, `${chr}1`);
+        }
+
+        finalFormula = '=' + finalFormula.replace(/'/g, '"');
+        finalFormula = renameFunctions(finalFormula);
+        const parsedFormula = formulaeParser(finalFormula);
+
+        // Hyper Formula Plugin
+        const formulaRow = [
+          ...Array.from(formulaColumnValues.values()),
+          parsedFormula.formula,
+        ];
+
+        const hfInstance = HyperFormula.buildFromArray([formulaRow], {
+          licenseKey: 'gpl-v3',
+          useColumnIndex: true,
+          smartRounding: false,
+        });
+        let finalFormulaValue = hfInstance.getCellValue({
+          sheet: 0,
+          col: formulaRow.length - 1,
+          row: 0,
+        });
+        finalFormulaValue = isNaN(finalFormulaValue)
+          ? finalFormulaValue
+          : toFixed(finalFormulaValue, 2);
+
+        const alreadyExistsIdx = formValues.findIndex(
+          (formValue) => formValue.id === column?.id
+        );
+
+        if (alreadyExistsIdx > -1) {
+          formValues[alreadyExistsIdx].text = parsedFormula.symbol
+            ? `${parsedFormula?.symbol}${finalFormulaValue}`
+            : finalFormulaValue;
+        } else {
+          formValues.push({
+            ...column,
+            text: parsedFormula.symbol
+              ? `${parsedFormula?.symbol}${finalFormulaValue}`
+              : finalFormulaValue,
+          });
+        }
+      }
+    }
+
+    const generatedPDF = await generatePDFWithGivenPlaceholders(
+      fileId,
+      placeholders,
+      formValues
+    );
+    return {
+      fileId,
+      ...generatedPDF,
+    };
+  } catch (error) {
+    if (user) {
+      if (typeof error === 'object') {
+        throw {
+          ...error,
+          userId: user?._id,
+        };
+      }
+    }
     throw error;
   }
 };
@@ -359,4 +590,5 @@ module.exports = {
   getFinalContract,
   downloadContract,
   generateFilePreview,
+  generateFilePreviewWithPlaceholders,
 };

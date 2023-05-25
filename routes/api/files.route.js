@@ -65,6 +65,11 @@ router.post(
 
 router.get('/generate-preview/:itemId/:fileId', controller.generatePreview);
 
+router.post(
+  '/generate-realtime-preview/:itemId/:fileId',
+  controller.generateRealtimeFilePreview
+);
+
 router.get(
   '/send-mail/:itemId/:id',
   verifySessionToken,

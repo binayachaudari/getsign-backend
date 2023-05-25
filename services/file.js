@@ -155,6 +155,59 @@ const generatePDF = async (id, fields) => {
   }
 };
 
+const generatePDFWithGivenPlaceholders = async (id, placeholders, values) => {
+  try {
+    const fileDetails = await getFile(id);
+
+    const pdfDoc = await PDFDocument.load(fileDetails?.file);
+    const pages = pdfDoc.getPages();
+    pdfDoc.registerFontkit(fontkit);
+    // Load the `Arial Unicode MS.ttf`
+    const fontBytes = fs.readFileSync(
+      path.join(__dirname, '..', 'utils/fonts/Arial Unicode MS.ttf')
+    );
+    const customFont = await pdfDoc.embedFont(fontBytes, { subset: true });
+
+    const parsedFileDetails = fileDetails.toJSON();
+
+    if (values?.length && placeholders?.length) {
+      placeholders?.forEach(async (placeHolder) => {
+        const currentPage = pages[placeHolder?.formField?.pageIndex];
+
+        const value = values.find((item) => item?.id === placeHolder?.itemId);
+
+        if (value) {
+          const paddingX = -6;
+          const fontSize = placeHolder?.fontSize || 11;
+          const scalingFactor = 0.75;
+          const paddingY = 22.8 - (fontSize - 11) * scalingFactor;
+          currentPage.drawText(value?.text, {
+            x: placeHolder.formField.coordinates.x + paddingX,
+            y: placeHolder.formField.coordinates.y + paddingY,
+            font: customFont,
+            size: fontSize,
+          });
+        }
+      });
+
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([new Uint8Array(pdfBytes)], {
+        type: 'application/pdf',
+      });
+      const type = blob.type;
+      const arrayBuffer = await blob.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      const base64String = buffer.toString('base64');
+      return {
+        name: parsedFileDetails.file_name,
+        file: `data:${type};base64,${base64String}`,
+      };
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
 const loadFile = async (url) => {
   const body = await fetch(url);
   const contentType = body.headers.get('content-type');
@@ -365,4 +418,10 @@ const addSenderDetails = async (
   }
 };
 
-module.exports = { addFormFields, generatePDF, addSenderDetails, signPDF };
+module.exports = {
+  addFormFields,
+  generatePDF,
+  addSenderDetails,
+  signPDF,
+  generatePDFWithGivenPlaceholders,
+};

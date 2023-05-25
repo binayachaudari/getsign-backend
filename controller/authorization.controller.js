@@ -1,6 +1,7 @@
 const {
   storeOrUpdateUser,
   isUserAuthenticated,
+  updateUserToken,
 } = require('../services/user.service');
 
 const CLIENT_ID = process.env.CLIENT_ID;
@@ -37,7 +38,17 @@ module.exports = {
           return next({ error: result, statusCode: 400 });
         }
 
-        const user = await storeOrUpdateUser(context, result.access_token);
+        let user;
+
+        if (context?.updateTokenUserId) {
+          user = await updateUserToken(
+            context?.updateTokenUserId,
+            result.access_token
+          );
+          return;
+        }
+
+        user = await storeOrUpdateUser(context, result.access_token);
         const params = new URLSearchParams();
         params.append('result', JSON.stringify(result));
         params.append('user', JSON.stringify(user));
