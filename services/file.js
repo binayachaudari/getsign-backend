@@ -174,26 +174,20 @@ const generatePDFWithGivenPlaceholders = async (id, placeholders, values) => {
       placeholders?.forEach(async (placeHolder) => {
         const currentPage = pages[placeHolder?.formField?.pageIndex];
 
-        // if (placeHolder?.image) {
-        //   const pngImage = await pdfDoc.embedPng(placeHolder?.image?.src);
-        //   currentPage.drawImage(pngImage, {
-        //     x: placeHolder?.formField.coordinates.x,
-        //     y: placeHolder?.formField.coordinates.y,
-        //     width: placeHolder?.image.width,
-        //     height: placeHolder?.image.height,
-        //   });
-        // } else {
         const value = values.find((item) => item?.id === placeHolder?.itemId);
 
         if (value) {
+          const paddingX = -6;
+          const fontSize = placeHolder?.fontSize || 11;
+          const scalingFactor = 0.75;
+          const paddingY = 22.8 - (fontSize - 11) * scalingFactor;
           currentPage.drawText(value?.text, {
-            x: placeHolder.formField.coordinates.x,
-            y: placeHolder.formField.coordinates.y,
+            x: placeHolder.formField.coordinates.x + paddingX,
+            y: placeHolder.formField.coordinates.y + paddingY,
             font: customFont,
-            size: 11,
+            size: fontSize,
           });
         }
-        // }
       });
 
       const pdfBytes = await pdfDoc.save();
