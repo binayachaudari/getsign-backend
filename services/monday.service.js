@@ -552,6 +552,9 @@ async function getFieldValue(column, itemId, searchMode = true) {
     }
   } else if (type === 'lookup') {
     if (!isNaN(column.text)) value = Number(column.text);
+    else if (typeof column.text === 'string') {
+      value = column.text;
+    }
   } else if (type === 'location') {
     value =
       jsonObj && jsonObj.lat && jsonObj.lng
