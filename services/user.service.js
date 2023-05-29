@@ -35,4 +35,13 @@ const isUserAuthenticated = async (userId, accountId) => {
   return user;
 };
 
-module.exports = { storeOrUpdateUser, isUserAuthenticated };
+const updateUserToken = async (userId, token) => {
+  const user = await UserModel.findById(userId);
+
+  user.accessToken = token;
+  await user.save();
+
+  return user;
+};
+
+module.exports = { storeOrUpdateUser, isUserAuthenticated, updateUserToken };

@@ -7,6 +7,7 @@ const {
   addFormFields,
   generatePDF,
   addSenderDetails,
+  generatePDFWithGivenPlaceholders,
 } = require('../services/file');
 const {
   addFileHistory,
@@ -17,6 +18,7 @@ const {
   getFileToSignSender,
   downloadContract,
   generateFilePreview,
+  generateFilePreviewWithPlaceholders,
 } = require('../services/fileHistory');
 const { emailRequestToSign, sendFinalContract } = require('../services/mailer');
 const {
@@ -310,6 +312,33 @@ module.exports = {
       const result = await generateFilePreview(fileId, itemId);
       return res.json({ data: result }).status(200);
     } catch (error) {
+      if (error?.status === 403 && error?.userId) {
+        return res.redirect(
+          '/re-authenticate?context=' +
+            JSON.stringify({ updateTokenUserId: error?.userId })
+        );
+      }
+      next(error);
+    }
+  },
+
+  generateRealtimeFilePreview: async (req, res, next) => {
+    const { itemId, fileId } = req.params;
+    const { placeholders } = req.body;
+    try {
+      const result = await generateFilePreviewWithPlaceholders(
+        fileId,
+        itemId,
+        placeholders || []
+      );
+      return res.json({ data: result }).status(200);
+    } catch (error) {
+      if (error?.status === 403 && error?.userId) {
+        return res.redirect(
+          '/re-authenticate?context=' +
+            JSON.stringify({ updateTokenUserId: error?.userId })
+        );
+      }
       next(error);
     }
   },

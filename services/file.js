@@ -1,4 +1,4 @@
-const { PDFDocument } = require('pdf-lib');
+const { PDFDocument, rgb } = require('pdf-lib');
 const FileDetails = require('../models/FileDetails');
 const { getFile, s3, getSignedUrl } = require('./s3');
 const fontkit = require('@pdf-lib/fontkit');
@@ -155,6 +155,75 @@ const generatePDF = async (id, fields) => {
   }
 };
 
+const generatePDFWithGivenPlaceholders = async (id, placeholders, values) => {
+  try {
+    const ERROR_COLOR = [220 / 255, 38 / 255, 38 / 255];
+    const fileDetails = await getFile(id);
+
+    const pdfDoc = await PDFDocument.load(fileDetails?.file);
+    const pages = pdfDoc.getPages();
+    pdfDoc.registerFontkit(fontkit);
+    // Load the `Arial Unicode MS.ttf`
+    const fontBytes = fs.readFileSync(
+      path.join(__dirname, '..', 'utils/fonts/Arial Unicode MS.ttf')
+    );
+    const customFont = await pdfDoc.embedFont(fontBytes, { subset: true });
+
+    const parsedFileDetails = fileDetails.toJSON();
+
+    if (values?.length && placeholders?.length) {
+      placeholders?.forEach(async (placeHolder) => {
+        const currentPage = pages[placeHolder?.formField?.pageIndex];
+
+        const value = values.find((item) => item?.id === placeHolder?.itemId);
+
+        const calculationError =
+          typeof value?.text === 'object' && value?.type === 'formula';
+
+        if (value) {
+          const paddingX = -6;
+          const fontSize = placeHolder?.fontSize || 11;
+          const scalingFactor = 0.75;
+          const paddingY = 22.8 - (fontSize - 11) * scalingFactor;
+
+          if (calculationError) {
+            console.error('Calculation Error', value);
+            return currentPage.drawText('Error, Cannot Calculate', {
+              color: rgb(0.86, 0.14, 0.14),
+              x: placeHolder.formField.coordinates.x + paddingX,
+              y: placeHolder.formField.coordinates.y + paddingY,
+              font: customFont,
+              size: fontSize,
+            });
+          }
+
+          currentPage.drawText(value?.text, {
+            x: placeHolder.formField.coordinates.x + paddingX,
+            y: placeHolder.formField.coordinates.y + paddingY,
+            font: customFont,
+            size: fontSize,
+          });
+        }
+      });
+
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([new Uint8Array(pdfBytes)], {
+        type: 'application/pdf',
+      });
+      const type = blob.type;
+      const arrayBuffer = await blob.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      const base64String = buffer.toString('base64');
+      return {
+        name: parsedFileDetails.file_name,
+        file: `data:${type};base64,${base64String}`,
+      };
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
 const loadFile = async (url) => {
   const body = await fetch(url);
   const contentType = body.headers.get('content-type');
@@ -240,7 +309,7 @@ const signPDF = async ({ id, signatureFields, status, itemId }) => {
 
           const value = values.find((item) => item?.id === placeHolder?.itemId);
 
-          if (value){
+          if (value) {
             const paddingX = -6;
             const fontSize = placeHolder?.fontSize || 11;
             const scalingFactor = 0.75;
@@ -365,4 +434,10 @@ const addSenderDetails = async (
   }
 };
 
-module.exports = { addFormFields, generatePDF, addSenderDetails, signPDF };
+module.exports = {
+  addFormFields,
+  generatePDF,
+  addSenderDetails,
+  signPDF,
+  generatePDFWithGivenPlaceholders,
+};

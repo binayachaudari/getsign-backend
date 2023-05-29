@@ -45,4 +45,13 @@ const setMondayToken = async (userId, accountId) => {
   return user?.accessToken;
 };
 
-module.exports = { monday, setMondayToken };
+const getUserDetails = async (userId, accountId) => {
+  const user = await UserModel.findOne({
+    user_id: userId,
+    account_id: accountId,
+  }).exec();
+
+  return user;
+};
+
+module.exports = { monday, setMondayToken, getUserDetails };
