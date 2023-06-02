@@ -122,11 +122,26 @@ const generatePDF = async (id, fields) => {
         // } else {
         const value = fields.find((item) => item?.id === placeHolder?.itemId);
 
+        const calculationError =
+          typeof value?.text === 'object' && value?.type === 'formula';
+
         if (value) {
           const paddingX = -6;
           const fontSize = placeHolder?.fontSize || 11;
           const scalingFactor = 0.75;
           const paddingY = 22.8 - (fontSize - 11) * scalingFactor;
+
+          if (calculationError) {
+            console.error('Calculation Error', value);
+            return currentPage.drawText('Error, Cannot Calculate', {
+              color: rgb(0.86, 0.14, 0.14),
+              x: placeHolder.formField.coordinates.x + paddingX,
+              y: placeHolder.formField.coordinates.y + paddingY,
+              font: customFont,
+              size: fontSize,
+            });
+          }
+
           currentPage.drawText(value?.text, {
             x: placeHolder.formField.coordinates.x + paddingX,
             y: placeHolder.formField.coordinates.y + paddingY,
