@@ -357,7 +357,7 @@ const generateFilePreview = async (fileId, itemId) => {
     ];
 
     // Formula column
-    const formulaColumnValues = new Map();
+    const boardFormulaColumnValues = new Map();
 
     const formulaColumns = getFormulaColumns(
       columnValues?.data?.items?.[0]?.column_values || []
@@ -371,13 +371,55 @@ const generateFilePreview = async (fileId, itemId) => {
       const columnDetails =
         columnDetailsResponse?.data?.items?.[0]?.board?.columns || [];
 
+      // storing formula column settings_str values in map
+      for (const columnValue of columnDetails) {
+        boardFormulaColumnValues.set(
+          columnValue.id,
+          parseFormulaColumnIds(columnValue.settings_str)
+        );
+      }
+
+      // parsing and replacing formula column id with actual formula string
+      for (const columnValue of columnDetails) {
+        const parsedFormulaColumn = parseFormulaColumnIds(
+          columnValue.settings_str
+        );
+        let parsedRecursiveFormula = parsedFormulaColumn.formula;
+
+        parsedFormulaColumn?.formulaColumns?.map((item) => {
+          let currentItemValue = boardFormulaColumnValues.get(item);
+          if (currentItemValue?.formula || currentItemValue) {
+            const globalRegex = new RegExp(`{${item}}`, 'g');
+            parsedRecursiveFormula = parsedRecursiveFormula.replace(
+              globalRegex,
+              currentItemValue || currentItemValue?.formula
+            );
+          }
+        });
+
+        boardFormulaColumnValues.set(columnValue.id, parsedRecursiveFormula);
+      }
+
       let finalFormula;
       for (const column of columnDetails) {
+        const formulaColumnValues = new Map();
         const parsedColumn = parseFormulaColumnIds(column?.settings_str);
         finalFormula = parsedColumn.formula;
         for (const item of columnValues?.data?.items?.[0]?.column_values) {
-          if (parsedColumn.formulaColumns.includes(item.id)) {
-            const columnValue = await getSpecificColumnValue(itemId, item.id);
+          if (
+            parsedColumn.formulaColumns?.length &&
+            parsedColumn.formulaColumns.includes(item.id)
+          ) {
+            let columnValue;
+            if (item.type === 'formula') {
+              columnValue = boardFormulaColumnValues.get(item.id);
+              columnValue = '=' + columnValue.replace(/'/g, '"');
+              columnValue = renameFunctions(columnValue);
+              const parsedFormula = formulaeParser(columnValue);
+              columnValue = parsedFormula.formula;
+            } else {
+              columnValue = await getSpecificColumnValue(itemId, item.id);
+            }
             formulaColumnValues.set(
               {
                 id: item.id,
@@ -418,6 +460,8 @@ const generateFilePreview = async (fileId, itemId) => {
         finalFormulaValue = isNaN(finalFormulaValue)
           ? finalFormulaValue
           : toFixed(finalFormulaValue, 2);
+
+        boardFormulaColumnValues.set(column.id, finalFormulaValue);
 
         const alreadyExistsIdx = formValues.findIndex(
           (formValue) => formValue.id === column?.id
@@ -478,7 +522,7 @@ const generateFilePreviewWithPlaceholders = async (
     ];
 
     // Formula column
-    const formulaColumnValues = new Map();
+    const boardFormulaColumnValues = new Map();
 
     const formulaColumns = getFormulaColumns(
       columnValues?.data?.items?.[0]?.column_values || []
@@ -492,13 +536,55 @@ const generateFilePreviewWithPlaceholders = async (
       const columnDetails =
         columnDetailsResponse?.data?.items?.[0]?.board?.columns || [];
 
+      // storing formula column settings_str values in map
+      for (const columnValue of columnDetails) {
+        boardFormulaColumnValues.set(
+          columnValue.id,
+          parseFormulaColumnIds(columnValue.settings_str)
+        );
+      }
+
+      // parsing and replacing formula column id with actual formula string
+      for (const columnValue of columnDetails) {
+        const parsedFormulaColumn = parseFormulaColumnIds(
+          columnValue.settings_str
+        );
+        let parsedRecursiveFormula = parsedFormulaColumn.formula;
+
+        parsedFormulaColumn?.formulaColumns?.map((item) => {
+          let currentItemValue = boardFormulaColumnValues.get(item);
+          if (currentItemValue?.formula || currentItemValue) {
+            const globalRegex = new RegExp(`{${item}}`, 'g');
+            parsedRecursiveFormula = parsedRecursiveFormula.replace(
+              globalRegex,
+              currentItemValue || currentItemValue?.formula
+            );
+          }
+        });
+
+        boardFormulaColumnValues.set(columnValue.id, parsedRecursiveFormula);
+      }
+
       let finalFormula;
       for (const column of columnDetails) {
+        const formulaColumnValues = new Map();
         const parsedColumn = parseFormulaColumnIds(column?.settings_str);
         finalFormula = parsedColumn.formula;
         for (const item of columnValues?.data?.items?.[0]?.column_values) {
-          if (parsedColumn.formulaColumns.includes(item.id)) {
-            const columnValue = await getSpecificColumnValue(itemId, item.id);
+          if (
+            parsedColumn.formulaColumns?.length &&
+            parsedColumn.formulaColumns.includes(item.id)
+          ) {
+            let columnValue;
+            if (item.type === 'formula') {
+              columnValue = boardFormulaColumnValues.get(item.id);
+              columnValue = '=' + columnValue.replace(/'/g, '"');
+              columnValue = renameFunctions(columnValue);
+              const parsedFormula = formulaeParser(columnValue);
+              columnValue = parsedFormula.formula;
+            } else {
+              columnValue = await getSpecificColumnValue(itemId, item.id);
+            }
             formulaColumnValues.set(
               {
                 id: item.id,
@@ -539,6 +625,8 @@ const generateFilePreviewWithPlaceholders = async (
         finalFormulaValue = isNaN(finalFormulaValue)
           ? finalFormulaValue
           : toFixed(finalFormulaValue, 2);
+
+        boardFormulaColumnValues.set(column.id, finalFormulaValue);
 
         const alreadyExistsIdx = formValues.findIndex(
           (formValue) => formValue.id === column?.id
