@@ -198,34 +198,52 @@ const generatePDFWithGivenPlaceholders = async (id, placeholders, values) => {
       placeholders?.forEach(async (placeHolder) => {
         const currentPage = pages[placeHolder?.formField?.pageIndex];
 
-        const value = values.find((item) => item?.id === placeHolder?.itemId);
-
-        const calculationError =
-          typeof value?.text === 'object' && value?.type === 'formula';
-
-        if (value) {
-          const paddingX = -6;
-          const fontSize = placeHolder?.fontSize || 11;
+        if (placeHolder?.itemId === 'sign-date') {
+          const fontSize = placeHolder?.height
+            ? parseInt(placeHolder?.height / 3)
+            : 17;
           const scalingFactor = 0.75;
-          const paddingY = 22.8 - (fontSize - 11) * scalingFactor;
+          const paddingX = 14 * scalingFactor;
+          const currentDate = moment(new Date())
+            .format(placeHolder?.dateFormat?.format || 'DD/MM/YYYY')
+            .toString();
 
-          if (calculationError) {
-            console.error('Calculation Error', value);
-            return currentPage.drawText('Error, Cannot Calculate', {
-              color: rgb(0.86, 0.14, 0.14),
+          currentPage.drawText(currentDate, {
+            x: placeHolder.formField.coordinates.x + paddingX,
+            y: placeHolder.formField.coordinates.y,
+            font: customFont,
+            size: fontSize,
+          });
+        } else {
+          const value = values.find((item) => item?.id === placeHolder?.itemId);
+
+          const calculationError =
+            typeof value?.text === 'object' && value?.type === 'formula';
+
+          if (value) {
+            const paddingX = -6;
+            const fontSize = placeHolder?.fontSize || 11;
+            const scalingFactor = 0.75;
+            const paddingY = 22.8 - (fontSize - 11) * scalingFactor;
+
+            if (calculationError) {
+              console.error('Calculation Error', value);
+              return currentPage.drawText('Error, Cannot Calculate', {
+                color: rgb(0.86, 0.14, 0.14),
+                x: placeHolder.formField.coordinates.x + paddingX,
+                y: placeHolder.formField.coordinates.y + paddingY,
+                font: customFont,
+                size: fontSize,
+              });
+            }
+
+            currentPage.drawText(value?.text, {
               x: placeHolder.formField.coordinates.x + paddingX,
               y: placeHolder.formField.coordinates.y + paddingY,
               font: customFont,
               size: fontSize,
             });
           }
-
-          currentPage.drawText(value?.text, {
-            x: placeHolder.formField.coordinates.x + paddingX,
-            y: placeHolder.formField.coordinates.y + paddingY,
-            font: customFont,
-            size: fontSize,
-          });
         }
       });
 
