@@ -73,6 +73,19 @@ const validateSignatures = () => [
   body('signatures.*.image.src').trim().not().isEmpty(),
   body('signatures.*.image.height').trim().not().isEmpty().toFloat(),
   body('signatures.*.image.width').trim().not().isEmpty().toFloat(),
+  body('checkboxes').isArray(),
+  body('checkboxes.*.id').trim().not().isEmpty().escape(),
+  body('checkboxes.*.itemId').trim().not().isEmpty().escape(),
+  body('checkboxes.*.title').trim().not().isEmpty().escape(),
+  body('checkboxes.*.placeholder.x').trim().not().isEmpty().toFloat(),
+  body('checkboxes.*.placeholder.y').trim().not().isEmpty().toFloat(),
+  body('checkboxes.*.formField.pageNumber').trim().not().isEmpty().toInt(),
+  body('checkboxes.*.formField.pageIndex').trim().not().isEmpty().toInt(),
+  body('checkboxes.*.formField.coordinates.x').trim().not().isEmpty().toFloat(),
+  body('checkboxes.*.formField.coordinates.y').trim().not().isEmpty().toFloat(),
+  body('checkboxes.*.isChecked').toBoolean(),
+  body('checkboxes.*.image.height').toFloat(),
+  body('checkboxes.*.image.width').toFloat(),
 ];
 
 module.exports = {

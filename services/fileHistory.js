@@ -30,7 +30,7 @@ const addFileHistory = async ({
   id,
   status,
   itemId,
-  signatures,
+  interactedFields,
   ipAddress,
 }) => {
   try {
@@ -45,10 +45,10 @@ const addFileHistory = async ({
       return addedHistory;
     }
 
-    if (signatures?.length) {
+    if (interactedFields?.length) {
       const signedFile = await signPDF({
         id,
-        signatureFields: signatures,
+        interactedFields,
         status,
         itemId,
       });

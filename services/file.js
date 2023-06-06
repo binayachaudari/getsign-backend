@@ -257,7 +257,7 @@ const loadFile = async (url) => {
   return `data:${contentType};base64,${base64String}`;
 };
 
-const signPDF = async ({ id, signatureFields, status, itemId }) => {
+const signPDF = async ({ id, interactedFields, status, itemId }) => {
   try {
     let pdfDoc;
     const fileDetails = await getFile(id);
@@ -311,10 +311,10 @@ const signPDF = async ({ id, signatureFields, status, itemId }) => {
     const parsedFileDetails = fileDetails.toJSON();
 
     if (parsedFileDetails?.fields) {
-      if (signatureFields?.length) {
-        signatureFields?.forEach(async (placeHolder) => {
+      if (interactedFields?.length) {
+        interactedFields?.forEach(async (placeHolder) => {
           const currentPage = pages[placeHolder?.formField?.pageIndex];
-          if (placeHolder?.image) {
+          if (placeHolder?.image?.src) {
             const pngImage = await pdfDoc.embedPng(placeHolder?.image?.src);
             currentPage.drawImage(pngImage, {
               x: placeHolder?.formField.coordinates.x,
