@@ -73,6 +73,27 @@ const validateSignatures = () => [
   body('signatures.*.image.src').trim().not().isEmpty(),
   body('signatures.*.image.height').trim().not().isEmpty().toFloat(),
   body('signatures.*.image.width').trim().not().isEmpty().toFloat(),
+  body('standardFields').isArray(),
+  body('standardFields.*.id').trim().not().isEmpty().escape(),
+  body('standardFields.*.itemId').trim().not().isEmpty().escape(),
+  body('standardFields.*.title').trim().not().isEmpty().escape(),
+  body('standardFields.*.placeholder.x').trim().not().isEmpty().toFloat(),
+  body('standardFields.*.placeholder.y').trim().not().isEmpty().toFloat(),
+  body('standardFields.*.formField.pageNumber').trim().not().isEmpty().toInt(),
+  body('standardFields.*.formField.pageIndex').trim().not().isEmpty().toInt(),
+  body('standardFields.*.formField.coordinates.x')
+    .trim()
+    .not()
+    .isEmpty()
+    .toFloat(),
+  body('standardFields.*.formField.coordinates.y')
+    .trim()
+    .not()
+    .isEmpty()
+    .toFloat(),
+  body('standardFields.*.isChecked').toBoolean(),
+  body('standardFields.*.image.height').toFloat(),
+  body('standardFields.*.image.width').toFloat(),
 ];
 
 module.exports = {

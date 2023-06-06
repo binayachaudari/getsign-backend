@@ -117,7 +117,7 @@ module.exports = {
     ).split(',');
 
     const ip = ips[0].trim();
-    const { status, signatures, itemId } = req.body;
+    const { status, signatures, itemId, standardFields } = req.body;
     try {
       const template = await FileDetails.findById(id);
       const senderSignRequired = template?.fields?.filter((field) =>
@@ -132,7 +132,7 @@ module.exports = {
         id,
         itemId,
         status,
-        signatures,
+        interactedFields: [...signatures, ...standardFields],
         ipAddress: ip,
       });
 

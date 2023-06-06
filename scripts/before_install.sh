@@ -13,7 +13,7 @@ fi
 
 if [ "$DEPLOYMENT_GROUP_NAME" == "GetSignBackEndCICDProd" ]; then
   DESTINATION_PATH="/home/ubuntu/GetSign/jetsign-backend/"
-  sudo cp -R /var/www/GetSign-Dev/jetsign-backend/* $DESTINATION_PATH
+  # sudo cp -R /var/www/GetSign-Dev/jetsign-backend/* $DESTINATION_PATH
 fi
 
 cd $DESTINATION_PATH
