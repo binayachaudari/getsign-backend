@@ -13,8 +13,8 @@ const { emailVerification } = require('./mailer');
 const fs = require('fs');
 const path = require('path');
 const { arraysAreEqual } = require('../utils/arrays');
-const statusMapper = require('../config/statusMapper');
 require('regenerator-runtime/runtime');
+const moment = require('moment');
 
 const addFormFields = async (id, payload) => {
   const session = await FileHistory.startSession();
@@ -111,45 +111,53 @@ const generatePDF = async (id, fields) => {
       parsedFileDetails?.fields?.forEach(async (placeHolder) => {
         const currentPage = pages[placeHolder?.formField?.pageIndex];
 
-        // if (placeHolder?.image) {
-        //   const pngImage = await pdfDoc.embedPng(placeHolder?.image?.src);
-        //   currentPage.drawImage(pngImage, {
-        //     x: placeHolder?.formField.coordinates.x,
-        //     y: placeHolder?.formField.coordinates.y,
-        //     width: placeHolder?.image.width,
-        //     height: placeHolder?.image.height,
-        //   });
-        // } else {
-        const value = fields.find((item) => item?.id === placeHolder?.itemId);
-
-        const calculationError =
-          typeof value?.text === 'object' && value?.type === 'formula';
-
-        if (value) {
-          const paddingX = -6;
-          const fontSize = placeHolder?.fontSize || 11;
+        if (placeHolder?.itemId === 'sign-date') {
+          const fontSize = placeHolder?.height
+            ? parseInt(placeHolder?.height / 3)
+            : 17;
           const scalingFactor = 0.75;
-          const paddingY = 22.8 - (fontSize - 11) * scalingFactor;
+          const paddingX = 14 * scalingFactor;
+          const currentDate = moment(new Date())
+            .format(placeHolder?.dateFormat?.format || 'DD/MM/YYYY')
+            .toString();
 
-          if (calculationError) {
-            console.error('Calculation Error', value);
-            return currentPage.drawText('Error, Cannot Calculate', {
-              color: rgb(0.86, 0.14, 0.14),
+          currentPage.drawText(currentDate, {
+            x: placeHolder.formField.coordinates.x + paddingX,
+            y: placeHolder.formField.coordinates.y,
+            font: customFont,
+            size: fontSize,
+          });
+        } else {
+          const value = fields.find((item) => item?.id === placeHolder?.itemId);
+
+          const calculationError =
+            typeof value?.text === 'object' && value?.type === 'formula';
+
+          if (value) {
+            const paddingX = -6;
+            const fontSize = placeHolder?.fontSize || 11;
+            const scalingFactor = 0.75;
+            const paddingY = 22.8 - (fontSize - 11) * scalingFactor;
+
+            if (calculationError) {
+              console.error('Calculation Error', value);
+              return currentPage.drawText('Error, Cannot Calculate', {
+                color: rgb(0.86, 0.14, 0.14),
+                x: placeHolder.formField.coordinates.x + paddingX,
+                y: placeHolder.formField.coordinates.y + paddingY,
+                font: customFont,
+                size: fontSize,
+              });
+            }
+
+            currentPage.drawText(value?.text, {
               x: placeHolder.formField.coordinates.x + paddingX,
               y: placeHolder.formField.coordinates.y + paddingY,
               font: customFont,
               size: fontSize,
             });
           }
-
-          currentPage.drawText(value?.text, {
-            x: placeHolder.formField.coordinates.x + paddingX,
-            y: placeHolder.formField.coordinates.y + paddingY,
-            font: customFont,
-            size: fontSize,
-          });
         }
-        // }
       });
 
       const pdfBytes = await pdfDoc.save();
