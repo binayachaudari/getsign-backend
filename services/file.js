@@ -327,30 +327,6 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
     });
 
     const parsedFileDetails = fileDetails.toJSON();
-    const signedDateFields = parsedFileDetails?.fields.filter(
-      (item) => item.itemId === 'sign-date'
-    );
-
-    signedDateFields?.forEach(
-      async((dateField) => {
-        const currentPage = pages[dateField?.formField?.pageIndex];
-        const fontSize = dateField?.height
-          ? parseInt(dateField?.height / 3)
-          : 17;
-        const scalingFactor = 0.75;
-        const paddingX = 14 * scalingFactor;
-        const currentDate = moment(new Date())
-          .format(dateField?.dateFormat?.format || 'DD/MM/YYYY')
-          .toString();
-
-        currentPage.drawText(currentDate, {
-          x: dateField.formField.coordinates.x + paddingX,
-          y: dateField.formField.coordinates.y,
-          font: customFont,
-          size: fontSize,
-        });
-      })
-    );
 
     if (parsedFileDetails?.fields) {
       if (interactedFields?.length) {
@@ -363,6 +339,22 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
               y: placeHolder?.formField.coordinates.y,
               width: placeHolder?.image.width,
               height: placeHolder?.image.height,
+            });
+          } else if (placeHolder?.itemId === 'sign-date') {
+            const fontSize = placeHolder?.height
+              ? parseInt(placeHolder?.height / 3)
+              : 17;
+            const scalingFactor = 0.75;
+            const paddingX = 14 * scalingFactor;
+            const currentDate = moment(new Date())
+              .format(placeHolder?.dateFormat?.format || 'DD/MM/YYYY')
+              .toString();
+
+            currentPage.drawText(currentDate, {
+              x: placeHolder.formField.coordinates.x + paddingX,
+              y: placeHolder.formField.coordinates.y,
+              font: customFont,
+              size: fontSize,
             });
           } else if (placeHolder?.itemId === 'checkbox') {
             const padding = 6;
