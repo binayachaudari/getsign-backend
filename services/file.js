@@ -110,6 +110,7 @@ const generatePDF = async (id, fields) => {
     if (fields?.length && parsedFileDetails?.fields) {
       parsedFileDetails?.fields?.forEach(async (placeHolder) => {
         const currentPage = pages[placeHolder?.formField?.pageIndex];
+        if (!currentPage) return;
 
         if (placeHolder?.itemId === 'sign-date') {
           const fontSize = placeHolder?.height
@@ -197,6 +198,7 @@ const generatePDFWithGivenPlaceholders = async (id, placeholders, values) => {
     if (values?.length && placeholders?.length) {
       placeholders?.forEach(async (placeHolder) => {
         const currentPage = pages[placeHolder?.formField?.pageIndex];
+        if (!currentPage) return;
 
         if (placeHolder?.itemId === 'sign-date') {
           const fontSize = placeHolder?.height
@@ -332,6 +334,7 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
       if (interactedFields?.length) {
         interactedFields?.forEach(async (placeHolder) => {
           const currentPage = pages[placeHolder?.formField?.pageIndex];
+          if (!currentPage) return;
           if (placeHolder?.image?.src) {
             const pngImage = await pdfDoc.embedPng(placeHolder?.image?.src);
             currentPage.drawImage(pngImage, {
@@ -379,6 +382,8 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
       if (values?.length) {
         parsedFileDetails?.fields?.forEach(async (placeHolder) => {
           const currentPage = pages[placeHolder?.formField?.pageIndex];
+
+          if (!currentPage) return;
 
           const value = values.find((item) => item?.id === placeHolder?.itemId);
 
