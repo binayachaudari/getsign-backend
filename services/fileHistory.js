@@ -743,7 +743,14 @@ const generateFilePreview = async (fileId, itemId) => {
       ...generatedPDF,
       fields:
         fileDetails?.fields?.filter((field) =>
-          ['checkbox', 'sign-date'].includes(field?.itemId)
+          [
+            'checkbox',
+            'sign-date',
+            'receiver-initials',
+            'sender-initials',
+            'receiver-signature',
+            'sender-signature',
+          ].includes(field?.itemId)
         ) || [],
     };
   } catch (error) {
