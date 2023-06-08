@@ -92,8 +92,8 @@ const validateSignatures = () => [
     .isEmpty()
     .toFloat(),
   body('standardFields.*.isChecked').toBoolean(),
-  body('standardFields.*.image.height').toFloat(),
-  body('standardFields.*.image.width').toFloat(),
+  body('standardFields.*.height').toFloat(),
+  body('standardFields.*.width').toFloat(),
 ];
 
 module.exports = {
