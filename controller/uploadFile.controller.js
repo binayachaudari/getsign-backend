@@ -216,7 +216,7 @@ module.exports = {
         accountId: template?.account_id,
       });
 
-      return res.json({ data: { ...result } }).status(200);
+      return res.json({ data: result }).status(200);
     } catch (error) {
       next(error);
     }
