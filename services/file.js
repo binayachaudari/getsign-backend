@@ -110,6 +110,7 @@ const generatePDF = async (id, fields) => {
     if (fields?.length && parsedFileDetails?.fields) {
       parsedFileDetails?.fields?.forEach(async (placeHolder) => {
         const currentPage = pages[placeHolder?.formField?.pageIndex];
+        if (!currentPage) return;
 
         if (placeHolder?.itemId === 'sign-date') {
           /**
@@ -204,6 +205,7 @@ const generatePDFWithGivenPlaceholders = async (id, placeholders, values) => {
     if (values?.length && placeholders?.length) {
       placeholders?.forEach(async (placeHolder) => {
         const currentPage = pages[placeHolder?.formField?.pageIndex];
+        if (!currentPage) return;
 
         // else if (placeHolder?.itemId === 'checkbox') {
         // const padding = 6; // 6 is done because we have padding+boders in the frontend checkbox box
