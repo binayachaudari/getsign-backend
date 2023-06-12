@@ -46,7 +46,7 @@ app.use(Sentry.Handlers.tracingHandler());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(cors());
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '10MB' }));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
   fileUpload({
