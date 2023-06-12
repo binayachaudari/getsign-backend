@@ -4,7 +4,12 @@ const { getFile, s3, getSignedUrl } = require('./s3');
 const fontkit = require('@pdf-lib/fontkit');
 const FileHistory = require('../models/FileHistory');
 const { setMondayToken } = require('../utils/monday');
-const { getColumnValues, updateStatusColumn } = require('./monday.service');
+const {
+  getColumnValues,
+  updateStatusColumn,
+  getColumnDetails,
+  getSpecificColumnValue,
+} = require('./monday.service');
 const { Types } = require('mongoose');
 const { backOfficeSavedDocument } = require('./backoffice.service');
 const ApplicationModel = require('../models/Application.model');
@@ -15,6 +20,14 @@ const path = require('path');
 const { arraysAreEqual } = require('../utils/arrays');
 require('regenerator-runtime/runtime');
 const moment = require('moment');
+const {
+  getFormulaColumns,
+  parseFormulaColumnIds,
+  renameFunctions,
+} = require('../utils/formula');
+const { formulaeParser } = require('../utils/mondayFormulaConverter');
+const { HyperFormula } = require('hyperformula');
+const { toFixed } = require('../utils/number');
 
 const addFormFields = async (id, payload) => {
   const session = await FileHistory.startSession();
@@ -331,6 +344,132 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
         type: 'text',
       },
     ];
+
+    // Formula column
+    const boardFormulaColumnValues = new Map();
+
+    const formulaColumns = getFormulaColumns(
+      valuesToFill?.data?.items?.[0]?.column_values || []
+    );
+
+    if (formulaColumns.length > 0) {
+      const columnDetailsResponse = await getColumnDetails(
+        itemId,
+        formulaColumns?.map((column) => column?.id)
+      );
+      const columnDetails =
+        columnDetailsResponse?.data?.items?.[0]?.board?.columns || [];
+
+      // storing formula column settings_str values in map
+      for (const columnValue of columnDetails) {
+        boardFormulaColumnValues.set(
+          columnValue.id,
+          parseFormulaColumnIds(columnValue.settings_str)
+        );
+      }
+
+      // parsing and replacing formula column id with actual formula string
+      for (const columnValue of columnDetails) {
+        const parsedFormulaColumn = parseFormulaColumnIds(
+          columnValue.settings_str
+        );
+        let parsedRecursiveFormula = parsedFormulaColumn.formula;
+
+        parsedFormulaColumn?.formulaColumns?.map((item) => {
+          let currentItemValue = boardFormulaColumnValues.get(item);
+          if (currentItemValue?.formula || currentItemValue) {
+            const globalRegex = new RegExp(`{${item}}`, 'g');
+            parsedRecursiveFormula = parsedRecursiveFormula.replace(
+              globalRegex,
+              currentItemValue || currentItemValue?.formula
+            );
+          }
+        });
+
+        boardFormulaColumnValues.set(columnValue.id, parsedRecursiveFormula);
+      }
+
+      let finalFormula;
+      for (const column of columnDetails) {
+        const formulaColumnValues = new Map();
+        const parsedColumn = parseFormulaColumnIds(column?.settings_str);
+        finalFormula = parsedColumn.formula;
+        for (const item of valuesToFill?.data?.items?.[0]?.column_values) {
+          if (
+            parsedColumn.formulaColumns?.length &&
+            parsedColumn.formulaColumns.includes(item.id)
+          ) {
+            let columnValue;
+            if (item.type === 'formula') {
+              columnValue = boardFormulaColumnValues.get(item.id);
+              columnValue = '=' + columnValue.replace(/'/g, '"');
+              columnValue = renameFunctions(columnValue);
+              const parsedFormula = formulaeParser(columnValue);
+              columnValue = parsedFormula.formula;
+            } else {
+              columnValue = await getSpecificColumnValue(itemId, item.id);
+            }
+            formulaColumnValues.set(
+              {
+                id: item.id,
+              },
+              columnValue
+            );
+          }
+        }
+
+        const formulaColumnsKeys = Array.from(formulaColumnValues.keys());
+        for (let index = 0; index < formulaColumnsKeys.length; index++) {
+          const key = formulaColumnsKeys[index];
+          const chr = String.fromCharCode(97 + index).toUpperCase();
+          const globalRegex = new RegExp(`{${key?.id}}`, 'g');
+          finalFormula = finalFormula.replace(globalRegex, `${chr}1`);
+        }
+
+        finalFormula = '=' + finalFormula.replace(/'/g, '"');
+        finalFormula = renameFunctions(finalFormula);
+        const parsedFormula = formulaeParser(finalFormula);
+
+        // Hyper Formula Plugin
+        const formulaRow = [
+          ...Array.from(formulaColumnValues.values()),
+          parsedFormula.formula,
+        ];
+
+        const hfInstance = HyperFormula.buildFromArray([formulaRow], {
+          licenseKey: 'gpl-v3',
+          useColumnIndex: true,
+          smartRounding: false,
+        });
+        let finalFormulaValue = hfInstance.getCellValue({
+          sheet: 0,
+          col: formulaRow.length - 1,
+          row: 0,
+        });
+        finalFormulaValue = isNaN(finalFormulaValue)
+          ? finalFormulaValue
+          : toFixed(finalFormulaValue, 2);
+
+        boardFormulaColumnValues.set(column.id, finalFormulaValue);
+
+        const alreadyExistsIdx = values.findIndex(
+          (formValue) => formValue.id === column?.id
+        );
+
+        if (alreadyExistsIdx > -1) {
+          values[alreadyExistsIdx].text = parsedFormula.symbol
+            ? `${parsedFormula?.symbol}${finalFormulaValue}`
+            : finalFormulaValue;
+        } else {
+          values.push({
+            ...column,
+            text: parsedFormula.symbol
+              ? `${parsedFormula?.symbol}${finalFormulaValue}`
+              : finalFormulaValue,
+          });
+        }
+      }
+    }
 
     const signedBySender = await FileHistory.findOne({
       fileId: id,
