@@ -3,6 +3,7 @@ const controller = require('../../controller/uploadFile.controller');
 const {
   validateRequest,
 } = require('../../middleware/validateRequest.middleware');
+const { validateTrial } = require('../../middleware/validateTrial');
 const {
   verifySessionToken,
 } = require('../../middleware/verifySessionToken.middleware');
@@ -75,6 +76,7 @@ router.get(
   verifySessionToken,
   validateItemIdAndIdParam(),
   validateRequest,
+  validateTrial,
   controller.sendPDF
 );
 router.get(

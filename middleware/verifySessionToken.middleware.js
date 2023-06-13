@@ -21,6 +21,8 @@ const verifySessionToken = async (req, res, next) => {
 
     req.isAuthenticated = true;
     req.user = user;
+    req.userId = userId;
+    req.accountId = accountId;
     next();
   } catch (err) {
     return next(err);
