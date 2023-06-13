@@ -18,7 +18,11 @@ const applicationWebhook = async (req, res, next) => {
       accountId: payload?.data?.account_id,
       username: payload?.data?.user_name,
       slug: decoded?.dat?.slug,
-      subscription: payload?.data?.subscription?.is_trial ? 'Trial' : 'Paid',
+      subscription:
+        payload?.data?.subscription?.is_trial === undefined ||
+        payload?.data?.subscription?.is_trial
+          ? 'Trial'
+          : 'Paid',
       tier: payload?.data?.subscription?.plan_id,
     });
   }
