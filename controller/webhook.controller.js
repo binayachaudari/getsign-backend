@@ -1,6 +1,7 @@
 const ApplicationModel = require('../models/Application.model');
 const jwt = require('jsonwebtoken');
 const { backOfficeAddItem } = require('../services/backoffice.service');
+const SubscriptionModel = require('../models/Subscription.model');
 
 const applicationWebhook = async (req, res, next) => {
   let decoded;
@@ -17,8 +18,8 @@ const applicationWebhook = async (req, res, next) => {
       accountId: payload?.data?.account_id,
       username: payload?.data?.user_name,
       slug: decoded?.dat?.slug,
-      subscription: 'Trial',
-      tier: undefined,
+      subscription: payload?.data?.subscription?.is_trial ? 'Trial' : 'Paid',
+      tier: payload?.data?.subscription?.plan_id,
     });
   }
 
@@ -29,6 +30,42 @@ const applicationWebhook = async (req, res, next) => {
       Number(backOfficeItemId?.data?.create_item?.id) || null,
     ...payload?.data,
   });
+
+  const subscriptionExists = await SubscriptionModel.findOne({
+    account_id: payload?.data?.account_id,
+  });
+
+  if (!subscriptionExists) {
+    await SubscriptionModel.create({
+      type: payload.type,
+      user_id: payload?.data?.user_id,
+      user_email: payload?.data?.user_email,
+      user_name: payload?.data?.user_name,
+      user_cluster: payload?.data?.user_cluster,
+      account_tier: payload?.data?.account_tier,
+      account_name: payload?.data?.account_name,
+      account_slug: payload?.data?.account_slug,
+      account_max_users: payload?.data?.account_max_users,
+      account_id: payload?.data?.account_id,
+      timestamp: payload?.data?.timestamp,
+      subscription: payload?.data?.subscription,
+    });
+  } else {
+    await SubscriptionModel.findByIdAndUpdate(subscriptionExists._id, {
+      type: payload.type,
+      user_id: payload?.data?.user_id,
+      user_email: payload?.data?.user_email,
+      user_name: payload?.data?.user_name,
+      user_cluster: payload?.data?.user_cluster,
+      account_tier: payload?.data?.account_tier,
+      account_name: payload?.data?.account_name,
+      account_slug: payload?.data?.account_slug,
+      account_max_users: payload?.data?.account_max_users,
+      account_id: payload?.data?.account_id,
+      timestamp: payload?.data?.timestamp,
+      subscription: payload?.data?.subscription,
+    });
+  }
 
   return res.status(201).json({ data: app });
 };

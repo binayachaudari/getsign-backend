@@ -8,8 +8,13 @@ const appSubscriptionValidation = () => [
   body('data.user_email').trim().not().isEmpty().escape(),
   body('data.user_name').trim().not().isEmpty().escape(),
   body('data.user_cluster').trim().not().isEmpty().escape(),
+  body('data.account_tier').trim().not().isEmpty().escape(),
+  body('data.account_name').trim().not().isEmpty().escape(),
+  body('data.account_slug').trim().not().isEmpty().escape(),
+  body('data.account_max_users').trim().not().isEmpty().toInt(),
   body('data.version_data').isObject(),
   body('data.timestamp').trim().not().isEmpty().escape(),
+  body('data.subscription').isObject(),
 ];
 
 module.exports = {

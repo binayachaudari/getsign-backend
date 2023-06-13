@@ -101,6 +101,9 @@ const backOfficeAddItem = async ({
   );
 
   if (itemsByAccountId?.data?.items_by_column_values?.length) {
+    // itemsByAccountId?.data?.items_by_column_values?.forEach((item) => {
+    //   updateColumnValues(item.id, JSON.stringify({}));
+    // });
     return;
   }
 

@@ -6,11 +6,6 @@ const schema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    slug: String,
-    app_id: {
-      type: Number,
-      required: true,
-    },
     user_id: {
       type: String,
       required: true,
@@ -40,8 +35,6 @@ const schema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    back_office_item_id: Number,
-    version_data: Object,
     timestamp: String,
     subscription: Object,
   },
@@ -53,4 +46,4 @@ const schema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model('application', schema);
+module.exports = mongoose.model('subscription', schema);
