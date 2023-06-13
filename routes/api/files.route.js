@@ -76,7 +76,7 @@ router.get(
   verifySessionToken,
   validateItemIdAndIdParam(),
   validateRequest,
-  validateTrial,
+  // validateTrial,
   controller.sendPDF
 );
 router.get(
