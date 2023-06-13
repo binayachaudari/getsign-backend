@@ -103,17 +103,21 @@ const validateTrial = async (req, res, next) => {
       },
     ]);
 
-    if (itemSentList[0].totalCount === 10) {
+    if (itemSentList?.[0]?.totalCount < 10) {
+      return next();
+    }
+
+    if (itemSentList?.[0]?.totalCount === 10) {
       // if sent documents count is 10; tag mailchimp
       return next();
     }
 
-    if (itemSentList[0].totalCount === 15) {
+    if (itemSentList?.[0]?.totalCount === 15) {
       // if sent documents count is 15; tag mailchimp
       return next();
     }
 
-    if (itemSentList[0].totalCount > 15) {
+    if (itemSentList?.[0]?.totalCount > 15) {
       await updateStatusColumn({
         itemId: itemId,
         boardId: template.board_id,
