@@ -41,7 +41,7 @@ const validateTrial = async (req, res, next) => {
       new Date(subscribed?.created_at).getDate()
     );
     const endOfMonth = new Date(startOfMonth).setMonth(
-      new Date(startOfMonth) + 1
+      new Date(startOfMonth).getMonth() + 1
     );
 
     // check no of documents sent this month depending upon subscrition document created_at date
@@ -72,8 +72,16 @@ const validateTrial = async (req, res, next) => {
             },
             {
               'filehistories.created_at': {
-                $gte: startOfMonth,
-                $lte: endOfMonth,
+                $gte: new Date(
+                  new Date(startOfMonth).getFullYear(),
+                  new Date(startOfMonth).getMonth(),
+                  new Date(startOfMonth).getDate()
+                ),
+                $lte: new Date(
+                  new Date(endOfMonth).getFullYear(),
+                  new Date(endOfMonth).getMonth(),
+                  new Date(endOfMonth).getDate()
+                ),
               },
             },
           ],
@@ -103,21 +111,19 @@ const validateTrial = async (req, res, next) => {
       },
     ]);
 
-    if (itemSentList?.[0]?.totalCount < 10) {
-      return next();
-    }
-
     if (itemSentList?.[0]?.totalCount === 10) {
       // if sent documents count is 10; tag mailchimp
-      return next();
     }
 
     if (itemSentList?.[0]?.totalCount === 15) {
       // if sent documents count is 15; tag mailchimp
+    }
+
+    if (itemSentList.length === 0 || itemSentList?.[0]?.totalCount < 15) {
       return next();
     }
 
-    if (itemSentList?.[0]?.totalCount > 15) {
+    if (itemSentList?.[0]?.totalCount >= 15) {
       await updateStatusColumn({
         itemId: itemId,
         boardId: template.board_id,
