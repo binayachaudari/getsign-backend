@@ -61,7 +61,10 @@ const applicationWebhook = async (req, res, next) => {
       accountId: payload?.data?.account_id,
       username: payload?.data?.user_name,
       slug: decoded?.dat?.slug,
-      subscription: subscriptionType(payload?.data?.subscription),
+      subscription:
+        payload.type === 'app_subscription_cancelled'
+          ? 'Cancelled'
+          : subscriptionType(payload?.data?.subscription),
       tier: pricingPlan.max_seats.toString(),
       version,
       type: getBillingPeriod(payload?.data?.subscription?.billing_period),
@@ -83,10 +86,13 @@ const applicationWebhook = async (req, res, next) => {
     });
   } else {
     backOfficeItemId = applicationHistory?.back_office_item_id;
-    const payload = {
+    const values = {
       text2: version || null,
       status: {
-        label: subscriptionType(payload?.data?.subscription),
+        label:
+          payload.type === 'app_subscription_cancelled'
+            ? 'Cancelled'
+            : subscriptionType(payload?.data?.subscription),
       },
       status5: {
         label: pricingPlan.max_seats.toString(),
@@ -111,8 +117,7 @@ const applicationWebhook = async (req, res, next) => {
           : null,
     };
 
-    const values = JSON.stringify(payload);
-    await updateColumnValues(backOfficeItemId, values);
+    await updateColumnValues(backOfficeItemId, JSON.stringify(values));
   }
 
   const app = await ApplicationModel.create({
