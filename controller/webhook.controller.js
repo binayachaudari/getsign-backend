@@ -171,6 +171,7 @@ const applicationWebhook = async (req, res, next) => {
 
     await addItemsToOrders({
       customerName: payload?.data?.user_name,
+      createdDate: getDateAndTime(payload?.data?.timestamp),
       email: payload?.data?.user_email,
       accountId: payload?.data?.account_id,
       transactionType,
