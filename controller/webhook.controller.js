@@ -1,6 +1,10 @@
 const ApplicationModel = require('../models/Application.model');
 const jwt = require('jsonwebtoken');
-const { backOfficeAddItem } = require('../services/backoffice.service');
+const {
+  backOfficeAddItem,
+  updateColumnValues,
+  getDateAndTime,
+} = require('../services/backoffice.service');
 const SubscriptionModel = require('../models/Subscription.model');
 const { pricingV1 } = require('../config/pricing.v1');
 
@@ -16,6 +20,19 @@ const subscriptionType = (subscription) => {
   return 'Paid';
 };
 
+const getBillingPeriod = (billingPeriod) => {
+  switch (billingPeriod) {
+    case 'monthly':
+      return 'Monthly';
+
+    case 'yearly':
+      return 'Yearly';
+
+    default:
+      null;
+  }
+};
+
 const applicationWebhook = async (req, res, next) => {
   let decoded;
   let backOfficeItemId;
@@ -24,7 +41,20 @@ const applicationWebhook = async (req, res, next) => {
 
   const payload = req.body;
 
-  if (payload.type === 'install') {
+  const applicationHistory = await ApplicationModel.findOne({
+    account_id: payload?.data?.account_id,
+    back_office_item_id: { $ne: null },
+  });
+
+  const version = payload?.data?.version_data
+    ? `${payload?.data?.version_data?.major}.${payload?.data?.version_data?.minor}.${payload?.data?.version_data?.patch}`
+    : null;
+
+  const pricingPlan = payload?.data?.subscription?.plan_id
+    ? pricingV1.get(payload?.data?.subscription?.plan_id)
+    : null;
+
+  if (!applicationHistory?.back_office_item_id) {
     backOfficeItemId = await backOfficeAddItem({
       customerName: payload?.data?.user_name,
       accountEmail: payload?.data?.user_email,
@@ -32,11 +62,53 @@ const applicationWebhook = async (req, res, next) => {
       username: payload?.data?.user_name,
       slug: decoded?.dat?.slug,
       subscription: subscriptionType(payload?.data?.subscription),
-      tier: payload?.data?.subscription?.plan_id
-        ? pricingV1.get(payload?.data?.subscription?.plan_id)
+      tier: pricingPlan.max_seats,
+      version,
+      type: getBillingPeriod(payload?.data?.subscription?.billing_period),
+      subscribedDate:
+        subscriptionType(payload?.data?.subscription) === 'Paid'
+          ? getDateAndTime()
+          : null,
+      renewalDate: payload?.data?.subscription?.renewal_date
+        ? getDateAndTime(payload?.data?.subscription?.renewal_date)
         : null,
-      version: `${payload?.data?.version_data?.major}.${payload?.data?.version_data?.minor}.${payload?.data?.version_data?.patch}`,
+      amount:
+        getBillingPeriod(payload?.data?.subscription?.billing_period) ===
+        'Monthly'
+          ? pricingPlan.monthly
+          : getBillingPeriod(payload?.data?.subscription?.billing_period) ===
+            'Yearly'
+          ? pricingPlan.yearly
+          : null,
     });
+  } else {
+    backOfficeItemId = applicationHistory?.back_office_item_id;
+    const payload = {
+      text2: version || null,
+      status: {
+        label: subscriptionType(payload?.data?.subscription),
+      },
+      status5: {
+        label: pricingPlan.max_seats,
+      },
+      status88: {
+        label: getBillingPeriod(payload?.data?.subscription?.billing_period),
+      },
+      date6: payload?.data?.subscription?.renewal_date
+        ? getDateAndTime(payload?.data?.subscription?.renewal_date)
+        : null,
+      numbers59:
+        getBillingPeriod(payload?.data?.subscription?.billing_period) ===
+        'Monthly'
+          ? pricingPlan.monthly
+          : getBillingPeriod(payload?.data?.subscription?.billing_period) ===
+            'Yearly'
+          ? pricingPlan.yearly
+          : null,
+    };
+
+    const values = JSON.stringify(payload);
+    await updateColumnValues(backOfficeItemId, values);
   }
 
   const app = await ApplicationModel.create({

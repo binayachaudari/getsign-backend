@@ -45,8 +45,8 @@ const updateColumnValues = async (itemId, values) => {
   );
 };
 
-const getDateAndTime = () => {
-  const today = new Date();
+const getDateAndTime = (givenDate) => {
+  const today = givenDate ? new Date(givenDate) : new Date();
 
   const year = today.getFullYear();
   const month = today.getUTCMonth() + 1;
@@ -73,6 +73,10 @@ const backOfficeAddItem = async ({
   subscription,
   tier,
   version,
+  type,
+  subscribedDate,
+  renewalDate,
+  amount,
 }) => {
   if (!backOfficeMondayToken) {
     throw 'Cannot find back office token';
@@ -126,6 +130,12 @@ const backOfficeAddItem = async ({
     date4: {
       ...getDateAndTime(),
     },
+    date3: subscribedDate,
+    status88: {
+      label: type,
+    },
+    date6: renewalDate,
+    numbers59: amount,
   };
 
   const values = JSON.stringify(payload);
@@ -399,4 +409,6 @@ module.exports = {
   backOfficeItemViewInstalled,
   backOfficeUpdateTotalSent,
   backOfficeUpdateTotalSigned,
+  updateColumnValues,
+  getDateAndTime,
 };
