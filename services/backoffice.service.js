@@ -2,6 +2,7 @@ const { monday } = require('../utils/monday');
 
 const backOfficeMondayToken = process.env.BACK_OFFICE_TOKEN;
 const boardId = process.env.BACK_OFFICE_CUSTOMER_BOARD_ID;
+const ordersBoardId = process.env.BACK_OFFICE_ORDERS_BOARD_ID;
 
 const getItemDetails = async ({ itemId, columnIds }) => {
   return await monday.api(
@@ -399,6 +400,63 @@ const backOfficeUpdateTotalSigned = async (itemId) => {
   await updateColumnValues(itemId, values);
 };
 
+const addItemsToOrders = async ({
+  customerName,
+  createdDate,
+  email,
+  accountId,
+  transactionType,
+  plan,
+  type,
+  active,
+  amount = '',
+  deactivationDate,
+}) => {
+  monday.setToken(backOfficeMondayToken);
+
+  const payload = {
+    date: getDateAndTime(createdDate),
+    email_1: {
+      email,
+      text: email,
+    },
+    numbers1: accountId,
+    status: {
+      label: transactionType,
+    },
+    status9: {
+      label: plan,
+    },
+    status97: {
+      label: type,
+    },
+    status91: {
+      label: active,
+    },
+    numbers: amount,
+    date0: getDateAndTime(deactivationDate),
+  };
+
+  const values = JSON.stringify(payload);
+
+  return await monday.api(
+    `
+    mutation createItem($itemName: String!, $boardId: Int!, $values: JSON) {
+      create_item(board_id: $boardId, item_name: $itemName, column_values: $values) {
+        id
+      }
+    }     
+  `,
+    {
+      variables: {
+        boardId: Number(ordersBoardId),
+        itemName: customerName,
+        values,
+      },
+    }
+  );
+};
+
 module.exports = {
   backOfficeAddItem,
   backOfficeUploadedDocument,
@@ -411,4 +469,5 @@ module.exports = {
   backOfficeUpdateTotalSigned,
   updateColumnValues,
   getDateAndTime,
+  addItemsToOrders,
 };

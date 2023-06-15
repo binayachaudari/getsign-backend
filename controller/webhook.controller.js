@@ -4,9 +4,11 @@ const {
   backOfficeAddItem,
   updateColumnValues,
   getDateAndTime,
+  addItemsToOrders,
 } = require('../services/backoffice.service');
 const SubscriptionModel = require('../models/Subscription.model');
 const { pricingV1 } = require('../config/pricing.v1');
+const { orderTypes } = require('../config/orderTypes');
 
 const subscriptionType = (subscription) => {
   if (!subscription) {
@@ -161,6 +163,35 @@ const applicationWebhook = async (req, res, next) => {
       account_id: payload?.data?.account_id,
       timestamp: payload?.data?.timestamp,
       subscription: payload?.data?.subscription,
+    });
+  }
+
+  if (payload?.type && orderTypes.get(payload.type)) {
+    const transactionType = orderTypes.get(payload.type).status;
+
+    await addItemsToOrders({
+      customerName: payload?.data?.user_name,
+      email: payload?.data?.user_email,
+      accountId: payload?.data?.account_id,
+      transactionType,
+      plan: pricingPlan.max_seats.toString(),
+      type: getBillingPeriod(payload?.data?.subscription?.billing_period),
+      active: payload?.type === 'app_subscription_cancelled' ? 'NO' : 'YES',
+      amount: [
+        'app_subscription_cancelled_by_user',
+        'app_subscription_cancelled',
+      ].includes(payload?.type)
+        ? null
+        : getBillingPeriod(payload?.data?.subscription?.billing_period) ===
+          'Monthly'
+        ? pricingPlan.monthly
+        : getBillingPeriod(payload?.data?.subscription?.billing_period) ===
+          'Yearly'
+        ? pricingPlan.yearly
+        : null,
+      deactivationDate: payload?.data?.subscription?.renewal_date
+        ? getDateAndTime(payload?.data?.subscription?.renewal_date)
+        : null,
     });
   }
 
