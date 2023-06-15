@@ -19,10 +19,7 @@ const schema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    user_cluster: {
-      type: String,
-      required: true,
-    },
+    user_cluster: String,
     account_tier: String,
     account_name: String,
     account_slug: String,
