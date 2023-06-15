@@ -62,7 +62,7 @@ const applicationWebhook = async (req, res, next) => {
       username: payload?.data?.user_name,
       slug: decoded?.dat?.slug,
       subscription: subscriptionType(payload?.data?.subscription),
-      tier: pricingPlan.max_seats,
+      tier: pricingPlan.max_seats.toString(),
       version,
       type: getBillingPeriod(payload?.data?.subscription?.billing_period),
       subscribedDate:
@@ -89,11 +89,15 @@ const applicationWebhook = async (req, res, next) => {
         label: subscriptionType(payload?.data?.subscription),
       },
       status5: {
-        label: pricingPlan.max_seats,
+        label: pricingPlan.max_seats.toString(),
       },
       status88: {
         label: getBillingPeriod(payload?.data?.subscription?.billing_period),
       },
+      date3:
+        subscriptionType(payload?.data?.subscription) === 'Paid'
+          ? getDateAndTime()
+          : null,
       date6: payload?.data?.subscription?.renewal_date
         ? getDateAndTime(payload?.data?.subscription?.renewal_date)
         : null,
