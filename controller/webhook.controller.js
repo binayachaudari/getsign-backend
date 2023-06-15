@@ -2,6 +2,19 @@ const ApplicationModel = require('../models/Application.model');
 const jwt = require('jsonwebtoken');
 const { backOfficeAddItem } = require('../services/backoffice.service');
 const SubscriptionModel = require('../models/Subscription.model');
+const { pricingV1 } = require('../config/pricing.v1');
+
+const subscriptionType = (subscription) => {
+  if (!subscription) {
+    return 'Trial';
+  }
+
+  if (subscription?.is_trial) {
+    return 'Trial';
+  }
+
+  return 'Paid';
+};
 
 const applicationWebhook = async (req, res, next) => {
   let decoded;
@@ -18,12 +31,11 @@ const applicationWebhook = async (req, res, next) => {
       accountId: payload?.data?.account_id,
       username: payload?.data?.user_name,
       slug: decoded?.dat?.slug,
-      subscription:
-        payload?.data?.subscription?.is_trial === undefined ||
-        payload?.data?.subscription?.is_trial
-          ? 'Trial'
-          : 'Paid',
-      tier: payload?.data?.subscription?.plan_id,
+      subscription: subscriptionType(payload?.data?.subscription),
+      tier: payload?.data?.subscription?.plan_id
+        ? pricingV1.get(payload?.data?.subscription?.plan_id)
+        : null,
+      version: `${payload?.data?.version_data?.major}.${payload?.data?.version_data?.minor}.${payload?.data?.version_data?.patch}`,
     });
   }
 

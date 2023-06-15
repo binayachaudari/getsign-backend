@@ -72,13 +72,14 @@ const backOfficeAddItem = async ({
   username,
   subscription,
   tier,
+  version,
 }) => {
   if (!backOfficeMondayToken) {
     throw 'Cannot find back office token';
   }
 
   if (!boardId) {
-    throw 'Back office boardId not provided';
+    throw 'Back office Customer boardId not provided';
   }
 
   monday.setToken(backOfficeMondayToken);
@@ -121,6 +122,7 @@ const backOfficeAddItem = async ({
     status5: {
       label: tier,
     },
+    text2: version || null,
     date4: {
       ...getDateAndTime(),
     },
