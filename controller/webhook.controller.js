@@ -57,7 +57,7 @@ const applicationWebhook = async (req, res, next) => {
     : null;
 
   if (!applicationHistory?.back_office_item_id) {
-    backOfficeItemId = await backOfficeAddItem({
+    const addedCustomer = await backOfficeAddItem({
       customerName: payload?.data?.user_name,
       accountEmail: payload?.data?.user_email,
       accountId: payload?.data?.account_id,
@@ -67,7 +67,7 @@ const applicationWebhook = async (req, res, next) => {
         payload.type === 'app_subscription_cancelled'
           ? 'Cancelled'
           : subscriptionType(payload?.data?.subscription),
-      tier: pricingPlan.max_seats.toString(),
+      tier: pricingPlan ? pricingPlan.max_seats.toString() : null,
       version,
       type: getBillingPeriod(payload?.data?.subscription?.billing_period),
       subscribedDate:
@@ -80,12 +80,14 @@ const applicationWebhook = async (req, res, next) => {
       amount:
         getBillingPeriod(payload?.data?.subscription?.billing_period) ===
         'Monthly'
-          ? pricingPlan.monthly
+          ? pricingPlan?.monthly
           : getBillingPeriod(payload?.data?.subscription?.billing_period) ===
             'Yearly'
-          ? pricingPlan.yearly
+          ? pricingPlan?.yearly
           : null,
     });
+
+    backOfficeItemId = addedCustomer?.data?.create_item?.id;
   } else {
     backOfficeItemId = applicationHistory?.back_office_item_id;
     const values = {
@@ -97,7 +99,7 @@ const applicationWebhook = async (req, res, next) => {
             : subscriptionType(payload?.data?.subscription),
       },
       status5: {
-        label: pricingPlan.max_seats.toString(),
+        label: pricingPlan ? pricingPlan.max_seats.toString() : null,
       },
       status88: {
         label: getBillingPeriod(payload?.data?.subscription?.billing_period),
@@ -112,10 +114,10 @@ const applicationWebhook = async (req, res, next) => {
       numbers59:
         getBillingPeriod(payload?.data?.subscription?.billing_period) ===
         'Monthly'
-          ? pricingPlan.monthly
+          ? pricingPlan?.monthly
           : getBillingPeriod(payload?.data?.subscription?.billing_period) ===
             'Yearly'
-          ? pricingPlan.yearly
+          ? pricingPlan?.yearly
           : null,
     };
 
@@ -125,8 +127,7 @@ const applicationWebhook = async (req, res, next) => {
   const app = await ApplicationModel.create({
     type: payload.type,
     slug: decoded?.dat?.slug,
-    back_office_item_id:
-      Number(backOfficeItemId?.data?.create_item?.id) || null,
+    back_office_item_id: Number(backOfficeItemId) || null,
     ...payload?.data,
   });
 
@@ -175,7 +176,7 @@ const applicationWebhook = async (req, res, next) => {
       email: payload?.data?.user_email,
       accountId: payload?.data?.account_id,
       transactionType,
-      plan: pricingPlan.max_seats.toString(),
+      plan: pricingPlan ? pricingPlan.max_seats.toString() : null,
       type: getBillingPeriod(payload?.data?.subscription?.billing_period),
       active: payload?.type === 'app_subscription_cancelled' ? 'NO' : 'YES',
       amount: [
@@ -185,10 +186,10 @@ const applicationWebhook = async (req, res, next) => {
         ? null
         : getBillingPeriod(payload?.data?.subscription?.billing_period) ===
           'Monthly'
-        ? pricingPlan.monthly
+        ? pricingPlan?.monthly
         : getBillingPeriod(payload?.data?.subscription?.billing_period) ===
           'Yearly'
-        ? pricingPlan.yearly
+        ? pricingPlan?.yearly
         : null,
       deactivationDate: payload?.data?.subscription?.renewal_date
         ? getDateAndTime(payload?.data?.subscription?.renewal_date)
