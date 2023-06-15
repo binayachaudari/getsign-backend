@@ -5,6 +5,7 @@ const boardId = process.env.BACK_OFFICE_CUSTOMER_BOARD_ID;
 const ordersBoardId = process.env.BACK_OFFICE_ORDERS_BOARD_ID;
 
 const getItemDetails = async ({ itemId, columnIds }) => {
+  monday.setToken(backOfficeMondayToken);
   return await monday.api(
     `
   query getItemDetails($ids: [Int], $columnIds: [String]) {
@@ -28,6 +29,7 @@ const getItemDetails = async ({ itemId, columnIds }) => {
 };
 
 const updateColumnValues = async (itemId, values) => {
+  monday.setToken(backOfficeMondayToken);
   return await monday.api(
     `
   mutation updateColumnValues($itemId: Int, $boardId: Int!, $values: JSON!) {
