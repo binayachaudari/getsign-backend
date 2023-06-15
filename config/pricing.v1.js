@@ -65,7 +65,7 @@ const pricingV1 = new Map([
   [
     '1000plus',
     {
-      max_seats: Infinity,
+      max_seats: '1000+',
       min_seats: 1001,
       monthly: 895,
       yearly: 9840,
