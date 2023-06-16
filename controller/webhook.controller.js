@@ -7,6 +7,7 @@ const {
   addItemsToOrders,
 } = require('../services/backoffice.service');
 const SubscriptionModel = require('../models/Subscription.model');
+const FileDetailsModel = require('../models/FileDetails');
 const { pricingV1 } = require('../config/pricing.v1');
 const { orderTypes } = require('../config/orderTypes');
 
@@ -42,6 +43,17 @@ const applicationWebhook = async (req, res, next) => {
   if (auth) decoded = jwt.decode(auth, process.env.CLIENT_SECRET);
 
   const payload = req.body;
+
+  // reset fields when they uninstall
+  if (
+    payload?.type === 'uninstall' &&
+    ((payload?.data?.version_data && payload?.data?.version_data.major <= 4) ||
+      payload?.data?.version_data?.minor <= 5)
+  ) {
+    await FileDetailsModel.find({
+      account_id: payload?.data?.account_id,
+    }).update({ fields: [] });
+  }
 
   const applicationHistory = await ApplicationModel.findOne({
     account_id: payload?.data?.account_id,
