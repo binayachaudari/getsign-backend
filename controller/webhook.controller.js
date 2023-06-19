@@ -68,7 +68,7 @@ const applicationWebhook = async (req, res, next) => {
     ? pricingV1.get(payload?.data?.subscription?.plan_id)
     : null;
 
-  if (!applicationHistory?.back_office_item_id) {
+  if (!applicationHistory?.back_office_item_id && payload.type === 'install') {
     const addedCustomer = await backOfficeAddItem({
       customerName: payload?.data?.user_name,
       accountEmail: payload?.data?.user_email,
