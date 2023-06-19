@@ -257,6 +257,9 @@ module.exports = {
             appInstallDetails.back_office_item_id,
             itemSentList[0].totalCount
           );
+          backOfficeUpadateLastDocSentDate(
+            appInstallDetails.back_office_item_id
+          );
         }
 
         await session.commitTransaction();
