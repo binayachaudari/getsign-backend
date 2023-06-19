@@ -750,6 +750,7 @@ const generateFilePreview = async (fileId, itemId) => {
             'sender-initials',
             'receiver-signature',
             'sender-signature',
+            'text-box',
           ].includes(field?.itemId)
         ) || [],
     };
