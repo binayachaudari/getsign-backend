@@ -133,7 +133,7 @@ const generatePDF = async (id, fields) => {
            */
           const fontSize = placeHolder?.height
             ? parseInt(placeHolder?.height / 3)
-            : 17;
+            : 11;
           const currentDate = moment(new Date())
             .format(placeHolder?.dateFormat?.format || 'DD/MM/YYYY')
             .toString();
@@ -250,7 +250,7 @@ const generatePDFWithGivenPlaceholders = async (id, placeholders, values) => {
            */
           const fontSize = placeHolder?.height
             ? parseInt(placeHolder?.height / 3)
-            : 17;
+            : 11;
           const currentDate = moment(new Date())
             .format(placeHolder?.dateFormat?.format || 'DD/MM/YYYY')
             .toString();
@@ -532,7 +532,7 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
              */
             const fontSize = placeHolder?.height
               ? parseInt(placeHolder?.height / 3)
-              : 17;
+              : 11;
             const currentDate = moment(new Date())
               .format(placeHolder?.dateFormat?.format || 'DD/MM/YYYY')
               .toString();
@@ -545,7 +545,7 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
               size: fontSize,
             });
           } else if (placeHolder?.itemId === 'checkbox') {
-            const padding = 6; // 6 is done because we have padding+boders in the frontend checkbox box
+            const padding = 5; // 6 is done because we have padding+boders in the frontend checkbox box
             let pngImage = await pdfDoc.embedPng(
               'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAAA8CAYAAAA6/NlyAAAACXBIWXMAACE4AAAhOAFFljFgAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAJ0SURBVHgB7ZtBbhoxFIb/52mlSOmC3gDUA2SAEJEVE7pFKidIjtDcAHEEeoHSEzRINFIXBbKpRkkAr9hEKkjdVk3V2VRqx649MGTS5gLz4k9CzHs2i49nezbPhAfY368HWuPEfAIQisgRBJIaWhLEYDr9fPb/eAbfrxc9D281jCgPlipGU8pwlSa2wr5f84UnxiZVAC9ulYib8upK2iARtpUVnp6nslrrHySop4CJvA4nyAmdTgeD83OflHdqxE4yQ7em0hVb6US4Uq0vzVfRPpt9u9IKR9llkDdMwVCpHJZMOUe0OYPMNh3Pp2GTqtWDtoZ4n042/0Qpz7IpVrpcPiwJDzMT2pWrFaEpFEQ7M6/PQdZCprSFws7SlLaXpoTGsSBNe+kkFcc9MKLRaEAJXGRSAZn9q9NoNg0JzAiCgH5Gv9Qm1AKPDCfMHSfMHSfMHSfMHSfMHSfMHSfMHSfMHSfMHSfMHSfMHSfMHSfMHSfMHSfMHSfMHSfMHSfMHSfMHSfMncctbPuNuRFF0b3YCq/SYPDhYwBG2ALG8Y6fxhqQQqu7blOhENg+Yy4sFgsSXnyaxpQIe+jjLvPadpJzkLbVvbn5WjKPx5uUVqTPknbhcrU+Mg9HSZqwUn/Q9Lzfq1arpbvdLvKEFR0OhxTHT0viCT6ZdVy0eVPDL/NZ+CJzySNplX+e+W3fE/Gb3d1diZwQRc9A9C1QCg27WrFu/bey383WrW4veVj8Ws0XyhvhvnTuWcuql1JeJoXbvpbsvR571cVMsDdcOJxc9iQaryt7uV2lD7b8+9WDNkG8MsN7BO0jR9hrSESYKMI7eR1e/Dv+F5R469eW8mIYAAAAAElFTkSuQmCC'
             );
@@ -559,10 +559,10 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
               // because coordinate calculation is done from bottom-left and the date has to be in the middle so multiplied by 2
               y:
                 placeHolder?.formField.coordinates.y -
-                (placeHolder?.height || 34) +
+                (placeHolder?.height || 25) +
                 padding, // substract padding just from bottom and decrease height because coordinates are calculated from bottom left
-              width: (placeHolder?.width || 34) - padding * 2, // default width is 34 and padding*2 is done because of padding-X = 6 in UI
-              height: (placeHolder?.height || 34) - padding * 2, // default height is 34 and padding*2 is done because of padding-Y = 6 in UI
+              width: (placeHolder?.width || 25) - padding * 1.5, // default width is 34 and padding*2 is done because of padding-X = 6 in UI
+              height: (placeHolder?.height || 25) - padding * 1.5, // default height is 34 and padding*2 is done because of padding-Y = 6 in UI
             });
           }
         });
