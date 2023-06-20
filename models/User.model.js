@@ -17,10 +17,7 @@ const schema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    workspace_id: {
-      type: Number,
-      required: true,
-    },
+    workspace_id: Number,
     item_id: {
       type: Number,
       required: true,
