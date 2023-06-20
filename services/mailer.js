@@ -16,6 +16,7 @@ const {
   backOfficeSentDocument,
   backOffice5DocumentSent,
   backOfficeUpdateTotalSent,
+  backOfficeUpadateLastDocSentDate,
 } = require('./backoffice.service');
 const { default: mongoose } = require('mongoose');
 
@@ -257,7 +258,7 @@ module.exports = {
             appInstallDetails.back_office_item_id,
             itemSentList[0].totalCount
           );
-          backOfficeUpadateLastDocSentDate(
+          await backOfficeUpadateLastDocSentDate(
             appInstallDetails.back_office_item_id
           );
         }
