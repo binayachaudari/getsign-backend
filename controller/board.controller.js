@@ -1,3 +1,4 @@
+const ApplicationModel = require('../models/Application.model');
 const {
   getStoredBoardFile,
   updateBackOfficeInstalledItemView,
@@ -8,6 +9,21 @@ const {
 module.exports = {
   installedItemView: async (req, res, next) => {
     try {
+      const { version } = req.query;
+      if (version) {
+        const applicationHistory = await ApplicationModel.findOne({
+          account_id: req?.accountId,
+          back_office_item_id: { $ne: null },
+        });
+
+        if (applicationHistory?.back_office_item_id) {
+          await updateColumnValues(
+            applicationHistory.back_office_item_id,
+            JSON.stringify({ text2: version })
+          );
+        }
+      }
+
       await updateBackOfficeInstalledItemView(Number(req?.user?.account_id));
       res
         .json({
