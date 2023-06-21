@@ -6,6 +6,8 @@ const {
   requestSignature,
   signedDocument,
   emailVerification,
+  trialLimitAboutToReach,
+  limitReached,
 } = require('../utils/emailTemplates/templates');
 const { updateStatusColumn, getEmailColumnValue } = require('./monday.service');
 const { setMondayToken } = require('../utils/monday');
@@ -114,6 +116,44 @@ const sendVerificationEmail = async (token, to) => {
     
     Thanks,
     GetSign.
+    `,
+  });
+};
+
+const sendLimitAboutToReach = async (url, to) => {
+  return await transporter.sendMail({
+    from: `GetSign <${process.env.EMAIL_USERNAME}>`,
+    to,
+    subject: `Limit is about to be reached only five documents left`,
+    html: trialLimitAboutToReach(url),
+    text: `Hi there, 
+    
+    just a quick reminder about your GetSign subscription.
+    Your trial subscription have a limit of 15 documents which is about to be reached. Click below to upgrade your account
+    
+    Upgrade: ${url}
+  
+    
+    Thanks,
+    The GetSign Team.
+    `,
+  });
+};
+
+const sendLimitReached = async (url, to) => {
+  return await transporter.sendMail({
+    from: `GetSign <${process.env.EMAIL_USERNAME}>`,
+    to,
+    subject: `Limit Reached`,
+    html: limitReached(url),
+    text: `Hi there, you have reached the limit of 15 documents for this month.  
+    Click below to upgrade your account
+    
+    Upgrade: ${url}
+  
+    
+    Thanks,
+    The GetSign Team.
     `,
   });
 };
@@ -281,4 +321,6 @@ module.exports = {
       throw err;
     }
   },
+  sendLimitAboutToReach,
+  sendLimitReached,
 };
