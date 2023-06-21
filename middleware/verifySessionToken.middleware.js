@@ -11,6 +11,8 @@ const verifySessionToken = async (req, res, next) => {
 
     const userId = decoded?.dat?.user_id;
     const accountId = decoded?.dat?.account_id;
+    const subscription = decoded?.dat?.subscription;
+    const slug = decoded?.dat?.slug;
     const user = await isUserAuthenticated(userId, accountId);
 
     await setMondayToken(userId, accountId);
@@ -23,6 +25,8 @@ const verifySessionToken = async (req, res, next) => {
     req.user = user;
     req.userId = userId;
     req.accountId = accountId;
+    req.subscription = subscription;
+    req.slug = slug;
     next();
   } catch (err) {
     return next(err);
