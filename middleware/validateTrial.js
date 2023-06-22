@@ -7,7 +7,7 @@ const { updateStatusColumn } = require('../services/monday.service');
 
 const validateTrial = async (req, res, next) => {
   try {
-    const subscription = res?.subscription;
+    const subscription = req?.subscription;
     if (!subscription) {
       return next({
         message: 'You need to upgrade/re-install GetSign',
