@@ -1,4 +1,5 @@
 const ApplicationModel = require('../models/Application.model');
+const { updateColumnValues } = require('../services/backoffice.service');
 const {
   getStoredBoardFile,
   updateBackOfficeInstalledItemView,
