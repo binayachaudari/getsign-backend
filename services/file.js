@@ -29,6 +29,8 @@ const { formulaeParser } = require('../utils/mondayFormulaConverter');
 const { HyperFormula } = require('hyperformula');
 const { toFixed } = require('../utils/number');
 
+const scalingFactor = 0.75;
+
 const addFormFields = async (id, payload) => {
   const session = await FileHistory.startSession();
   session.startTransaction();
@@ -138,8 +140,11 @@ const generatePDF = async (id, fields) => {
           const height = placeHolder.height || 18.33;
 
           currentPage.drawText(currentDate || '', {
-            x: placeHolder.formField.coordinates.x + 18, // + 18 is done because we have padding+boders in the frontend sign-date box
-            y: placeHolder.formField.coordinates.y + height * 0.2 - height, // because coordinate calculation is done from bottom-left and the date has padding of 8
+            x: placeHolder.formField.coordinates.x,
+            y:
+              placeHolder.formField.coordinates.y -
+              fontSize +
+              (fontSize * 1.375 - fontSize) / 2, // because coordinate calculation is done from bottom-left and the date has padding of 8
             font: customFont,
             size: fontSize,
           });
@@ -253,8 +258,11 @@ const generatePDFWithGivenPlaceholders = async (id, placeholders, values) => {
 
           const height = placeHolder.height || 18.33;
           currentPage.drawText(currentDate || '', {
-            x: placeHolder.formField.coordinates.x + 18, // + 18 is done because we have padding+boders in the frontend sign-date box
-            y: placeHolder.formField.coordinates.y + height * 0.2 - height, // because coordinate calculation is done from bottom-left and the date has padding of 8
+            x: placeHolder.formField.coordinates.x,
+            y:
+              placeHolder.formField.coordinates.y -
+              fontSize +
+              (fontSize * 1.375 - fontSize) / 2, // because coordinate calculation is done from bottom-left and the date has padding of 8
             font: customFont,
             size: fontSize,
           });
@@ -533,8 +541,11 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
 
             const height = placeHolder.height || 18.33;
             currentPage.drawText(currentDate || '', {
-              x: placeHolder.formField.coordinates.x + 18, // + 18 is done because we have padding+boders in the frontend sign-date box
-              y: placeHolder.formField.coordinates.y + height * 0.2 - height, // because coordinate calculation is done from bottom-left and the date has padding of 8
+              x: placeHolder.formField.coordinates.x,
+              y:
+                placeHolder.formField.coordinates.y -
+                fontSize +
+                (fontSize * 1.375 - fontSize) / 2, // because coordinate calculation is done from bottom-left and the date has padding of 8
               font: customFont,
               size: fontSize,
             });
