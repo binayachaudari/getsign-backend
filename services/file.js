@@ -140,11 +140,12 @@ const generatePDF = async (id, fields) => {
           const height = placeHolder.height || 18.33;
 
           currentPage.drawText(currentDate || '', {
-            x: placeHolder.formField.coordinates.x,
+            x: placeHolder.formField.coordinates.x + 16 + (fontSize % 16), // + 16 because we have gap, fontsize % 16 because of leading space of font
             y:
               placeHolder.formField.coordinates.y -
               fontSize +
-              (fontSize * 1.375 - fontSize) / 2, // because coordinate calculation is done from bottom-left and the date has padding of 8
+              (fontSize * 1.375 - fontSize) / 2 - // font cap size
+              8, // because coordinate calculation is done from bottom-left and the date has padding of 8
             font: customFont,
             size: fontSize,
           });
@@ -258,11 +259,12 @@ const generatePDFWithGivenPlaceholders = async (id, placeholders, values) => {
 
           const height = placeHolder.height || 18.33;
           currentPage.drawText(currentDate || '', {
-            x: placeHolder.formField.coordinates.x,
+            x: placeHolder.formField.coordinates.x + 16 + (fontSize % 16),
             y:
               placeHolder.formField.coordinates.y -
               fontSize +
-              (fontSize * 1.375 - fontSize) / 2, // because coordinate calculation is done from bottom-left and the date has padding of 8
+              (fontSize * 1.375 - fontSize) / 2 -
+              8, // because coordinate calculation is done from bottom-left and the date has padding of 8
             font: customFont,
             size: fontSize,
           });
@@ -541,11 +543,12 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
 
             const height = placeHolder.height || 18.33;
             currentPage.drawText(currentDate || '', {
-              x: placeHolder.formField.coordinates.x,
+              x: placeHolder.formField.coordinates.x + 16 + (fontSize % 16),
               y:
                 placeHolder.formField.coordinates.y -
                 fontSize +
-                (fontSize * 1.375 - fontSize) / 2, // because coordinate calculation is done from bottom-left and the date has padding of 8
+                (fontSize * 1.375 - fontSize) / 2 - // Capsize of 1.375
+                8, // because coordinate calculation is done from bottom-left and the date has padding of 8
               font: customFont,
               size: fontSize,
             });
