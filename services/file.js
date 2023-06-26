@@ -140,7 +140,7 @@ const generatePDF = async (id, fields) => {
           const height = placeHolder.height || 18.33;
 
           currentPage.drawText(currentDate || '', {
-            x: placeHolder.formField.coordinates.x + 16 + (fontSize % 16), // + 16 because we have gap, fontsize % 16 because of leading space of font
+            x: placeHolder.formField.coordinates.x + 8,
             y:
               placeHolder.formField.coordinates.y -
               fontSize +
@@ -259,7 +259,7 @@ const generatePDFWithGivenPlaceholders = async (id, placeholders, values) => {
 
           const height = placeHolder.height || 18.33;
           currentPage.drawText(currentDate || '', {
-            x: placeHolder.formField.coordinates.x + 16 + (fontSize % 16),
+            x: placeHolder.formField.coordinates.x + 8,
             y:
               placeHolder.formField.coordinates.y -
               fontSize +
@@ -543,7 +543,7 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
 
             const height = placeHolder.height || 18.33;
             currentPage.drawText(currentDate || '', {
-              x: placeHolder.formField.coordinates.x + 16 + (fontSize % 16),
+              x: placeHolder.formField.coordinates.x + 8,
               y:
                 placeHolder.formField.coordinates.y -
                 fontSize +
