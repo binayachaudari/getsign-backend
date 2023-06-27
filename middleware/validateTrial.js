@@ -7,6 +7,9 @@ const { updateStatusColumn } = require('../services/monday.service');
 
 const validateTrial = async (req, res, next) => {
   try {
+    if (process.env.IS_DEV) {
+      return next();
+    }
     const subscription = req?.subscription;
     if (!subscription) {
       return next({
