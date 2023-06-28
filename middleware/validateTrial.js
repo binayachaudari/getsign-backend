@@ -19,6 +19,7 @@ const validateTrial = async (req, res, next) => {
     }
     let isTrial = true;
     let trialPeriodExpired = true;
+    let isFreePlan = subscription?.plan_id === '3seats';
     const { accountId, slug } = req;
     const { itemId, id } = req.params;
 
@@ -31,7 +32,7 @@ const validateTrial = async (req, res, next) => {
       trialPeriodExpired = Boolean(renewalDate - now < 0);
       isTrial = subscription?.is_trial;
 
-      if (!isTrial || !trialPeriodExpired) {
+      if (!isTrial && !trialPeriodExpired && !isFreePlan) {
         return next();
       }
 
