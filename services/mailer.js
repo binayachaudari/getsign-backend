@@ -125,7 +125,7 @@ const sendLimitAboutToReach = async (url, to) => {
     from: `GetSign <${process.env.EMAIL_USERNAME}>`,
     to,
     subject: `Limit is about to be reached only five documents left`,
-    html: trialLimitAboutToReach(url),
+    html: trialLimitAboutToReach({ url }),
     text: `Hi there, 
     
     just a quick reminder about your GetSign subscription.
@@ -145,7 +145,7 @@ const sendLimitReached = async (url, to) => {
     from: `GetSign <${process.env.EMAIL_USERNAME}>`,
     to,
     subject: `Limit Reached`,
-    html: limitReached(url),
+    html: limitReached({ url }),
     text: `Hi there, you have reached the limit of 15 documents for this month.  
     Click below to upgrade your account
     

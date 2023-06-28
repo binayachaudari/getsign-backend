@@ -1,3 +1,4 @@
+const ApplicationModel = require('../models/Application.model');
 const FileDetails = require('../models/FileDetails');
 const {
   sendLimitAboutToReach,
@@ -24,6 +25,10 @@ const validateTrial = async (req, res, next) => {
     const { itemId, id } = req.params;
 
     const template = await FileDetails.findById(id);
+    const adminDetails = await ApplicationModel.findOne({
+      account_id: accountId,
+      type: 'install',
+    }).sort({ created_at: 'desc' });
 
     if (subscription) {
       const renewalDate = new Date(subscription?.renewal_date);
@@ -113,15 +118,15 @@ const validateTrial = async (req, res, next) => {
 
       if (itemSentList?.[0]?.totalCount === 10) {
         await sendLimitAboutToReach(
-          `${slug}.monday.com/apps/installed_apps/10050849?billing`,
-          template.email_address
+          `https://${slug}.monday.com/apps/installed_apps/10050849?billing`,
+          [template.email_address, adminDetails?.user_email]
         );
       }
 
       if (itemSentList?.[0]?.totalCount === 15) {
         await sendLimitReached(
-          `${slug}.monday.com/apps/installed_apps/10050849?billing`,
-          template.email_address
+          `https://${slug}.monday.com/apps/installed_apps/10050849?billing`,
+          [template.email_address, adminDetails?.user_email]
         );
       }
 
