@@ -429,7 +429,7 @@ const addItemsToOrders = async ({
   monday.setToken(backOfficeMondayToken);
 
   const payload = {
-    date: getDateAndTime(createdDate),
+    date: { ...createdDate },
     email_1: {
       email,
       text: email,
@@ -448,7 +448,7 @@ const addItemsToOrders = async ({
       label: active,
     },
     numbers: amount,
-    date0: getDateAndTime(deactivationDate),
+    date0: { ...deactivationDate },
   };
 
   const values = JSON.stringify(payload);

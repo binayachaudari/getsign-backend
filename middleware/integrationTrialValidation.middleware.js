@@ -3,10 +3,6 @@ const FileDetails = require('../models/FileDetails');
 const ApplicationModel = require('../models/Application.model');
 
 const integrationValidateTrial = async (req, res, next) => {
-  console.log({
-    header: req?.headers?.authorization,
-    payload: req?.body?.payload,
-  });
   try {
     if (process.env.IS_DEV) {
       return next();
