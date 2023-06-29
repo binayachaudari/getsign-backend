@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const FileDetails = require('../models/FileDetails');
 const ApplicationModel = require('../models/Application.model');
+const { updateStatusColumn } = require('../services/monday.service');
 
 const integrationValidateTrial = async (req, res, next) => {
   try {
