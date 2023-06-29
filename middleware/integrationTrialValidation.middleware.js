@@ -47,13 +47,15 @@ const integrationValidateTrial = async (req, res, next) => {
     const slug = adminDetails.slug;
 
     if (subscription) {
-      const renewalDate = new Date(subscription?.renewal_date);
-      const now = new Date();
+      if (!isFreePlan) {
+        const renewalDate = new Date(subscription?.renewal_date);
+        const now = new Date();
 
-      trialPeriodExpired = Boolean(renewalDate - now < 0);
-      isTrial = subscription?.is_trial;
+        trialPeriodExpired = Boolean(renewalDate - now < 0);
+        isTrial = subscription?.is_trial;
+      }
 
-      if (!isTrial && !trialPeriodExpired && !isFreePlan) {
+      if (!isFreePlan && !isTrial && !trialPeriodExpired) {
         return next();
       }
 
