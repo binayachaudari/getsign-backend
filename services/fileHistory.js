@@ -247,6 +247,23 @@ const getFileToSignSender = async (id, itemId) => {
           finalFormula = finalFormula.replace(globalRegex, `${chr}1`);
         }
 
+        // check if this is nested IF Conditions
+        const isNestedFormulae = hasNestedIF(finalFormula);
+
+        if (isNestedFormulae) {
+          // Remove 'IF' and remove the nested parentheses
+          const ifsFormula = finalFormula
+            .replace(/IF/g, '')
+            .replace(/\(/g, '')
+            .replace(/\)/g, '');
+
+          // Split the formula into individual conditions and values
+          const conditionsAndValues = ifsFormula.split(', ');
+
+          // Construct the IFS syntax
+          finalFormula = 'IFS(' + conditionsAndValues.join(', ') + ')';
+        }
+
         finalFormula = '=' + finalFormula.replace(/'/g, '"');
         finalFormula = renameFunctions(finalFormula);
         const parsedFormula = formulaeParser(finalFormula);
@@ -453,6 +470,23 @@ const getFileToSignReceiver = async (id, itemId) => {
               const chr = String.fromCharCode(97 + index).toUpperCase();
               const globalRegex = new RegExp(`{${key?.id}}`, 'g');
               finalFormula = finalFormula.replace(globalRegex, `${chr}1`);
+            }
+
+            // check if this is nested IF Conditions
+            const isNestedFormulae = hasNestedIF(finalFormula);
+
+            if (isNestedFormulae) {
+              // Remove 'IF' and remove the nested parentheses
+              const ifsFormula = finalFormula
+                .replace(/IF/g, '')
+                .replace(/\(/g, '')
+                .replace(/\)/g, '');
+
+              // Split the formula into individual conditions and values
+              const conditionsAndValues = ifsFormula.split(', ');
+
+              // Construct the IFS syntax
+              finalFormula = 'IFS(' + conditionsAndValues.join(', ') + ')';
             }
 
             finalFormula = '=' + finalFormula.replace(/'/g, '"');
@@ -691,6 +725,23 @@ const generateFilePreview = async (fileId, itemId) => {
           const chr = String.fromCharCode(97 + index).toUpperCase();
           const globalRegex = new RegExp(`{${key?.id}}`, 'g');
           finalFormula = finalFormula.replace(globalRegex, `${chr}1`);
+        }
+
+        // check if this is nested IF Conditions
+        const isNestedFormulae = hasNestedIF(finalFormula);
+
+        if (isNestedFormulae) {
+          // Remove 'IF' and remove the nested parentheses
+          const ifsFormula = finalFormula
+            .replace(/IF/g, '')
+            .replace(/\(/g, '')
+            .replace(/\)/g, '');
+
+          // Split the formula into individual conditions and values
+          const conditionsAndValues = ifsFormula.split(', ');
+
+          // Construct the IFS syntax
+          finalFormula = 'IFS(' + conditionsAndValues.join(', ') + ')';
         }
 
         finalFormula = '=' + finalFormula.replace(/'/g, '"');
