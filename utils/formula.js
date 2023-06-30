@@ -17,6 +17,11 @@ const parseFormulaColumnIds = (formulaStr) => {
   };
 };
 
+function hasNestedIF(formula) {
+  const regex = /\bIF\b.*\bIF\b/;
+  return regex.test(formula);
+}
+
 const unSupportedFunctions = {
   MINUS: 'HF.MINUS',
   MULTIPLY: 'HF.MULTIPLY',
@@ -37,4 +42,5 @@ module.exports = {
   parseFormulaColumnIds,
   getFormulaColumns,
   renameFunctions,
+  hasNestedIF,
 };

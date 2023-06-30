@@ -21,6 +21,7 @@ const {
   getFormulaColumns,
   parseFormulaColumnIds,
   renameFunctions,
+  hasNestedIF,
 } = require('../utils/formula');
 const HyperFormula = require('../utils/hyperFormula');
 const { toFixed } = require('../utils/number');
@@ -867,6 +868,23 @@ const generateFilePreviewWithPlaceholders = async (
           const chr = String.fromCharCode(97 + index).toUpperCase();
           const globalRegex = new RegExp(`{${key?.id}}`, 'g');
           finalFormula = finalFormula.replace(globalRegex, `${chr}1`);
+        }
+
+        // check if this is nested IF Conditions
+        const isNestedFormulae = hasNestedIF(finalFormula);
+
+        if (isNestedFormulae) {
+          // Remove 'IF' and remove the nested parentheses
+          const ifsFormula = finalFormula
+            .replace(/IF/g, '')
+            .replace(/\(/g, '')
+            .replace(/\)/g, '');
+
+          // Split the formula into individual conditions and values
+          const conditionsAndValues = ifsFormula.split(', ');
+
+          // Construct the IFS syntax
+          finalFormula = 'IFS(' + conditionsAndValues.join(', ') + ')';
         }
 
         finalFormula = '=' + finalFormula.replace(/'/g, '"');
