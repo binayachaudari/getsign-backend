@@ -24,7 +24,7 @@
     "express-fileupload": "^1.4.0",
     "express-validator": "^6.15.0",
     "helmet": "^6.0.1",
-    "hyperformula": "^2.4.0",
+    "hyperformula": "^2.5.0",
     "jsonwebtoken": "^9.0.0",
     "moment": "^2.29.4",
     "monday-sdk-js": "^0.1.6",

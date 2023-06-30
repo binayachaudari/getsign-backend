@@ -2216,10 +2216,10 @@ husky@^8.0.3:
   resolved "https://registry.yarnpkg.com/husky/-/husky-8.0.3.tgz#4936d7212e46d1dea28fef29bb3a108872cd9184"
   integrity sha512-+dQSyqPh4x1hlO1swXBiNb2HzTDN1I2IGLQx1GrBuiqFJfoMrnZWwVmatvSiO+Iz8fBUnf+lekwNo4c2LlXItg==
 
-hyperformula@^2.4.0:
-  version "2.4.0"
-  resolved "https://registry.yarnpkg.com/hyperformula/-/hyperformula-2.4.0.tgz#0838d0fb0f0190d1265a5af3613a3d5af940b152"
-  integrity sha512-W/3bP8BCfG5UEqn9aA/RROntiNxXXNWcAwSdGTskMzG0GYM6WR0UeU5OExjQYqg5TLnxo8GO+po61U3ZU7abfA==
+hyperformula@^2.5.0:
+  version "2.5.0"
+  resolved "https://registry.yarnpkg.com/hyperformula/-/hyperformula-2.5.0.tgz#b4c88de766ed5f6fb9f811ff4ef02290fbfe3a76"
+  integrity sha512-HkP7JZAmG7EQFF5XAhB3aGtTHvafblSRITTMYUsVoT9czIvYY7CvMQFfK1JNHJUVS844t8bnJpKEOqwcgBcHZg==
   dependencies:
     chevrotain "^6.5.0"
     tiny-emitter "^2.1.0"
