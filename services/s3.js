@@ -96,7 +96,7 @@ const uploadFile = async (req) => {
 
 const getFile = async (id) => {
   try {
-    const fileDetails = await FileDetailsModel.findById(id);
+    const fileDetails = await FileDetailsModel.findById(id).lean();
     const url = s3.getSignedUrl('getObject', {
       Bucket: process.env.BUCKET_NAME,
       Key: fileDetails.file,
@@ -111,6 +111,9 @@ const getFile = async (id) => {
 
     delete fileDetails.email_verification_token;
     delete fileDetails.email_verification_token_expires;
+    delete fileDetails._ac;
+    delete fileDetails._ct;
+
     return fileDetails;
   } catch (error) {
     throw error;
