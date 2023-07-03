@@ -40,9 +40,10 @@ module.exports = {
   },
   getFile: async (req, res, next) => {
     const id = req.params.id;
+    const accountId = req.accountId;
 
     try {
-      const result = await getFile(id);
+      const result = await getFile(id, accountId);
       return res.json({ data: result }).status(200);
     } catch (error) {
       next(error);

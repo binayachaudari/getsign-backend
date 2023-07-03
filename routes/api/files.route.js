@@ -28,6 +28,7 @@ router.get(
   '/get-file/:id',
   validateIdParam(),
   validateRequest,
+  verifySessionToken,
   controller.getFile
 );
 router.get(

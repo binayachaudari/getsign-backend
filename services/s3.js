@@ -94,7 +94,36 @@ const uploadFile = async (req) => {
   return result;
 };
 
-const getFile = async (id) => {
+const getFile = async (id, accountId) => {
+  try {
+    const fileDetails = await FileDetailsModel.findOne({
+      _id: id,
+      account_id: accountId,
+    }).lean();
+    const url = s3.getSignedUrl('getObject', {
+      Bucket: process.env.BUCKET_NAME,
+      Key: fileDetails.file,
+    });
+    const body = await fetch(url);
+    const contentType = body.headers.get('content-type');
+    const arrBuffer = await body.arrayBuffer();
+    const buffer = Buffer.from(arrBuffer);
+    var base64String = buffer.toString('base64');
+
+    fileDetails.file = `data:${contentType};base64,${base64String}`;
+
+    delete fileDetails.email_verification_token;
+    delete fileDetails.email_verification_token_expires;
+    delete fileDetails._ac;
+    delete fileDetails._ct;
+
+    return fileDetails;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const loadFileDetails = async (id) => {
   try {
     const fileDetails = await FileDetailsModel.findById(id).lean();
     const url = s3.getSignedUrl('getObject', {
@@ -206,4 +235,11 @@ const getSignedUrl = async (key) => {
   });
 };
 
-module.exports = { uploadFile, getFile, deleteFile, s3, getSignedUrl };
+module.exports = {
+  uploadFile,
+  getFile,
+  deleteFile,
+  s3,
+  getSignedUrl,
+  loadFileDetails,
+};

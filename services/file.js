@@ -1,6 +1,6 @@
 const { PDFDocument, rgb } = require('pdf-lib');
 const FileDetails = require('../models/FileDetails');
-const { getFile, s3, getSignedUrl } = require('./s3');
+const { s3, getSignedUrl, loadFileDetails } = require('./s3');
 const fontkit = require('@pdf-lib/fontkit');
 const FileHistory = require('../models/FileHistory');
 const { setMondayToken } = require('../utils/monday');
@@ -110,7 +110,7 @@ const addFormFields = async (id, payload) => {
 
 const generatePDF = async (id, fields) => {
   try {
-    const fileDetails = await getFile(id);
+    const fileDetails = await loadFileDetails(id);
 
     const pdfDoc = await PDFDocument.load(fileDetails?.file);
     const pages = pdfDoc.getPages();
@@ -206,7 +206,7 @@ const generatePDF = async (id, fields) => {
 
 const generatePDFWithGivenPlaceholders = async (id, placeholders, values) => {
   try {
-    const fileDetails = await getFile(id);
+    const fileDetails = await loadFileDetails(id);
 
     const pdfDoc = await PDFDocument.load(fileDetails?.file);
     const pages = pdfDoc.getPages();
@@ -335,7 +335,7 @@ const loadFile = async (url) => {
 const signPDF = async ({ id, interactedFields, status, itemId }) => {
   try {
     let pdfDoc;
-    const fileDetails = await getFile(id);
+    const fileDetails = await loadFileDetails(id);
     await setMondayToken(fileDetails.user_id, fileDetails.account_id);
     const valuesToFill = await getColumnValues(itemId);
 
