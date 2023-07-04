@@ -309,8 +309,9 @@ module.exports = {
 
   generatePreview: async (req, res, next) => {
     const { itemId, fileId } = req.params;
+    const accountId = req.accountId;
     try {
-      const result = await generateFilePreview(fileId, itemId);
+      const result = await generateFilePreview(fileId, itemId, accountId);
       return res.json({ data: result }).status(200);
     } catch (error) {
       if (error?.status === 403 && error?.userId) {
