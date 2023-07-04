@@ -629,10 +629,21 @@ const getFinalContract = async (id, withPdfBytes) => {
   }
 };
 
-const generateFilePreview = async (fileId, itemId) => {
+const generateFilePreview = async (fileId, itemId, accountId) => {
   let user;
   try {
-    const fileDetails = await FileDetails.findById(fileId);
+    const fileDetails = await FileDetails.findOne({
+      _id: fileId,
+      account_id: accountId,
+    });
+    if (!fileDetails) {
+      return {
+        fields: [],
+        file: null,
+        fileId: null,
+        name: null,
+      };
+    }
     await setMondayToken(fileDetails.user_id, fileDetails.account_id);
     user = await getUserDetails(fileDetails.user_id, fileDetails.account_id);
     const columnValues = await getColumnValues(itemId);

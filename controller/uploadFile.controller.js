@@ -40,9 +40,10 @@ module.exports = {
   },
   getFile: async (req, res, next) => {
     const id = req.params.id;
+    const accountId = req.accountId;
 
     try {
-      const result = await getFile(id);
+      const result = await getFile(id, accountId);
       return res.json({ data: result }).status(200);
     } catch (error) {
       next(error);
@@ -308,8 +309,9 @@ module.exports = {
 
   generatePreview: async (req, res, next) => {
     const { itemId, fileId } = req.params;
+    const accountId = req.accountId;
     try {
-      const result = await generateFilePreview(fileId, itemId);
+      const result = await generateFilePreview(fileId, itemId, accountId);
       return res.json({ data: result }).status(200);
     } catch (error) {
       if (error?.status === 403 && error?.userId) {
