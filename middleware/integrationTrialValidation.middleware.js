@@ -27,7 +27,6 @@ const integrationValidateTrial = async (req, res, next) => {
       });
     }
 
-    let isTrial = true;
     let trialPeriodExpired = true;
     let isFreePlan = subscription?.plan_id === '3seats';
     const file = await FileDetails.findOne({
@@ -41,7 +40,7 @@ const integrationValidateTrial = async (req, res, next) => {
       type: 'install',
     }).sort({ created_at: 'desc' });
 
-    const slug = adminDetails.slug;
+    const slug = adminDetails?.slug;
 
     if (subscription) {
       if (!isFreePlan) {
@@ -49,10 +48,9 @@ const integrationValidateTrial = async (req, res, next) => {
         const now = new Date();
 
         trialPeriodExpired = Boolean(renewalDate - now < 0);
-        isTrial = subscription?.is_trial;
       }
 
-      if (!isFreePlan && !isTrial && !trialPeriodExpired) {
+      if (!isFreePlan && !trialPeriodExpired) {
         return next();
       }
 
@@ -132,17 +130,31 @@ const integrationValidateTrial = async (req, res, next) => {
       ]);
 
       if (itemSentList?.[0]?.totalCount === 10) {
-        await sendLimitAboutToReach(
-          `https://${slug}.monday.com/apps/installed_apps/10050849?billing`,
-          [file.email_address, adminDetails?.user_email]
-        );
+        if (slug) {
+          await sendLimitAboutToReach(
+            `https://${slug}.monday.com/apps/installed_apps/10050849?billing`,
+            [file.email_address, adminDetails?.user_email]
+          );
+        } else {
+          await sendLimitAboutToReach(
+            `https://monday.com/apps/installed_apps/10050849?billing`,
+            [file.email_address, adminDetails?.user_email]
+          );
+        }
       }
 
       if (itemSentList?.[0]?.totalCount === 15) {
-        await sendLimitReached(
-          `https://${slug}.monday.com/apps/installed_apps/10050849?billing`,
-          [file.email_address, adminDetails?.user_email]
-        );
+        if (slug) {
+          await sendLimitReached(
+            `https://${slug}.monday.com/apps/installed_apps/10050849?billing`,
+            [file.email_address, adminDetails?.user_email]
+          );
+        } else {
+          await sendLimitReached(
+            `https://monday.com/apps/installed_apps/10050849?billing`,
+            [file.email_address, adminDetails?.user_email]
+          );
+        }
       }
 
       if (itemSentList.length === 0 || itemSentList?.[0]?.totalCount < 15) {
