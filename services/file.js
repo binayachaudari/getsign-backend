@@ -430,22 +430,22 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
           finalFormula = finalFormula.replace(globalRegex, `${chr}1`);
         }
 
-        // check if this is nested IF Conditions
-        const isNestedFormulae = hasNestedIF(finalFormula);
+        // // check if this is nested IF Conditions
+        // const isNestedFormulae = hasNestedIF(finalFormula);
 
-        if (isNestedFormulae) {
-          // Remove 'IF' and remove the nested parentheses
-          const ifsFormula = finalFormula
-            .replace(/IF/g, '')
-            .replace(/\(/g, '')
-            .replace(/\)/g, '');
+        // if (isNestedFormulae) {
+        //   // Remove 'IF' and remove the nested parentheses
+        //   const ifsFormula = finalFormula
+        //     .replace(/IF/g, '')
+        //     .replace(/\(/g, '')
+        //     .replace(/\)/g, '');
 
-          // Split the formula into individual conditions and values
-          const conditionsAndValues = ifsFormula.split(', ');
+        //   // Split the formula into individual conditions and values
+        //   const conditionsAndValues = ifsFormula.split(', ');
 
-          // Construct the IFS syntax
-          finalFormula = 'IFS(' + conditionsAndValues.join(', ') + ')';
-        }
+        //   // Construct the IFS syntax
+        //   finalFormula = 'IFS(' + conditionsAndValues.join(', ') + ')';
+        // }
 
         finalFormula = '=' + finalFormula.replace(/'/g, '"');
         finalFormula = renameFunctions(finalFormula);
