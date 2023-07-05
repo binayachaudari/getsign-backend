@@ -28,7 +28,14 @@ router.get(
   '/get-file/:id',
   validateIdParam(),
   validateRequest,
+  verifySessionToken,
   controller.getFile
+);
+router.get(
+  '/load-file-details/:id',
+  validateIdParam(),
+  validateRequest,
+  controller.getFileDetails
 );
 router.get(
   '/history/:itemId/:id',
@@ -64,7 +71,11 @@ router.post(
   controller.addSignature
 );
 
-router.get('/generate-preview/:itemId/:fileId', controller.generatePreview);
+router.get(
+  '/generate-preview/:itemId/:fileId',
+  verifySessionToken,
+  controller.generatePreview
+);
 
 router.post(
   '/generate-realtime-preview/:itemId/:fileId',

@@ -22,6 +22,7 @@ const {
   parseFormulaColumnIds,
   renameFunctions,
   hasNestedIF,
+  convertToNestedIFS,
 } = require('../utils/formula');
 const HyperFormula = require('../utils/hyperFormula');
 const { toFixed } = require('../utils/number');
@@ -223,7 +224,7 @@ const getFileToSignSender = async (id, itemId) => {
             let columnValue;
             if (item.type === 'formula') {
               columnValue = boardFormulaColumnValues.get(item.id);
-              columnValue = '=' + columnValue.replace(/'/g, '"');
+              columnValue = '=' + columnValue?.replace(/'/g, '"');
               columnValue = renameFunctions(columnValue);
               const parsedFormula = formulaeParser(columnValue);
               columnValue = parsedFormula.formula;
@@ -247,22 +248,22 @@ const getFileToSignSender = async (id, itemId) => {
           finalFormula = finalFormula.replace(globalRegex, `${chr}1`);
         }
 
-        // check if this is nested IF Conditions
-        const isNestedFormulae = hasNestedIF(finalFormula);
+        // // check if this is nested IF Conditions
+        // const isNestedFormulae = hasNestedIF(finalFormula);
 
-        if (isNestedFormulae) {
-          // Remove 'IF' and remove the nested parentheses
-          const ifsFormula = finalFormula
-            .replace(/IF/g, '')
-            .replace(/\(/g, '')
-            .replace(/\)/g, '');
+        // if (isNestedFormulae) {
+        //   // Remove 'IF' and remove the nested parentheses
+        //   const ifsFormula = finalFormula
+        //     .replace(/IF/g, '')
+        //     .replace(/\(/g, '')
+        //     .replace(/\)/g, '');
 
-          // Split the formula into individual conditions and values
-          const conditionsAndValues = ifsFormula.split(', ');
+        //   // Split the formula into individual conditions and values
+        //   const conditionsAndValues = ifsFormula.split(', ');
 
-          // Construct the IFS syntax
-          finalFormula = 'IFS(' + conditionsAndValues.join(', ') + ')';
-        }
+        //   // Construct the IFS syntax
+        //   finalFormula = 'IFS(' + conditionsAndValues.join(', ') + ')';
+        // }
 
         finalFormula = '=' + finalFormula.replace(/'/g, '"');
         finalFormula = renameFunctions(finalFormula);
@@ -472,22 +473,12 @@ const getFileToSignReceiver = async (id, itemId) => {
               finalFormula = finalFormula.replace(globalRegex, `${chr}1`);
             }
 
-            // check if this is nested IF Conditions
-            const isNestedFormulae = hasNestedIF(finalFormula);
+            // // check if this is nested IF Conditions
+            // const isNestedFormulae = hasNestedIF(finalFormula);
 
-            if (isNestedFormulae) {
-              // Remove 'IF' and remove the nested parentheses
-              const ifsFormula = finalFormula
-                .replace(/IF/g, '')
-                .replace(/\(/g, '')
-                .replace(/\)/g, '');
-
-              // Split the formula into individual conditions and values
-              const conditionsAndValues = ifsFormula.split(', ');
-
-              // Construct the IFS syntax
-              finalFormula = 'IFS(' + conditionsAndValues.join(', ') + ')';
-            }
+            // if (isNestedFormulae) {
+            //   finalFormula = convertToNestedIFS(finalFormula);
+            // }
 
             finalFormula = '=' + finalFormula.replace(/'/g, '"');
             finalFormula = renameFunctions(finalFormula);
@@ -629,10 +620,21 @@ const getFinalContract = async (id, withPdfBytes) => {
   }
 };
 
-const generateFilePreview = async (fileId, itemId) => {
+const generateFilePreview = async (fileId, itemId, accountId) => {
   let user;
   try {
-    const fileDetails = await FileDetails.findById(fileId);
+    const fileDetails = await FileDetails.findOne({
+      _id: fileId,
+      account_id: accountId,
+    });
+    if (!fileDetails) {
+      return {
+        fields: [],
+        file: null,
+        fileId: null,
+        name: null,
+      };
+    }
     await setMondayToken(fileDetails.user_id, fileDetails.account_id);
     user = await getUserDetails(fileDetails.user_id, fileDetails.account_id);
     const columnValues = await getColumnValues(itemId);
@@ -703,7 +705,7 @@ const generateFilePreview = async (fileId, itemId) => {
             let columnValue;
             if (item.type === 'formula') {
               columnValue = boardFormulaColumnValues.get(item.id);
-              columnValue = '=' + columnValue.replace(/'/g, '"');
+              columnValue = '=' + columnValue?.replace(/'/g, '"');
               columnValue = renameFunctions(columnValue);
               const parsedFormula = formulaeParser(columnValue);
               columnValue = parsedFormula.formula;
@@ -727,22 +729,22 @@ const generateFilePreview = async (fileId, itemId) => {
           finalFormula = finalFormula.replace(globalRegex, `${chr}1`);
         }
 
-        // check if this is nested IF Conditions
-        const isNestedFormulae = hasNestedIF(finalFormula);
+        // // check if this is nested IF Conditions
+        // const isNestedFormulae = hasNestedIF(finalFormula);
 
-        if (isNestedFormulae) {
-          // Remove 'IF' and remove the nested parentheses
-          const ifsFormula = finalFormula
-            .replace(/IF/g, '')
-            .replace(/\(/g, '')
-            .replace(/\)/g, '');
+        // if (isNestedFormulae) {
+        //   // Remove 'IF' and remove the nested parentheses
+        //   const ifsFormula = finalFormula
+        //     .replace(/IF/g, '')
+        //     .replace(/\(/g, '')
+        //     .replace(/\)/g, '');
 
-          // Split the formula into individual conditions and values
-          const conditionsAndValues = ifsFormula.split(', ');
+        //   // Split the formula into individual conditions and values
+        //   const conditionsAndValues = ifsFormula.split(', ');
 
-          // Construct the IFS syntax
-          finalFormula = 'IFS(' + conditionsAndValues.join(', ') + ')';
-        }
+        //   // Construct the IFS syntax
+        //   finalFormula = 'IFS(' + conditionsAndValues.join(', ') + ')';
+        // }
 
         finalFormula = '=' + finalFormula.replace(/'/g, '"');
         finalFormula = renameFunctions(finalFormula);
@@ -897,7 +899,7 @@ const generateFilePreviewWithPlaceholders = async (
             let columnValue;
             if (item.type === 'formula') {
               columnValue = boardFormulaColumnValues.get(item.id);
-              columnValue = '=' + columnValue.replace(/'/g, '"');
+              columnValue = '=' + columnValue?.replace(/'/g, '"');
               columnValue = renameFunctions(columnValue);
               const parsedFormula = formulaeParser(columnValue);
               columnValue = parsedFormula.formula;
@@ -921,22 +923,22 @@ const generateFilePreviewWithPlaceholders = async (
           finalFormula = finalFormula.replace(globalRegex, `${chr}1`);
         }
 
-        // check if this is nested IF Conditions
-        const isNestedFormulae = hasNestedIF(finalFormula);
+        // // check if this is nested IF Conditions
+        // const isNestedFormulae = hasNestedIF(finalFormula);
 
-        if (isNestedFormulae) {
-          // Remove 'IF' and remove the nested parentheses
-          const ifsFormula = finalFormula
-            .replace(/IF/g, '')
-            .replace(/\(/g, '')
-            .replace(/\)/g, '');
+        // if (isNestedFormulae) {
+        //   // Remove 'IF' and remove the nested parentheses
+        //   const ifsFormula = finalFormula
+        //     .replace(/IF/g, '')
+        //     .replace(/\(/g, '')
+        //     .replace(/\)/g, '');
 
-          // Split the formula into individual conditions and values
-          const conditionsAndValues = ifsFormula.split(', ');
+        //   // Split the formula into individual conditions and values
+        //   const conditionsAndValues = ifsFormula.split(', ');
 
-          // Construct the IFS syntax
-          finalFormula = 'IFS(' + conditionsAndValues.join(', ') + ')';
-        }
+        //   // Construct the IFS syntax
+        //   finalFormula = 'IFS(' + conditionsAndValues.join(', ') + ')';
+        // }
 
         finalFormula = '=' + finalFormula.replace(/'/g, '"');
         finalFormula = renameFunctions(finalFormula);
