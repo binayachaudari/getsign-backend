@@ -26,7 +26,12 @@ const {
   getEmailColumnValue,
   uploadContract,
 } = require('../services/monday.service');
-const { uploadFile, getFile, deleteFile } = require('../services/s3');
+const {
+  uploadFile,
+  getFile,
+  deleteFile,
+  loadFileDetails,
+} = require('../services/s3');
 const { setMondayToken } = require('../utils/monday');
 
 module.exports = {
@@ -44,6 +49,15 @@ module.exports = {
 
     try {
       const result = await getFile(id, accountId);
+      return res.json({ data: result }).status(200);
+    } catch (error) {
+      next(error);
+    }
+  },
+  getFileDetails: async (req, res, next) => {
+    const id = req.params.id;
+    try {
+      const result = await loadFileDetails(id);
       return res.json({ data: result }).status(200);
     } catch (error) {
       next(error);

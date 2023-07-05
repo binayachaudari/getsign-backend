@@ -32,6 +32,12 @@ router.get(
   controller.getFile
 );
 router.get(
+  '/load-file-details/:id',
+  validateIdParam(),
+  validateRequest,
+  controller.getFileDetails
+);
+router.get(
   '/history/:itemId/:id',
   verifySessionToken,
   validateItemIdAndIdParam(),
