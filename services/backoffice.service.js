@@ -453,7 +453,7 @@ const addItemsToOrders = async ({
 
   const values = JSON.stringify(payload);
 
-  return await monday.api(
+  const response = await monday.api(
     `
     mutation createItem($itemName: String!, $boardId: Int!, $values: JSON) {
       create_item(board_id: $boardId, item_name: $itemName, column_values: $values) {
@@ -469,6 +469,8 @@ const addItemsToOrders = async ({
       },
     }
   );
+  console.log({ customerOrders: response });
+  return response;
 };
 
 module.exports = {
