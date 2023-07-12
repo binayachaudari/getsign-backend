@@ -16,25 +16,23 @@ const schema = new mongoose.Schema(
     board_id: {
       type: Number,
       required: true,
-      required: true,
     },
     item_id: {
       type: Number,
       required: true,
-      required: true,
     },
     file: {
       type: String,
-      required: true,
     },
     file_name: {
       type: String,
-      required: true,
     },
     is_deleted: {
       type: Boolean,
       default: false,
     },
+    type: String,
+    presigned_file_column_id: String,
     email_column_id: String,
     status_column_id: String,
     file_column_id: String,
