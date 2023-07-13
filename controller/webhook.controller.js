@@ -190,7 +190,11 @@ const applicationWebhook = async (req, res, next) => {
       accountId: payload?.data?.account_id,
       transactionType,
       plan: pricingPlan ? pricingPlan.max_seats.toString() : null,
-      type: getBillingPeriod(payload?.data?.subscription?.billing_period),
+      type:
+        getBillingPeriod(payload?.data?.subscription?.billing_period) ===
+        'Yearly'
+          ? 'Annual'
+          : getBillingPeriod(payload?.data?.subscription?.billing_period),
       active: payload?.type === 'app_subscription_cancelled' ? 'NO' : 'YES',
       amount: [
         'app_subscription_cancelled_by_user',
