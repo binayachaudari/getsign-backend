@@ -594,6 +594,9 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
           const currentPage = pages[placeHolder?.formField?.pageIndex];
           const value = values.find((item) => item?.id === placeHolder?.itemId);
 
+          const calculationError =
+            typeof value?.text === 'object' && value?.type === 'formula';
+
           if (value) {
             /**
              * fontSize:
@@ -602,6 +605,20 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
             const fontSize = placeHolder?.fontSize || 11;
             // This is pixel to point conversion scale factor
             const scalingFactor = 0.75;
+
+            if (calculationError) {
+              console.error('Calculation Error', value);
+              return currentPage.drawText('Error, Cannot Calculate', {
+                color: rgb(0.86, 0.14, 0.14),
+                x: placeHolder.formField.coordinates.x,
+                y:
+                  placeHolder.formField.coordinates.y -
+                  fontSize * scalingFactor,
+                font: customFont,
+                size: fontSize,
+              });
+            }
+
             currentPage.drawText(value?.text || '', {
               x: placeHolder.formField.coordinates.x,
               y: placeHolder.formField.coordinates.y - fontSize * scalingFactor,
