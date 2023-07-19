@@ -430,22 +430,22 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
           finalFormula = finalFormula.replace(globalRegex, `${chr}1`);
         }
 
-        // // check if this is nested IF Conditions
-        // const isNestedFormulae = hasNestedIF(finalFormula);
+        // check if this is nested IF Conditions
+        const isNestedFormulae = hasNestedIF(finalFormula);
 
-        // if (isNestedFormulae) {
-        //   // Remove 'IF' and remove the nested parentheses
-        //   const ifsFormula = finalFormula
-        //     .replace(/IF/g, '')
-        //     .replace(/\(/g, '')
-        //     .replace(/\)/g, '');
+        if (isNestedFormulae) {
+          // Remove 'IF' and remove the nested parentheses
+          const ifsFormula = finalFormula
+            .replace(/IF/g, '')
+            .replace(/\(/g, '')
+            .replace(/\)/g, '');
 
-        //   // Split the formula into individual conditions and values
-        //   const conditionsAndValues = ifsFormula.split(', ');
+          // Split the formula into individual conditions and values
+          const conditionsAndValues = ifsFormula.split(', ');
 
-        //   // Construct the IFS syntax
-        //   finalFormula = 'IFS(' + conditionsAndValues.join(', ') + ')';
-        // }
+          // Construct the IFS syntax
+          finalFormula = 'IFS(' + conditionsAndValues.join(', ') + ')';
+        }
 
         finalFormula = '=' + finalFormula.replace(/'/g, '"');
         finalFormula = renameFunctions(finalFormula);
@@ -471,23 +471,40 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
           ? finalFormulaValue
           : toFixed(finalFormulaValue, 2);
 
-        boardFormulaColumnValues.set(column.id, finalFormulaValue);
+        if (typeof finalFormulaValue !== 'object') {
+          boardFormulaColumnValues.set(column.id, finalFormulaValue);
+          const alreadyExistsIdx = values.findIndex(
+            (formValue) => formValue.id === column?.id
+          );
 
-        const alreadyExistsIdx = values.findIndex(
-          (formValue) => formValue.id === column?.id
-        );
-
-        if (alreadyExistsIdx > -1) {
-          values[alreadyExistsIdx].text = parsedFormula.symbol
-            ? `${parsedFormula?.symbol}${finalFormulaValue}`
-            : finalFormulaValue;
-        } else {
-          values.push({
-            ...column,
-            text: parsedFormula.symbol
+          if (alreadyExistsIdx > -1) {
+            values[alreadyExistsIdx].text = parsedFormula.symbol
               ? `${parsedFormula?.symbol}${finalFormulaValue}`
-              : finalFormulaValue,
-          });
+              : finalFormulaValue;
+          } else {
+            values.push({
+              ...column,
+              text: parsedFormula.symbol
+                ? `${parsedFormula?.symbol}${finalFormulaValue}`
+                : finalFormulaValue,
+            });
+          }
+        } else {
+          boardFormulaColumnValues.set(column.id, '0');
+          const alreadyExistsIdx = values.findIndex(
+            (formValue) => formValue.id === column?.id
+          );
+
+          if (alreadyExistsIdx > -1) {
+            values[alreadyExistsIdx].text = parsedFormula.symbol
+              ? `${parsedFormula?.symbol}${0}`
+              : '0';
+          } else {
+            values.push({
+              ...column,
+              text: parsedFormula.symbol ? `${parsedFormula?.symbol}${0}` : '0',
+            });
+          }
         }
       }
     }
