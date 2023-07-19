@@ -9,10 +9,19 @@ const pricingV1 = new Map([
     },
   ],
   [
+    'GS15seats',
+    {
+      max_seats: 15,
+      min_seats: 4,
+      monthly: 55,
+      yearly: 600,
+    },
+  ],
+  [
     '30seats',
     {
       max_seats: 30,
-      min_seats: 4,
+      min_seats: 16,
       monthly: 60,
       yearly: 660,
     },
