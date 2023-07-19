@@ -18,8 +18,15 @@ const parseFormulaColumnIds = (formulaStr) => {
 };
 
 function hasNestedIF(formula) {
-  const regex = /\bIF\b.*\bIF\b/;
-  return regex.test(formula);
+  const regex = /IF\s*\([^)]*IF\s*\([^)]*\)*/g;
+
+  const matches = formula.match(regex);
+
+  if (matches && matches?.length === 1) {
+    return true;
+  }
+
+  return false;
 }
 
 function convertToNestedIFS(formula) {
