@@ -183,17 +183,7 @@ module.exports = {
           template.email_column_id
         );
         const to = emailColumn?.data?.items?.[0]?.column_values?.[0]?.text;
-        await sendFinalContract(
-          {
-            file: finalFile.file,
-            name: template.file_name,
-            itemId,
-            fileId: result._id,
-            senderName: template.sender_name,
-            senderEmail: template.email_address,
-          },
-          [template.email_address, to]
-        );
+
         await updateStatusColumn({
           itemId: itemId,
           boardId: template.board_id,
@@ -219,6 +209,19 @@ module.exports = {
           userId: template?.user_id,
           accountId: template?.account_id,
         });
+
+        await sendFinalContract(
+          {
+            file: finalFile.file,
+            name: template.file_name,
+            size: finalFile?.size,
+            itemId,
+            fileId: result._id,
+            senderName: template.sender_name,
+            senderEmail: template.email_address,
+          },
+          [template.email_address, to]
+        );
         return res.status(200).json({ data: 'Contract has been sent!' });
       }
 

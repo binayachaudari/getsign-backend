@@ -73,6 +73,15 @@ const sendRequestToSign = async ({ template, to, itemId, fileId }) => {
 };
 
 const sendSignedDocuments = async (document, to) => {
+  let attachments = [];
+
+  if (document?.size < 25000000) {
+    attachments.push({
+      filename: document.name,
+      path: document.file,
+    });
+  }
+
   return await transporter.sendMail({
     from: `${document.senderName} - via GetSign <${process.env.EMAIL_USERNAME}>`,
     replyTo: document.senderEmail,
@@ -93,12 +102,7 @@ const sendSignedDocuments = async (document, to) => {
       documentName: document.name,
       url: `${HOST}/download/${document.fileId}`,
     }),
-    attachments: [
-      {
-        filename: document.name,
-        path: document.file,
-      },
-    ],
+    attachments,
   });
 };
 
@@ -318,7 +322,7 @@ module.exports = {
     try {
       return await sendSignedDocuments(file, to);
     } catch (error) {
-      throw err;
+      throw error;
     }
   },
   sendLimitAboutToReach,
