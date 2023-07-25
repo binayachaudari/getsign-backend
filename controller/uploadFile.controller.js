@@ -187,6 +187,7 @@ module.exports = {
           {
             file: finalFile.file,
             name: template.file_name,
+            size: finalFile?.size,
             itemId,
             fileId: result._id,
             senderName: template.sender_name,

@@ -656,6 +656,7 @@ const getFinalContract = async (id, withPdfBytes) => {
 
     return {
       name: fileHistory?.fileId?.file_name,
+      size: blob?.size,
       file: `data:${blob.type};base64,${contractBase64}`,
       ...(withPdfBytes && {
         bytes: pdfBytes,
