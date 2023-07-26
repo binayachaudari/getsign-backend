@@ -150,11 +150,7 @@ const generatePDF = async (id, fields) => {
 
           currentPage.drawText(placeHolder?.content || '', {
             x: placeHolder.formField.coordinates.x + 8,
-            y:
-              placeHolder.formField.coordinates.y -
-              fontSize +
-              (fontSize * 1.375 - fontSize) / 2 -
-              8,
+            y: placeHolder.formField.coordinates.y - height + fontSize * 1.375,
             font: customFont,
             size: fontSize,
           });
@@ -272,11 +268,7 @@ const generatePDFWithGivenPlaceholders = async (id, placeholders, values) => {
 
           currentPage.drawText(placeHolder?.content || '', {
             x: placeHolder.formField.coordinates.x + 8,
-            y:
-              placeHolder.formField.coordinates.y -
-              fontSize +
-              (fontSize * 1.375 - fontSize) / 2 -
-              8,
+            y: placeHolder.formField.coordinates.y - height + fontSize * 1.375,
             font: customFont,
             size: fontSize,
           });
@@ -593,10 +585,7 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
             currentPage.drawText(placeHolder?.content || '', {
               x: placeHolder.formField.coordinates.x + 8,
               y:
-                placeHolder.formField.coordinates.y -
-                fontSize +
-                (fontSize * 1.375 - fontSize) / 2 -
-                8,
+                placeHolder.formField.coordinates.y - height + fontSize * 1.375,
               font: customFont,
               size: fontSize,
             });
