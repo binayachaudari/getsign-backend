@@ -7,7 +7,8 @@
   "author": "Binaya Chaudhary <binayachaudari@gmail.com>",
   "scripts": {
     "dev": "nodemon server",
-    "start": "node server"
+    "start": "node server",
+    "format": "prettier . --write"
   },
   "dependencies": {
     "@aws-sdk/client-ses": "^3.299.0",
@@ -38,6 +39,6 @@
     "husky": "^8.0.3",
     "lint-staged": "^13.1.0",
     "nodemon": "^2.0.20",
-    "prettier": "^2.8.2"
+    "prettier": "3.0.0"
   }
 }

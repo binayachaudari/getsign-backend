@@ -1,15 +1,15 @@
-const getFormulaColumns = (columnValues) => {
-  return columnValues.filter((column) => column.type === 'formula');
+const getFormulaColumns = columnValues => {
+  return columnValues.filter(column => column.type === 'formula');
 };
 
-const parseFormulaColumnIds = (formulaStr) => {
+const parseFormulaColumnIds = formulaStr => {
   const formulaObject = JSON.parse(formulaStr);
   const finalFormula = formulaObject.formula;
   const formulaColumns = finalFormula.match(/\{(.*?)\}/g);
 
   return {
     formulaColumns: formulaColumns
-      ? formulaColumns.map((columnName) =>
+      ? formulaColumns.map(columnName =>
           columnName.replace('{', '').replace('}', '')
         )
       : [],
@@ -69,7 +69,7 @@ const unSupportedFunctions = {
   DIVIDE: 'HF.DIVIDE',
 };
 
-const renameFunctions = (formula) => {
+const renameFunctions = formula => {
   let newFormula = formula;
   for (const key in unSupportedFunctions) {
     const value = unSupportedFunctions[key];
