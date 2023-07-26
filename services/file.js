@@ -144,6 +144,20 @@ const generatePDF = async (id, fields) => {
             font: customFont,
             size: fontSize,
           });
+        } else if (placeHolder?.itemId === 'text-box') {
+          const fontSize = placeHolder.fontSize || 11;
+          const height = placeHolder.height || 18.33;
+
+          currentPage.drawText(placeHolder?.content || '', {
+            x: placeHolder.formField.coordinates.x + 8,
+            y:
+              placeHolder.formField.coordinates.y -
+              fontSize +
+              (fontSize * 1.375 - fontSize) / 2 -
+              8,
+            font: customFont,
+            size: fontSize,
+          });
         } else {
           const value = fields.find((item) => item?.id === placeHolder?.itemId);
 
@@ -243,6 +257,20 @@ const generatePDFWithGivenPlaceholders = async (id, placeholders, values) => {
 
           const height = placeHolder.height || 18.33;
           currentPage.drawText(currentDate || '', {
+            x: placeHolder.formField.coordinates.x + 8,
+            y:
+              placeHolder.formField.coordinates.y -
+              fontSize +
+              (fontSize * 1.375 - fontSize) / 2 -
+              8,
+            font: customFont,
+            size: fontSize,
+          });
+        } else if (placeHolder?.itemId === 'text-box') {
+          const fontSize = placeHolder.fontSize || 11;
+          const height = placeHolder.height || 18.33;
+
+          currentPage.drawText(placeHolder?.content || '', {
             x: placeHolder.formField.coordinates.x + 8,
             y:
               placeHolder.formField.coordinates.y -
@@ -549,6 +577,20 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
 
             const height = placeHolder.height || 18.33;
             currentPage.drawText(currentDate || '', {
+              x: placeHolder.formField.coordinates.x + 8,
+              y:
+                placeHolder.formField.coordinates.y -
+                fontSize +
+                (fontSize * 1.375 - fontSize) / 2 -
+                8,
+              font: customFont,
+              size: fontSize,
+            });
+          } else if (placeHolder?.itemId === 'text-box') {
+            const fontSize = placeHolder.fontSize || 11;
+            const height = placeHolder.height || 18.33;
+
+            currentPage.drawText(placeHolder?.content || '', {
               x: placeHolder.formField.coordinates.x + 8,
               y:
                 placeHolder.formField.coordinates.y -
