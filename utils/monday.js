@@ -6,6 +6,8 @@ const me = async () => {
   try {
     return await monday.api(`{
   me {
+    name
+    email
     id
   }
 }
@@ -30,6 +32,7 @@ const setMondayToken = async (userId, accountId) => {
 
   monday.setToken(user.accessToken);
   const res = await me();
+  console.log(res);
   const mondayAPIError =
     res.hasOwnProperty('error_message') ||
     res.hasOwnProperty('error_code') ||

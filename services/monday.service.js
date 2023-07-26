@@ -63,7 +63,7 @@ const updateStatusColumn = async ({
     },
   });
   try {
-    return await monday.api(
+    const result = await monday.api(
       `mutation updateStatusColumn($boardId: Int!, $itemId: Int!, $value: JSON!) {
     change_multiple_column_values(board_id: $boardId, item_id: $itemId, column_values: $value, create_labels_if_missing: true) {
       id
@@ -77,6 +77,7 @@ const updateStatusColumn = async ({
         },
       }
     );
+    return result;
   } catch (error) {
     throw error;
   }
