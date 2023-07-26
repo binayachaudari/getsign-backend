@@ -596,11 +596,26 @@ const getSpecificColumnValue = async (itemId, columnIds) => {
   return getFieldValue(column);
 };
 
-const runMondayQuery = async (
+const runMondayQuery = async ({
+  userId,
+  accountId,
   query,
   queryOptions,
-  callback = data => data
-) => {};
+  callback = data => data,
+}) => {
+  await setMondayToken(userId, accountId);
+
+  return monday
+    .api(query, queryOptions)
+    .then(res => {
+      console.log('Create new column response===>', res);
+      return res;
+    })
+    .catch(err => {
+      console.log('Error while changing new column values ==>', err);
+      throw err;
+    });
+};
 
 /*
 rawColumnDatas type = [
