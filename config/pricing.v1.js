@@ -9,7 +9,7 @@ const pricingV1 = new Map([
     },
   ],
   [
-    'GS15seats',
+    'gs15seats',
     {
       max_seats: 15,
       min_seats: 4,
