@@ -11,7 +11,7 @@ const FileDetailsModel = require('../models/FileDetails');
 const { pricingV1 } = require('../config/pricing.v1');
 const { orderTypes } = require('../config/orderTypes');
 
-const subscriptionType = (subscription) => {
+const subscriptionType = subscription => {
   if (!subscription) {
     return 'Trial';
   }
@@ -23,7 +23,7 @@ const subscriptionType = (subscription) => {
   return 'Paid';
 };
 
-const getBillingPeriod = (billingPeriod) => {
+const getBillingPeriod = billingPeriod => {
   switch (billingPeriod) {
     case 'monthly':
       return 'Monthly';

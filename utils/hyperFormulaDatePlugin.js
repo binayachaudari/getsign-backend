@@ -31,7 +31,7 @@ class DatesCustomPlugin extends FunctionPlugin {
   }
 
   get_day(ast, state) {
-    return this.runFunction(ast.args, state, this.metadata('DAY'), (value) => {
+    return this.runFunction(ast.args, state, this.metadata('DAY'), value => {
       const output = new Date(value).getTime();
       console.log('get_day', output);
     });
@@ -129,33 +129,28 @@ class DatesCustomPlugin extends FunctionPlugin {
   }
 
   get_year(ast, state) {
-    return this.runFunction(ast.args, state, this.metadata('YEAR'), (year) => {
+    return this.runFunction(ast.args, state, this.metadata('YEAR'), year => {
       const output = formulajs.YEAR(year);
       return output;
     });
   }
 
   get_month(ast, state) {
-    return this.runFunction(
-      ast.args,
-      state,
-      this.metadata('MONTH'),
-      (month) => {
-        const output = formulajs.MONTH(month);
-        return output;
-      }
-    );
+    return this.runFunction(ast.args, state, this.metadata('MONTH'), month => {
+      const output = formulajs.MONTH(month);
+      return output;
+    });
   }
 
   get_day(ast, state) {
-    return this.runFunction(ast.args, state, this.metadata('DAY'), (day) => {
+    return this.runFunction(ast.args, state, this.metadata('DAY'), day => {
       const output = formulajs.DAY(day);
       return output;
     });
   }
 
   get_hour(ast, state) {
-    return this.runFunction(ast.args, state, this.metadata('HOUR'), (hour) => {
+    return this.runFunction(ast.args, state, this.metadata('HOUR'), hour => {
       const output = formulajs.HOUR(hour);
       return output;
     });
@@ -166,7 +161,7 @@ class DatesCustomPlugin extends FunctionPlugin {
       ast.args,
       state,
       this.metadata('MINUTE'),
-      (minute) => {
+      minute => {
         const output = formulajs.MINUTE(minute);
         return output;
       }
@@ -178,7 +173,7 @@ class DatesCustomPlugin extends FunctionPlugin {
       ast.args,
       state,
       this.metadata('SECOND'),
-      (second) => {
+      second => {
         const output = formulajs.SECOND(second);
         return output;
       }
@@ -186,15 +181,10 @@ class DatesCustomPlugin extends FunctionPlugin {
   }
 
   get_weeknum(ast, state) {
-    return this.runFunction(
-      ast.args,
-      state,
-      this.metadata('WEEKNUM'),
-      (date) => {
-        const output = formulajs.WEEKNUM(date);
-        return output;
-      }
-    );
+    return this.runFunction(ast.args, state, this.metadata('WEEKNUM'), date => {
+      const output = formulajs.WEEKNUM(date);
+      return output;
+    });
   }
 
   get_isoweeknum(ast, state) {
@@ -202,7 +192,7 @@ class DatesCustomPlugin extends FunctionPlugin {
       ast.args,
       state,
       this.metadata('ISOWEEKNUM'),
-      (date) => {
+      date => {
         const output = formulajs.ISOWEEKNUM(date);
         return output;
       }

@@ -14,7 +14,7 @@ const me = async () => {
   }
 };
 
-const getItemDetails = async (id) => {
+const getItemDetails = async id => {
   try {
     return await monday.api(
       `
@@ -132,7 +132,7 @@ const uploadContract = async ({
   }
 };
 
-const getColumnValues = async (itemId) => {
+const getColumnValues = async itemId => {
   return await monday.api(
     `
     query getColumnValues($ids: [Int]) {
@@ -195,7 +195,7 @@ const getEmailColumnValue = async (itemId, emailColId) => {
   );
 };
 
-const getUsers = async (usersIds) => {
+const getUsers = async usersIds => {
   try {
     const users = await monday.api(`query { users (ids: ${usersIds}) {
                 id, name
@@ -222,7 +222,7 @@ const getUsers = async (usersIds) => {
 };
 
 // Get team data by id
-const getTeams = async (teamsIds) => {
+const getTeams = async teamsIds => {
   try {
     const teams = await monday.api(`query { teams (ids: ${teamsIds}) {
                 id, name
@@ -545,7 +545,7 @@ async function getFieldValue(column, itemId, searchMode = true) {
     const linkedItems = jsonObj ? jsonObj.linkedPulseIds : null;
     let itemIds = [];
     if (linkedItems) {
-      itemIds = linkedItems.map((i) => i.linkedPulseId);
+      itemIds = linkedItems.map(i => i.linkedPulseId);
       value = JSON.stringify({ item_ids: itemIds });
     } else {
       value = '{}';
@@ -594,6 +594,67 @@ const getSpecificColumnValue = async (itemId, columnIds) => {
   return getFieldValue(column);
 };
 
+const runMondayQuery = async (
+  query,
+  queryOptions,
+  callback = data => data
+) => {};
+
+/*
+rawColumnDatas type = [
+  {
+    columnId:"",
+    columnValue:"",
+   
+  }
+]
+*/
+const updateMultipleTextColumnValues = async ({
+  itemId,
+  boardId,
+  userId,
+  accountId,
+  textBoxFields,
+}) => {
+  await setMondayToken(userId, accountId);
+
+  let query = `
+    mutation($item_id:Int,$board_id:Int!,$column_values:JSON!){
+      change_multiple_column_values(item_id:$item_id,board_id:$board_id,column_values:$column_values){
+        id
+      }
+    }
+  `;
+
+  const change_multiple_column_values_options = {
+    variables: {
+      item_id: Number(itemId),
+      board_id: Number(boardId),
+    },
+  };
+  let column_values = {};
+
+  for (const textBoxField of textBoxFields) {
+    if (textBoxField?.content) {
+      column_values[textBoxField.column.value] = textBoxField.content;
+    }
+  }
+
+  change_multiple_column_values_options.variables.column_values =
+    JSON.stringify(column_values);
+
+  return monday
+    .api(query, change_multiple_column_values_options)
+    .then(res => {
+      console.log('Change multiple column values response===>', res);
+      return res;
+    })
+    .catch(err => {
+      console.log('Error while changing multiple text column values ==>', err);
+      throw err;
+    });
+};
+
 module.exports = {
   me,
   getItemDetails,
@@ -603,4 +664,6 @@ module.exports = {
   uploadContract,
   getColumnDetails,
   getSpecificColumnValue,
+  runMondayQuery,
+  updateMultipleTextColumnValues,
 };

@@ -2,7 +2,7 @@ const FileDetails = require('../models/FileDetails');
 const crypto = require('crypto');
 const { emailVerification } = require('./mailer');
 
-const addSenderDetails = async (payload) => {
+const addSenderDetails = async payload => {
   try {
     const previous = await FileDetails.find({
       account_id: payload.account_id,
@@ -17,7 +17,7 @@ const addSenderDetails = async (payload) => {
         const verificationToken = crypto.randomBytes(20).toString('hex');
         const verificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000;
 
-        previous.forEach((item) => {
+        previous.forEach(item => {
           item.is_email_verified = false;
           item.email_verification_token = verificationToken;
           item.email_verification_token_expires = verificationTokenExpires;
@@ -29,7 +29,7 @@ const addSenderDetails = async (payload) => {
         );
       }
 
-      previous.forEach((item) => {
+      previous.forEach(item => {
         item.email_address = payload?.email_address;
         item.email_column_id = payload?.email_column_id;
         item.status_column_id = payload?.status_column_id;

@@ -15,7 +15,7 @@ const s3 = new AWS.S3({
   region: process.env.AWS_REGION,
 });
 
-const uploadFile = async (req) => {
+const uploadFile = async req => {
   const body = req.body;
   const file = req.files.file;
 
@@ -123,7 +123,7 @@ const getFile = async (id, accountId) => {
   }
 };
 
-const loadFileDetails = async (id) => {
+const loadFileDetails = async id => {
   try {
     const fileDetails = await FileDetailsModel.findById(id).lean();
     const url = s3.getSignedUrl('getObject', {
@@ -149,7 +149,7 @@ const loadFileDetails = async (id) => {
   }
 };
 
-const deleteFile = async (id) => {
+const deleteFile = async id => {
   const session = await FileHistory.startSession();
   session.startTransaction();
   let deleted;
@@ -195,7 +195,7 @@ const deleteFile = async (id) => {
     ]);
 
     if (notSignedByBothAndSender?.length > 0) {
-      notSignedByBothAndSender?.forEach(async (item) => {
+      notSignedByBothAndSender?.forEach(async item => {
         await updateStatusColumn({
           itemId: item?._id,
           boardId: template.board_id,
@@ -206,7 +206,7 @@ const deleteFile = async (id) => {
         });
       });
 
-      const toDeleteHistory = notSignedByBothAndSender.map((item) => item?._id);
+      const toDeleteHistory = notSignedByBothAndSender.map(item => item?._id);
 
       // delete file histories
       await FileHistory.deleteMany({
@@ -228,7 +228,7 @@ const deleteFile = async (id) => {
   }
 };
 
-const getSignedUrl = async (key) => {
+const getSignedUrl = async key => {
   return s3.getSignedUrl('getObject', {
     Bucket: process.env.BUCKET_NAME,
     Key: key,

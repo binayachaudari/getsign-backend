@@ -27,6 +27,7 @@ const verifySessionToken = async (req, res, next) => {
     req.accountId = accountId;
     req.subscription = subscription;
     req.slug = slug;
+
     next();
   } catch (err) {
     return next(err);

@@ -17,7 +17,7 @@ const backOfficeMondayToken = process.env.BACK_OFFICE_TOKEN;
 const customerBoardId = process.env.BACK_OFFICE_CUSTOMER_BOARD_ID;
 const ordersBoardId = process.env.BACK_OFFICE_ORDERS_BOARD_ID;
 
-const subscriptionType = (subscription) => {
+const subscriptionType = subscription => {
   if (!subscription) {
     return 'Trial';
   }
@@ -29,7 +29,7 @@ const subscriptionType = (subscription) => {
   return 'Paid';
 };
 
-const getBillingPeriod = (billingPeriod) => {
+const getBillingPeriod = billingPeriod => {
   switch (billingPeriod) {
     case 'monthly':
       return 'Monthly';

@@ -32,8 +32,8 @@ module.exports = {
     };
 
     fetch('https://auth.monday.com/oauth2/token', requestOptions)
-      .then((response) => response.json())
-      .then(async (result) => {
+      .then(response => response.json())
+      .then(async result => {
         if (result.error) {
           return next({ error: result, statusCode: 400 });
         }
@@ -54,7 +54,7 @@ module.exports = {
         params.append('user', JSON.stringify(user));
         return res.redirect('/authorize?' + params);
       })
-      .catch((error) => next({ message: error, statusCode: 400 }));
+      .catch(error => next({ message: error, statusCode: 400 }));
   },
   isAuthorized: async (req, res, next) => {
     const { userId } = req.params;
