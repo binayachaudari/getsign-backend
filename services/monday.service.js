@@ -23,6 +23,7 @@ const getItemDetails = async id => {
       id
       board {
         id
+        name
       }
       column_values {
         id
