@@ -3,7 +3,7 @@ const FileHistory = require('../models/FileHistory');
 const ApplicationModel = require('../models/Application.model');
 const { backOfficeItemViewInstalled } = require('./backoffice.service');
 
-const updateBackOfficeInstalledItemView = async (accountId) => {
+const updateBackOfficeInstalledItemView = async accountId => {
   try {
     const applicationDetails = await ApplicationModel.findOne({
       account_id: accountId,
@@ -17,7 +17,7 @@ const updateBackOfficeInstalledItemView = async (accountId) => {
   }
 };
 
-const getAvailableFilesForBoard = async (boardId) => {
+const getAvailableFilesForBoard = async boardId => {
   try {
     return FileDetails.find({
       board_id: boardId,

@@ -1,5 +1,5 @@
-const { monday, setMondayToken } = require("../utils/monday");
-const axios = require("axios");
+const { monday, setMondayToken } = require('../utils/monday');
+const axios = require('axios');
 
 const me = async () => {
   try {
@@ -14,7 +14,7 @@ const me = async () => {
   }
 };
 
-const getItemDetails = async (id) => {
+const getItemDetails = async id => {
   try {
     return await monday.api(
       `
@@ -90,20 +90,20 @@ const uploadContract = async ({
   accountId,
 }) => {
   const accessToken = await setMondayToken(userId, accountId);
-  const url = "https://api.monday.com/v2/file";
+  const url = 'https://api.monday.com/v2/file';
   var query = `mutation add_file($file: File!) { add_file_to_column (file: $file, item_id: ${itemId}, column_id: "${columnId}") { id } }`;
-  var data = "";
-  const boundary = "xxxxxxxxxxxxxxx";
+  var data = '';
+  const boundary = 'xxxxxxxxxxxxxxx';
 
   try {
     // construct query part
-    data += "--" + boundary + "\r\n";
+    data += '--' + boundary + '\r\n';
     data += 'Content-Disposition: form-data; name="query"; \r\n';
-    data += "Content-Type:application/json\r\n\r\n";
-    data += "\r\n" + query + "\r\n";
+    data += 'Content-Type:application/json\r\n\r\n';
+    data += '\r\n' + query + '\r\n';
 
     // construct file part
-    data += "--" + boundary + "\r\n";
+    data += '--' + boundary + '\r\n';
     data +=
       'Content-Disposition: form-data; name="variables[file]"; filename="' +
       file.name +
@@ -111,16 +111,16 @@ const uploadContract = async ({
     data += `Content-Type:${file.type}\r\n\r\n`;
 
     var payload = Buffer.concat([
-      Buffer.from(data, "utf8"),
+      Buffer.from(data, 'utf8'),
       new Uint8Array(file.bytes),
-      Buffer.from("\r\n--" + boundary + "--\r\n", "utf8"),
+      Buffer.from('\r\n--' + boundary + '--\r\n', 'utf8'),
     ]);
 
     return await axios({
       url,
-      method: "post",
+      method: 'post',
       headers: {
-        "Content-Type": "multipart/form-data; boundary=" + boundary,
+        'Content-Type': 'multipart/form-data; boundary=' + boundary,
         Authorization: accessToken,
       },
       data: payload,
@@ -132,7 +132,7 @@ const uploadContract = async ({
   }
 };
 
-const getColumnValues = async (itemId) => {
+const getColumnValues = async itemId => {
   return await monday.api(
     `
     query getColumnValues($ids: [Int]) {
@@ -195,16 +195,16 @@ const getEmailColumnValue = async (itemId, emailColId) => {
   );
 };
 
-const getUsers = async (usersIds) => {
+const getUsers = async usersIds => {
   try {
     const users = await monday.api(`query { users (ids: ${usersIds}) {
                 id, name
             }}`);
 
     if (
-      users.hasOwnProperty("error_message") ||
-      users.hasOwnProperty("error_code") ||
-      users.hasOwnProperty("errors")
+      users.hasOwnProperty('error_message') ||
+      users.hasOwnProperty('error_code') ||
+      users.hasOwnProperty('errors')
     ) {
       throw {
         status: 403,
@@ -216,21 +216,21 @@ const getUsers = async (usersIds) => {
     }
     return null;
   } catch (error) {
-    console.log("Error while get user", error.message);
+    console.log('Error while get user', error.message);
     throw error;
   }
 };
 
 // Get team data by id
-const getTeams = async (teamsIds) => {
+const getTeams = async teamsIds => {
   try {
     const teams = await monday.api(`query { teams (ids: ${teamsIds}) {
                 id, name
             }}`);
     if (
-      teams.hasOwnProperty("error_message") ||
-      teams.hasOwnProperty("error_code") ||
-      teams.hasOwnProperty("errors")
+      teams.hasOwnProperty('error_message') ||
+      teams.hasOwnProperty('error_code') ||
+      teams.hasOwnProperty('errors')
     ) {
       throw {
         status: 403,
@@ -242,22 +242,22 @@ const getTeams = async (teamsIds) => {
     }
     return null;
   } catch (error) {
-    console.log("Error while get teams", error.message);
+    console.log('Error while get teams', error.message);
     throw error;
   }
 };
 
 // Get field value and handle many column types
 async function getFieldValue(column, itemId, searchMode = true) {
-  let value = "";
-  let jsonObj = "";
+  let value = '';
+  let jsonObj = '';
   const { type } = column;
 
   try {
     jsonObj = isNaN(column.value) ? JSON.parse(column.value) : column.value;
   } catch (error) {
     jsonObj = value =
-      column.value != null ? column.value.replace('"', "") : column.value;
+      column.value != null ? column.value.replace('"', '') : column.value;
   }
 
   const additional_info = column.additional_info
@@ -265,7 +265,7 @@ async function getFieldValue(column, itemId, searchMode = true) {
     : null;
 
   // Handle status
-  if (type === "color") {
+  if (type === 'color') {
     const additional_info = column.additional_info
       ? JSON.parse(column.additional_info)
       : column.label;
@@ -275,7 +275,7 @@ async function getFieldValue(column, itemId, searchMode = true) {
           ? column.text
           : additional_info
           ? additional_info.label
-          : "";
+          : '';
     } else {
       value = JSON.stringify({
         label:
@@ -283,21 +283,21 @@ async function getFieldValue(column, itemId, searchMode = true) {
             ? column.text
             : additional_info
             ? additional_info.label
-            : "",
+            : '',
       });
     }
     // Handle datetime
-  } else if (type === "date") {
+  } else if (type === 'date') {
     if (searchMode) {
-      value = jsonObj ? jsonObj.date : "";
+      value = jsonObj ? jsonObj.date : '';
       if (jsonObj && jsonObj.time) {
-        value = value + " " + jsonObj.time;
+        value = value + ' ' + jsonObj.time;
       }
     } else {
       if (!jsonObj) {
         value = JSON.stringify({
-          date: "",
-          time: "",
+          date: '',
+          time: '',
         });
       } else if (jsonObj && jsonObj.time && jsonObj.date) {
         value = JSON.stringify({
@@ -315,7 +315,7 @@ async function getFieldValue(column, itemId, searchMode = true) {
       }
     }
     // Handle PersonAndTeams
-  } else if (type === "multiple-person") {
+  } else if (type === 'multiple-person') {
     const persons = jsonObj ? jsonObj.personsAndTeams : [];
     let personsIds = [];
     let teamsIds = [];
@@ -324,9 +324,9 @@ async function getFieldValue(column, itemId, searchMode = true) {
     let personsAndTeamsObj = [];
     for (let index = 0; index < persons.length; index++) {
       const person = persons[index];
-      if (person.kind === "person") {
+      if (person.kind === 'person') {
         personsIds.push(person.id);
-      } else if (person.kind === "team") {
+      } else if (person.kind === 'team') {
         teamsIds.push(person.id);
       }
       personsAndTeamsIds.push(person.id);
@@ -362,171 +362,171 @@ async function getFieldValue(column, itemId, searchMode = true) {
       }
     }
     // Handle Phone
-  } else if (type === "phone") {
+  } else if (type === 'phone') {
     if (searchMode) {
-      value = `${jsonObj ? jsonObj.phone : ""}`;
+      value = `${jsonObj ? jsonObj.phone : ''}`;
     } else {
       value = JSON.stringify({
-        phone: `${jsonObj ? jsonObj.phone : ""}`,
-        countryShortName: `${jsonObj ? jsonObj.countryShortName : ""}`,
+        phone: `${jsonObj ? jsonObj.phone : ''}`,
+        countryShortName: `${jsonObj ? jsonObj.countryShortName : ''}`,
       });
     }
-  } else if (type === "email") {
+  } else if (type === 'email') {
     if (searchMode) {
       value = `${
-        jsonObj ? jsonObj.email.replace(/[^a-zA-Z0-9-_@.]/g, "") : ""
+        jsonObj ? jsonObj.email.replace(/[^a-zA-Z0-9-_@.]/g, '') : ''
       }`;
     } else {
       value = JSON.stringify({
         email: `${
-          jsonObj ? jsonObj.email.replace(/[^a-zA-Z0-9-_@.]/g, "") : ""
+          jsonObj ? jsonObj.email.replace(/[^a-zA-Z0-9-_@.]/g, '') : ''
         }`,
         text: `${
           jsonObj
-            ? (jsonObj.text || jsonObj.email).replace(/[^a-zA-Z0-9-_@.]/g, "")
-            : ""
+            ? (jsonObj.text || jsonObj.email).replace(/[^a-zA-Z0-9-_@.]/g, '')
+            : ''
         }`,
       });
     }
-  } else if (type === "text" || type == "name") {
+  } else if (type === 'text' || type == 'name') {
     if (searchMode) {
-      value = `${jsonObj || ""}`;
+      value = `${jsonObj || ''}`;
     } else {
-      value = JSON.stringify(jsonObj || "");
+      value = JSON.stringify(jsonObj || '');
     }
     if (value) {
-      value = value.replace(/\\/g, "\\\\");
+      value = value.replace(/\\/g, '\\\\');
     }
-  } else if (type === "numeric") {
-    value = column.value ? jsonObj : "0";
+  } else if (type === 'numeric') {
+    value = column.value ? jsonObj : '0';
     if (searchMode) {
       value = `${
         jsonObj != null
           ? jsonObj +
-            (additional_info?.symbol === "%" ? additional_info?.symbol : "")
-          : ""
+            (additional_info?.symbol === '%' ? additional_info?.symbol : '')
+          : ''
       }`;
     } else {
       value = JSON.stringify(
         jsonObj != null
           ? jsonObj +
-              (additional_info?.symbol === "%" ? additional_info?.symbol : "")
-          : ""
+              (additional_info?.symbol === '%' ? additional_info?.symbol : '')
+          : ''
       );
     }
-  } else if (type === "pulse-id") {
+  } else if (type === 'pulse-id') {
     jsonObj = itemId || jsonObj.text;
     value = itemId || jsonObj.text;
-  } else if (type === "timerange") {
+  } else if (type === 'timerange') {
     if (searchMode) {
-      value = `${jsonObj ? jsonObj.from + " - " + jsonObj.to : ""}`;
+      value = `${jsonObj ? jsonObj.from + ' - ' + jsonObj.to : ''}`;
     } else {
       value = JSON.stringify({
-        from: `${jsonObj ? jsonObj.from : ""}`,
-        to: `${jsonObj ? jsonObj.to : ""}`,
+        from: `${jsonObj ? jsonObj.from : ''}`,
+        to: `${jsonObj ? jsonObj.to : ''}`,
       });
     }
-  } else if (type === "long-text") {
+  } else if (type === 'long-text') {
     if (searchMode) {
-      value = `${jsonObj ? jsonObj.text.replace('"', "") : ""}`;
+      value = `${jsonObj ? jsonObj.text.replace('"', '') : ''}`;
     } else {
       value = JSON.stringify({
         text: `${jsonObj ? jsonObj.text : '""'}`,
       });
     }
     if (value) {
-      value = value.replace(/\\/g, "\\\\");
+      value = value.replace(/\\/g, '\\\\');
     }
-  } else if (type === "boolean") {
+  } else if (type === 'boolean') {
     if (searchMode) {
-      value = `${jsonObj ? jsonObj.checked : ""}`;
+      value = `${jsonObj ? jsonObj.checked : ''}`;
     } else {
       value =
         jsonObj && jsonObj.checked
           ? JSON.stringify({
               checked: `${jsonObj.checked}`,
             })
-          : "{}";
+          : '{}';
     }
-  } else if (type === "rating") {
+  } else if (type === 'rating') {
     if (searchMode) {
-      value = `${jsonObj ? jsonObj.rating : ""}`;
+      value = `${jsonObj ? jsonObj.rating : ''}`;
     } else {
       value = JSON.stringify({
-        rating: jsonObj ? jsonObj.rating : "",
+        rating: jsonObj ? jsonObj.rating : '',
       });
     }
-  } else if (type === "link") {
+  } else if (type === 'link') {
     if (searchMode) {
-      value = `${jsonObj ? jsonObj.url : ""}`;
+      value = `${jsonObj ? jsonObj.url : ''}`;
     } else {
       value = JSON.stringify({
-        url: `${jsonObj ? jsonObj.url : ""}`,
-        text: `${jsonObj ? jsonObj.text : ""}`,
+        url: `${jsonObj ? jsonObj.url : ''}`,
+        text: `${jsonObj ? jsonObj.text : ''}`,
       });
     }
-  } else if (type === "color-picker") {
-    value = jsonObj ? JSON.stringify(jsonObj.color) : "{}";
-  } else if (type == "country") {
+  } else if (type === 'color-picker') {
+    value = jsonObj ? JSON.stringify(jsonObj.color) : '{}';
+  } else if (type == 'country') {
     if (searchMode) {
-      value = `${jsonObj ? jsonObj.countryName : ""}`;
+      value = `${jsonObj ? jsonObj.countryName : ''}`;
     } else {
       value = JSON.stringify({
-        countryCode: `${jsonObj ? jsonObj.countryCode : ""}`,
-        countryName: `${jsonObj ? jsonObj.countryName : ""}`,
+        countryCode: `${jsonObj ? jsonObj.countryCode : ''}`,
+        countryName: `${jsonObj ? jsonObj.countryName : ''}`,
       });
     }
-  } else if (type === "tag") {
+  } else if (type === 'tag') {
     if (searchMode) {
-      value = `${jsonObj && jsonObj.tag_ids ? jsonObj.tag_ids.toString() : ""}`;
+      value = `${jsonObj && jsonObj.tag_ids ? jsonObj.tag_ids.toString() : ''}`;
     } else {
       value = JSON.stringify(jsonObj);
     }
-  } else if (type === "votes") {
+  } else if (type === 'votes') {
     value = jsonObj
       ? JSON.stringify({
           votersIds: jsonObj.votersIds,
         })
-      : "[]";
-  } else if (type === "dropdown") {
+      : '[]';
+  } else if (type === 'dropdown') {
     if (jsonObj && jsonObj.ids && jsonObj.ids.length && column.text) {
-      const labels = column.text.split(",");
+      const labels = column.text.split(',');
       value = JSON.stringify({ labels });
       if (searchMode) {
         value = `${column.text}`;
       }
     } else {
-      value = "[]";
+      value = '[]';
     }
-  } else if (type === "timezone") {
+  } else if (type === 'timezone') {
     if (searchMode) {
-      value = `${jsonObj && jsonObj.timezone ? jsonObj.timezone : ""}`;
+      value = `${jsonObj && jsonObj.timezone ? jsonObj.timezone : ''}`;
     } else {
       value = jsonObj ? JSON.stringify(jsonObj) : '{"timezone": ""}';
     }
-  } else if (type === "week") {
+  } else if (type === 'week') {
     value = jsonObj ? JSON.stringify(jsonObj) : '{"week": ""}';
-  } else if (type === "hour") {
+  } else if (type === 'hour') {
     if (searchMode) {
       if (jsonObj && jsonObj.hour >= 0) {
         let { hour, minute } = jsonObj;
-        const AmOrPm = hour >= 12 ? "PM" : "AM";
+        const AmOrPm = hour >= 12 ? 'PM' : 'AM';
         hour = hour % 12 || 12;
-        value = hour + ":" + ("0" + minute).slice(-2) + " " + AmOrPm;
+        value = hour + ':' + ('0' + minute).slice(-2) + ' ' + AmOrPm;
       } else {
-        value = "";
+        value = '';
       }
     } else {
-      value = jsonObj ? JSON.stringify(jsonObj) : "{}";
+      value = jsonObj ? JSON.stringify(jsonObj) : '{}';
     }
     // Handle file
-  } else if (type === "file") {
+  } else if (type === 'file') {
     let allFilesList = [];
     const files = jsonObj ? jsonObj.files : [];
     if (files && files.length > 0) {
       for (let index = 0; index < files.length; index++) {
         const file = files[index];
-        if (file.fileType === "ASSET") {
+        if (file.fileType === 'ASSET') {
           // // const assetsIds = files.map(file => file.assetId);
           // if (file.assetId) {
           //   const monday_files = await Monday.getFile([file.assetId]);
@@ -541,21 +541,21 @@ async function getFieldValue(column, itemId, searchMode = true) {
       }
     }
     value = JSON.stringify(allFilesList);
-  } else if (type === "board-relation") {
+  } else if (type === 'board-relation') {
     const linkedItems = jsonObj ? jsonObj.linkedPulseIds : null;
     let itemIds = [];
     if (linkedItems) {
-      itemIds = linkedItems.map((i) => i.linkedPulseId);
+      itemIds = linkedItems.map(i => i.linkedPulseId);
       value = JSON.stringify({ item_ids: itemIds });
     } else {
-      value = "{}";
+      value = '{}';
     }
-  } else if (type === "lookup") {
+  } else if (type === 'lookup') {
     if (!isNaN(column.text)) value = Number(column.text);
-    else if (typeof column.text === "string") {
+    else if (typeof column.text === 'string') {
       value = column.text;
     }
-  } else if (type === "location") {
+  } else if (type === 'location') {
     value =
       jsonObj && jsonObj.lat && jsonObj.lng
         ? JSON.stringify({
@@ -563,7 +563,7 @@ async function getFieldValue(column, itemId, searchMode = true) {
             lng: jsonObj.lng,
             address: jsonObj.address.replace(/[\n\r\t]/g),
           })
-        : "{}";
+        : '{}';
   } else {
     value = jsonObj;
   }
@@ -597,7 +597,7 @@ const getSpecificColumnValue = async (itemId, columnIds) => {
 const runMondayQuery = async (
   query,
   queryOptions,
-  callback = (data) => data
+  callback = data => data
 ) => {};
 
 /*
@@ -645,12 +645,12 @@ const updateMultipleTextColumnValues = async ({
 
   return monday
     .api(query, change_multiple_column_values_options)
-    .then((res) => {
-      console.log("Change multiple column values response===>", res);
+    .then(res => {
+      console.log('Change multiple column values response===>', res);
       return res;
     })
-    .catch((err) => {
-      console.log("Error while changing multiple text column values ==>", err);
+    .catch(err => {
+      console.log('Error while changing multiple text column values ==>', err);
       throw err;
     });
 };

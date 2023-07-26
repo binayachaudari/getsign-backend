@@ -48,7 +48,7 @@ const updateColumnValues = async (itemId, values) => {
   );
 };
 
-const getDateAndTime = (givenDate) => {
+const getDateAndTime = givenDate => {
   const today = givenDate ? new Date(givenDate) : new Date();
 
   const year = today.getFullYear();
@@ -161,7 +161,7 @@ const backOfficeAddItem = async ({
   );
 };
 
-const backOfficeUploadedDocument = async (itemId) => {
+const backOfficeUploadedDocument = async itemId => {
   monday.setToken(backOfficeMondayToken);
 
   const prevValues = await getItemDetails({
@@ -171,7 +171,7 @@ const backOfficeUploadedDocument = async (itemId) => {
 
   const columnValues = prevValues?.data?.items?.[0]?.column_values;
 
-  const requiresUpdate = columnValues.some((item) => {
+  const requiresUpdate = columnValues.some(item => {
     if (item.type === 'color' && typeof item.additional_info === 'string') {
       const value = JSON.parse(item.additional_info);
 
@@ -196,7 +196,7 @@ const backOfficeUploadedDocument = async (itemId) => {
   return;
 };
 
-const backOfficeSavedDocument = async (itemId) => {
+const backOfficeSavedDocument = async itemId => {
   monday.setToken(backOfficeMondayToken);
 
   const prevValues = await getItemDetails({
@@ -206,7 +206,7 @@ const backOfficeSavedDocument = async (itemId) => {
 
   const columnValues = prevValues?.data?.items?.[0]?.column_values;
 
-  const requiresUpdate = columnValues.some((item) => {
+  const requiresUpdate = columnValues.some(item => {
     if (item.type === 'color' && typeof item.additional_info === 'string') {
       const value = JSON.parse(item.additional_info);
 
@@ -231,7 +231,7 @@ const backOfficeSavedDocument = async (itemId) => {
   return;
 };
 
-const backOfficeSentDocument = async (itemId) => {
+const backOfficeSentDocument = async itemId => {
   monday.setToken(backOfficeMondayToken);
 
   const prevValues = await getItemDetails({
@@ -241,7 +241,7 @@ const backOfficeSentDocument = async (itemId) => {
 
   const columnValues = prevValues?.data?.items?.[0]?.column_values;
 
-  const requiresUpdate = columnValues.some((item) => {
+  const requiresUpdate = columnValues.some(item => {
     if (item.type === 'color' && typeof item.additional_info === 'string') {
       const value = JSON.parse(item.additional_info);
 
@@ -266,7 +266,7 @@ const backOfficeSentDocument = async (itemId) => {
   return;
 };
 
-const backOfficeDocumentSigned = async (itemId) => {
+const backOfficeDocumentSigned = async itemId => {
   monday.setToken(backOfficeMondayToken);
 
   const prevValues = await getItemDetails({
@@ -276,7 +276,7 @@ const backOfficeDocumentSigned = async (itemId) => {
 
   const columnValues = prevValues?.data?.items?.[0]?.column_values;
 
-  const requiresUpdate = columnValues.some((item) => {
+  const requiresUpdate = columnValues.some(item => {
     if (item.type === 'color' && typeof item.additional_info === 'string') {
       const value = JSON.parse(item.additional_info);
 
@@ -303,7 +303,7 @@ const backOfficeDocumentSigned = async (itemId) => {
   return;
 };
 
-const backOffice5DocumentSent = async (itemId) => {
+const backOffice5DocumentSent = async itemId => {
   monday.setToken(backOfficeMondayToken);
 
   const prevValues = await getItemDetails({
@@ -313,7 +313,7 @@ const backOffice5DocumentSent = async (itemId) => {
 
   const columnValues = prevValues?.data?.items?.[0]?.column_values;
 
-  const requiresUpdate = columnValues.some((item) => {
+  const requiresUpdate = columnValues.some(item => {
     if (item.type === 'color' && typeof item.additional_info === 'string') {
       const value = JSON.parse(item.additional_info);
 
@@ -338,7 +338,7 @@ const backOffice5DocumentSent = async (itemId) => {
   return;
 };
 
-const backOfficeItemViewInstalled = async (itemId) => {
+const backOfficeItemViewInstalled = async itemId => {
   monday.setToken(backOfficeMondayToken);
 
   const prevValues = await getItemDetails({
@@ -348,7 +348,7 @@ const backOfficeItemViewInstalled = async (itemId) => {
 
   const columnValues = prevValues?.data?.items?.[0]?.column_values;
 
-  const requiresUpdate = columnValues.some((item) => {
+  const requiresUpdate = columnValues.some(item => {
     if (item.type === 'color' && typeof item.additional_info === 'string') {
       const value = JSON.parse(item.additional_info);
 
@@ -380,7 +380,7 @@ const backOfficeUpdateTotalSent = async (itemId, totalCount = 0) => {
   await updateColumnValues(itemId, values);
 };
 
-const backOfficeUpadateLastDocSentDate = async (itemId) => {
+const backOfficeUpadateLastDocSentDate = async itemId => {
   monday.setToken(backOfficeMondayToken);
 
   const values = JSON.stringify({
@@ -392,7 +392,7 @@ const backOfficeUpadateLastDocSentDate = async (itemId) => {
   await updateColumnValues(itemId, values);
 };
 
-const backOfficeUpdateTotalSigned = async (itemId) => {
+const backOfficeUpdateTotalSigned = async itemId => {
   monday.setToken(backOfficeMondayToken);
 
   const prevValues = await getItemDetails({

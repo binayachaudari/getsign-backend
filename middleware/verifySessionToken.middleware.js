@@ -1,6 +1,6 @@
-const jwt = require("jsonwebtoken");
-const { isUserAuthenticated } = require("../services/user.service");
-const { setMondayToken } = require("../utils/monday");
+const jwt = require('jsonwebtoken');
+const { isUserAuthenticated } = require('../services/user.service');
+const { setMondayToken } = require('../utils/monday');
 
 const verifySessionToken = async (req, res, next) => {
   try {
@@ -18,7 +18,7 @@ const verifySessionToken = async (req, res, next) => {
     await setMondayToken(userId, accountId);
 
     if (!user || !user?.accessToken) {
-      return next({ statusCode: 401, message: "Unauthorized" });
+      return next({ statusCode: 401, message: 'Unauthorized' });
     }
 
     req.isAuthenticated = true;

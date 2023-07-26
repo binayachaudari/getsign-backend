@@ -79,7 +79,7 @@ const addFormFields = async (id, payload) => {
       ]);
 
       if (notSignedByBoth?.length > 0) {
-        notSignedByBoth?.forEach(async (item) => {
+        notSignedByBoth?.forEach(async item => {
           // updating status column
           await updateStatusColumn({
             itemId: item?._id,
@@ -91,7 +91,7 @@ const addFormFields = async (id, payload) => {
           });
         });
 
-        const notSignedByBothItemIds = notSignedByBoth.map((item) => item?._id);
+        const notSignedByBothItemIds = notSignedByBoth.map(item => item?._id);
 
         // delete history
         await FileHistory.deleteMany({
@@ -122,7 +122,7 @@ const generatePDF = async (id, fields) => {
     const customFont = await pdfDoc.embedFont(fontBytes, { subset: true });
 
     if (fields?.length && fileDetails?.fields) {
-      fileDetails?.fields?.forEach(async (placeHolder) => {
+      fileDetails?.fields?.forEach(async placeHolder => {
         const currentPage = pages[placeHolder?.formField?.pageIndex];
         if (!currentPage) return;
 
@@ -145,7 +145,7 @@ const generatePDF = async (id, fields) => {
             size: fontSize,
           });
         } else {
-          const value = fields.find((item) => item?.id === placeHolder?.itemId);
+          const value = fields.find(item => item?.id === placeHolder?.itemId);
 
           const calculationError =
             typeof value?.text === 'object' && value?.type === 'formula';
@@ -209,7 +209,7 @@ const generatePDFWithGivenPlaceholders = async (id, placeholders, values) => {
     const customFont = await pdfDoc.embedFont(fontBytes, { subset: true });
 
     if (values?.length && placeholders?.length) {
-      placeholders?.forEach(async (placeHolder) => {
+      placeholders?.forEach(async placeHolder => {
         const currentPage = pages[placeHolder?.formField?.pageIndex];
         if (!currentPage) return;
 
@@ -253,7 +253,7 @@ const generatePDFWithGivenPlaceholders = async (id, placeholders, values) => {
             size: fontSize,
           });
         } else {
-          const value = values.find((item) => item?.id === placeHolder?.itemId);
+          const value = values.find(item => item?.id === placeHolder?.itemId);
 
           const calculationError =
             typeof value?.text === 'object' && value?.type === 'formula';
@@ -304,7 +304,7 @@ const generatePDFWithGivenPlaceholders = async (id, placeholders, values) => {
   }
 };
 
-const loadFile = async (url) => {
+const loadFile = async url => {
   const body = await fetch(url);
   const contentType = body.headers.get('content-type');
   const arrBuffer = await body.arrayBuffer();
@@ -341,7 +341,7 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
     if (formulaColumns.length > 0) {
       const columnDetailsResponse = await getColumnDetails(
         itemId,
-        formulaColumns?.map((column) => column?.id)
+        formulaColumns?.map(column => column?.id)
       );
       const columnDetails =
         columnDetailsResponse?.data?.items?.[0]?.board?.columns || [];
@@ -361,7 +361,7 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
         );
         let parsedRecursiveFormula = parsedFormulaColumn.formula;
 
-        parsedFormulaColumn?.formulaColumns?.map((item) => {
+        parsedFormulaColumn?.formulaColumns?.map(item => {
           let currentItemValue = boardFormulaColumnValues.get(item);
           if (currentItemValue?.formula || currentItemValue) {
             const globalRegex = new RegExp(`{${item}}`, 'g');
@@ -456,7 +456,7 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
         if (typeof finalFormulaValue !== 'object') {
           boardFormulaColumnValues.set(column.id, finalFormulaValue);
           const alreadyExistsIdx = values.findIndex(
-            (formValue) => formValue.id === column?.id
+            formValue => formValue.id === column?.id
           );
 
           if (alreadyExistsIdx > -1) {
@@ -474,7 +474,7 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
         } else {
           boardFormulaColumnValues.set(column.id, '0');
           const alreadyExistsIdx = values.findIndex(
-            (formValue) => formValue.id === column?.id
+            formValue => formValue.id === column?.id
           );
 
           if (alreadyExistsIdx > -1) {
@@ -528,7 +528,7 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
 
     if (fileDetails?.fields) {
       if (interactedFields?.length) {
-        interactedFields?.forEach(async (placeHolder) => {
+        interactedFields?.forEach(async placeHolder => {
           const currentPage = pages[placeHolder?.formField?.pageIndex];
 
           if (placeHolder?.image?.src) {
@@ -582,9 +582,9 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
       }
 
       if (values?.length) {
-        fileDetails?.fields?.forEach(async (placeHolder) => {
+        fileDetails?.fields?.forEach(async placeHolder => {
           const currentPage = pages[placeHolder?.formField?.pageIndex];
-          const value = values.find((item) => item?.id === placeHolder?.itemId);
+          const value = values.find(item => item?.id === placeHolder?.itemId);
 
           const calculationError =
             typeof value?.text === 'object' && value?.type === 'formula';

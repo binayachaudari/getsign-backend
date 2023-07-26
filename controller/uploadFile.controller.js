@@ -1,14 +1,14 @@
-const statusMapper = require("../config/statusMapper");
-const ApplicationModel = require("../models/Application.model");
-const FileDetails = require("../models/FileDetails");
-const FileHistory = require("../models/FileHistory");
-const { backOfficeDocumentSigned } = require("../services/backoffice.service");
+const statusMapper = require('../config/statusMapper');
+const ApplicationModel = require('../models/Application.model');
+const FileDetails = require('../models/FileDetails');
+const FileHistory = require('../models/FileHistory');
+const { backOfficeDocumentSigned } = require('../services/backoffice.service');
 const {
   addFormFields,
   generatePDF,
   addSenderDetails,
   generatePDFWithGivenPlaceholders,
-} = require("../services/file");
+} = require('../services/file');
 const {
   addFileHistory,
   getFileHistory,
@@ -19,23 +19,23 @@ const {
   downloadContract,
   generateFilePreview,
   generateFilePreviewWithPlaceholders,
-} = require("../services/fileHistory");
-const { emailRequestToSign, sendFinalContract } = require("../services/mailer");
+} = require('../services/fileHistory');
+const { emailRequestToSign, sendFinalContract } = require('../services/mailer');
 const {
   updateStatusColumn,
   getEmailColumnValue,
   uploadContract,
   updateMultipleTextColumnValues,
-} = require("../services/monday.service");
+} = require('../services/monday.service');
 const {
   uploadFile,
   getFile,
   deleteFile,
   loadFileDetails,
-} = require("../services/s3");
-const { setMondayToken } = require("../utils/monday");
+} = require('../services/s3');
+const { setMondayToken } = require('../utils/monday');
 
-const TEXT_BOX_ITEM_ID = "text-box";
+const TEXT_BOX_ITEM_ID = 'text-box';
 
 module.exports = {
   uploadFile: async (req, res, next) => {
@@ -127,29 +127,29 @@ module.exports = {
   addSignature: async (req, res, next) => {
     const id = req.params.id;
     let ips = (
-      req.headers["cf-connecting-ip"] ||
-      req.headers["x-real-ip"] ||
-      req.headers["x-forwarded-for"] ||
+      req.headers['cf-connecting-ip'] ||
+      req.headers['x-real-ip'] ||
+      req.headers['x-forwarded-for'] ||
       req.connection.remoteAddress ||
-      ""
-    ).split(",");
+      ''
+    ).split(',');
 
     const ip = ips[0].trim();
     const { status, signatures, itemId, standardFields } = req.body;
     try {
       const template = await FileDetails.findById(id);
-      const senderSignRequired = template?.fields?.filter((field) =>
-        ["Sender Signature", "Sender Initials"].includes(field?.title)
+      const senderSignRequired = template?.fields?.filter(field =>
+        ['Sender Signature', 'Sender Initials'].includes(field?.title)
       )?.length;
 
-      const receiverSignRequired = template?.fields?.filter((field) =>
-        ["Receiver Signature", "Receiver Initials"].includes(field?.title)
+      const receiverSignRequired = template?.fields?.filter(field =>
+        ['Receiver Signature', 'Receiver Initials'].includes(field?.title)
       )?.length;
 
       if (standardFields?.length) {
         let textBoxFields = [];
         textBoxFields = [...standardFields]?.filter(
-          (field) =>
+          field =>
             field.itemId === TEXT_BOX_ITEM_ID && Boolean(field?.column?.value)
         );
 
@@ -174,13 +174,13 @@ module.exports = {
       const alsoSignedBySender = await FileHistory.findOne({
         fileId: template.id,
         itemId,
-        status: "signed_by_sender",
+        status: 'signed_by_sender',
       }).exec();
 
       const alsoSignedByReceiver = await FileHistory.findOne({
         fileId: template.id,
         itemId,
-        status: "signed_by_receiver",
+        status: 'signed_by_receiver',
       }).exec();
 
       // const onlySenderSigRequired =
@@ -207,14 +207,14 @@ module.exports = {
           itemId: itemId,
           boardId: template.board_id,
           columnId: template?.status_column_id,
-          columnValue: "Completed",
+          columnValue: 'Completed',
           userId: template?.user_id,
           accountId: template?.account_id,
         });
         const appInstallDetails = await ApplicationModel.findOne({
-          type: "install",
+          type: 'install',
           account_id: template.account_id,
-        }).sort({ created_at: "desc" });
+        }).sort({ created_at: 'desc' });
 
         if (appInstallDetails?.back_office_item_id) {
           await backOfficeDocumentSigned(appInstallDetails.back_office_item_id);
@@ -241,7 +241,7 @@ module.exports = {
           },
           [template.email_address, to]
         );
-        return res.status(200).json({ data: "Contract has been sent!" });
+        return res.status(200).json({ data: 'Contract has been sent!' });
       }
 
       await updateStatusColumn({
@@ -285,12 +285,12 @@ module.exports = {
   viewedPDF: async (req, res, next) => {
     const { itemId, id } = req.params;
     let ips = (
-      req.headers["cf-connecting-ip"] ||
-      req.headers["x-real-ip"] ||
-      req.headers["x-forwarded-for"] ||
+      req.headers['cf-connecting-ip'] ||
+      req.headers['x-real-ip'] ||
+      req.headers['x-forwarded-for'] ||
       req.connection.remoteAddress ||
-      ""
-    ).split(",");
+      ''
+    ).split(',');
 
     const ip = ips[0].trim();
     try {
@@ -352,7 +352,7 @@ module.exports = {
     } catch (error) {
       if (error?.status === 403 && error?.userId) {
         return res.redirect(
-          "/re-authenticate?context=" +
+          '/re-authenticate?context=' +
             JSON.stringify({ updateTokenUserId: error?.userId })
         );
       }
@@ -373,7 +373,7 @@ module.exports = {
     } catch (error) {
       if (error?.status === 403 && error?.userId) {
         return res.redirect(
-          "/re-authenticate?context=" +
+          '/re-authenticate?context=' +
             JSON.stringify({ updateTokenUserId: error?.userId })
         );
       }
