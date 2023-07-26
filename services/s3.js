@@ -1,11 +1,11 @@
-const AWS = require('aws-sdk');
-const FileDetailsModel = require('../models/FileDetails');
-const FileHistory = require('../models/FileHistory');
-const { setMondayToken } = require('../utils/monday');
-const { updateStatusColumn } = require('./monday.service');
-const { Types } = require('mongoose');
-const ApplicationModel = require('../models/Application.model');
-const { backOfficeUploadedDocument } = require('./backoffice.service');
+const AWS = require("aws-sdk");
+const FileDetailsModel = require("../models/FileDetails");
+const FileHistory = require("../models/FileHistory");
+const { setMondayToken } = require("../utils/monday");
+const { updateStatusColumn } = require("./monday.service");
+const { Types } = require("mongoose");
+const ApplicationModel = require("../models/Application.model");
+const { backOfficeUploadedDocument } = require("./backoffice.service");
 
 const s3 = new AWS.S3({
   credentials: {
@@ -59,9 +59,9 @@ const uploadFile = async (req) => {
   await result.save();
 
   const appInstallDetails = await ApplicationModel.findOne({
-    type: 'install',
+    type: "install",
     account_id: result.account_id,
-  }).sort({ created_at: 'desc' });
+  }).sort({ created_at: "desc" });
 
   if (appInstallDetails?.back_office_item_id) {
     await backOfficeUploadedDocument(appInstallDetails.back_office_item_id);
@@ -69,9 +69,9 @@ const uploadFile = async (req) => {
 
   if (prev?._id) {
     // get itemId that are already signed by receiver or sender
-    const signedItemIds = await FileHistory.distinct('itemId', {
+    const signedItemIds = await FileHistory.distinct("itemId", {
       fileId: prev._id,
-      status: { $in: ['signed_by_receiver', 'signed_by_sender'] },
+      status: { $in: ["signed_by_receiver", "signed_by_sender"] },
     });
 
     if (!signedItemIds.length) {
@@ -100,15 +100,15 @@ const getFile = async (id, accountId) => {
       _id: id,
       account_id: accountId,
     }).lean();
-    const url = s3.getSignedUrl('getObject', {
+    const url = s3.getSignedUrl("getObject", {
       Bucket: process.env.BUCKET_NAME,
       Key: fileDetails.file,
     });
     const body = await fetch(url);
-    const contentType = body.headers.get('content-type');
+    const contentType = body.headers.get("content-type");
     const arrBuffer = await body.arrayBuffer();
     const buffer = Buffer.from(arrBuffer);
-    var base64String = buffer.toString('base64');
+    var base64String = buffer.toString("base64");
 
     fileDetails.file = `data:${contentType};base64,${base64String}`;
 
@@ -126,15 +126,15 @@ const getFile = async (id, accountId) => {
 const loadFileDetails = async (id) => {
   try {
     const fileDetails = await FileDetailsModel.findById(id).lean();
-    const url = s3.getSignedUrl('getObject', {
+    const url = s3.getSignedUrl("getObject", {
       Bucket: process.env.BUCKET_NAME,
       Key: fileDetails.file,
     });
     const body = await fetch(url);
-    const contentType = body.headers.get('content-type');
+    const contentType = body.headers.get("content-type");
     const arrBuffer = await body.arrayBuffer();
     const buffer = Buffer.from(arrBuffer);
-    var base64String = buffer.toString('base64');
+    var base64String = buffer.toString("base64");
 
     fileDetails.file = `data:${contentType};base64,${base64String}`;
 
@@ -162,12 +162,12 @@ const deleteFile = async (id) => {
     const notSignedByBothAndSender = await FileHistory.aggregate([
       {
         $group: {
-          _id: '$itemId',
+          _id: "$itemId",
           status: {
-            $push: '$status',
+            $push: "$status",
           },
           fileId: {
-            $first: '$fileId',
+            $first: "$fileId",
           },
         },
       },
@@ -178,14 +178,14 @@ const deleteFile = async (id) => {
             {
               status: {
                 $not: {
-                  $all: ['signed_by_sender', 'signed_by_receiver'],
+                  $all: ["signed_by_sender", "signed_by_receiver"],
                 },
               },
             },
             {
               status: {
                 $not: {
-                  $all: ['signed_by_receiver'],
+                  $all: ["signed_by_receiver"],
                 },
               },
             },
@@ -229,7 +229,7 @@ const deleteFile = async (id) => {
 };
 
 const getSignedUrl = async (key) => {
-  return s3.getSignedUrl('getObject', {
+  return s3.getSignedUrl("getObject", {
     Bucket: process.env.BUCKET_NAME,
     Key: key,
   });

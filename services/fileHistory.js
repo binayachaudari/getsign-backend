@@ -1,32 +1,32 @@
-const { PDFDocument } = require('pdf-lib');
-const statusMapper = require('../config/statusMapper');
-const FileDetails = require('../models/FileDetails');
-const FileHistory = require('../models/FileHistory');
-const { setMondayToken, getUserDetails } = require('../utils/monday');
-const { embedHistory } = require('./embedDocumentHistory');
+const { PDFDocument } = require("pdf-lib");
+const statusMapper = require("../config/statusMapper");
+const FileDetails = require("../models/FileDetails");
+const FileHistory = require("../models/FileHistory");
+const { setMondayToken, getUserDetails, monday } = require("../utils/monday");
+const { embedHistory } = require("./embedDocumentHistory");
 const {
   signPDF,
   generatePDF,
   generatePDFWithGivenPlaceholders,
-} = require('./file');
+} = require("./file");
 const {
   updateStatusColumn,
   getColumnValues,
   getEmailColumnValue,
   getColumnDetails,
   getSpecificColumnValue,
-} = require('./monday.service');
-const { s3, getSignedUrl } = require('./s3');
+} = require("./monday.service");
+const { s3, getSignedUrl } = require("./s3");
 const {
   getFormulaColumns,
   parseFormulaColumnIds,
   renameFunctions,
   hasNestedIF,
   convertToNestedIFS,
-} = require('../utils/formula');
-const HyperFormula = require('../utils/hyperFormula');
-const { toFixed } = require('../utils/number');
-const { formulaeParser } = require('../utils/mondayFormulaConverter');
+} = require("../utils/formula");
+const HyperFormula = require("../utils/hyperFormula");
+const { toFixed } = require("../utils/number");
+const { formulaeParser } = require("../utils/mondayFormulaConverter");
 
 const addFileHistory = async ({
   id,
@@ -34,6 +34,7 @@ const addFileHistory = async ({
   itemId,
   interactedFields,
   ipAddress,
+  boardId,
 }) => {
   try {
     const addedHistory = await FileHistory.findOne({
@@ -43,7 +44,7 @@ const addFileHistory = async ({
     }).exec();
 
     if (addedHistory) {
-      if (addedHistory?.status === 'viewed') return;
+      if (addedHistory?.status === "viewed") return;
       return addedHistory;
     }
 
@@ -60,13 +61,13 @@ const addFileHistory = async ({
         status,
         itemId,
         file: signedFile.Key,
-        ...(status === 'signed_by_receiver' && {
+        ...(status === "signed_by_receiver" && {
           receiverSignedIpAddress: ipAddress,
         }),
       });
     }
 
-    if (status === 'viewed')
+    if (status === "viewed")
       return await FileHistory.create({
         fileId: id,
         status,
@@ -82,11 +83,11 @@ const getFileHistory = async (itemId, id) => {
   try {
     const history = await FileHistory.find({ fileId: id, itemId })
       .sort({
-        createdAt: 'desc',
+        createdAt: "desc",
       })
       .exec();
-    const data = history?.filter((item) => item?.status !== 'resent');
-    const resendStatus = history?.filter((item) => item?.status === 'resent');
+    const data = history?.filter((item) => item?.status !== "resent");
+    const resendStatus = history?.filter((item) => item?.status === "resent");
 
     return { data, resendStatus };
   } catch (error) {
@@ -98,21 +99,21 @@ const isAlreadyViewed = async ({ fileId, itemId }) => {
   return await FileHistory.findOne({
     fileId,
     itemId,
-    status: 'viewed',
+    status: "viewed",
   }).exec();
 };
 
 const viewedFile = async (id, itemId, ip) => {
   try {
     const fromFileHistory = await FileHistory.findById(id);
-    if (!fromFileHistory) throw new Error('No file with such id');
+    if (!fromFileHistory) throw new Error("No file with such id");
 
     const template = await FileDetails.findById(fromFileHistory.fileId);
 
     const newHistory = await addFileHistory({
       id: fromFileHistory.fileId,
       itemId,
-      status: 'viewed',
+      status: "viewed",
       ipAddress: ip,
     });
 
@@ -138,7 +139,7 @@ const getFileToSignSender = async (id, itemId) => {
   const isAlreadySignedBySender = await FileHistory.findOne({
     fileId: id,
     itemId,
-    status: 'signed_by_sender',
+    status: "signed_by_sender",
   }).exec();
 
   if (isAlreadySignedBySender) {
@@ -151,7 +152,7 @@ const getFileToSignSender = async (id, itemId) => {
   const alreadySignedByReceiver = await FileHistory.findOne({
     fileId: id,
     itemId,
-    status: 'signed_by_receiver',
+    status: "signed_by_receiver",
   }).exec();
 
   if (!alreadySignedByReceiver) {
@@ -160,10 +161,10 @@ const getFileToSignSender = async (id, itemId) => {
     const formValues = [
       ...(columnValues?.data?.items?.[0]?.column_values || []),
       {
-        id: 'item-name',
-        text: columnValues?.data?.items?.[0]?.name || '',
-        title: 'Item Name',
-        type: 'text',
+        id: "item-name",
+        text: columnValues?.data?.items?.[0]?.name || "",
+        title: "Item Name",
+        type: "text",
       },
     ];
 
@@ -200,7 +201,7 @@ const getFileToSignSender = async (id, itemId) => {
         parsedFormulaColumn?.formulaColumns?.map((item) => {
           let currentItemValue = boardFormulaColumnValues.get(item);
           if (currentItemValue?.formula || currentItemValue) {
-            const globalRegex = new RegExp(`{${item}}`, 'g');
+            const globalRegex = new RegExp(`{${item}}`, "g");
             parsedRecursiveFormula = parsedRecursiveFormula.replace(
               globalRegex,
               currentItemValue || currentItemValue?.formula
@@ -222,8 +223,8 @@ const getFileToSignSender = async (id, itemId) => {
             parsedColumn.formulaColumns.includes(item.id)
           ) {
             let columnValue;
-            if (item.type === 'formula') {
-              if (typeof columnValue !== 'object') {
+            if (item.type === "formula") {
+              if (typeof columnValue !== "object") {
                 columnValue = boardFormulaColumnValues.get(item.id);
                 columnValue = columnValue?.replace(/'/g, '"');
                 columnValue = renameFunctions(columnValue);
@@ -246,7 +247,7 @@ const getFileToSignSender = async (id, itemId) => {
         for (let index = 0; index < formulaColumnsKeys.length; index++) {
           const key = formulaColumnsKeys[index];
           const chr = String.fromCharCode(97 + index).toUpperCase();
-          const globalRegex = new RegExp(`{${key?.id}}`, 'g');
+          const globalRegex = new RegExp(`{${key?.id}}`, "g");
           finalFormula = finalFormula.replace(globalRegex, `${chr}1`);
         }
 
@@ -256,18 +257,18 @@ const getFileToSignSender = async (id, itemId) => {
         if (isNestedFormulae) {
           // Remove 'IF' and remove the nested parentheses
           const ifsFormula = finalFormula
-            .replace(/IF/g, '')
-            .replace(/\(/g, '')
-            .replace(/\)/g, '');
+            .replace(/IF/g, "")
+            .replace(/\(/g, "")
+            .replace(/\)/g, "");
 
           // Split the formula into individual conditions and values
-          const conditionsAndValues = ifsFormula.split(', ');
+          const conditionsAndValues = ifsFormula.split(", ");
 
           // Construct the IFS syntax
-          finalFormula = 'IFS(' + conditionsAndValues.join(', ') + ')';
+          finalFormula = "IFS(" + conditionsAndValues.join(", ") + ")";
         }
 
-        finalFormula = '=' + finalFormula.replace(/'/g, '"');
+        finalFormula = "=" + finalFormula.replace(/'/g, '"');
         finalFormula = renameFunctions(finalFormula);
         const parsedFormula = formulaeParser(finalFormula);
 
@@ -278,7 +279,7 @@ const getFileToSignSender = async (id, itemId) => {
         ];
 
         const hfInstance = HyperFormula.buildFromArray([formulaRow], {
-          licenseKey: 'gpl-v3',
+          licenseKey: "gpl-v3",
           useColumnIndex: true,
           smartRounding: false,
         });
@@ -291,7 +292,7 @@ const getFileToSignSender = async (id, itemId) => {
           ? finalFormulaValue
           : toFixed(finalFormulaValue, 2);
 
-        if (typeof finalFormulaValue !== 'object') {
+        if (typeof finalFormulaValue !== "object") {
           boardFormulaColumnValues.set(column.id, finalFormulaValue);
           const alreadyExistsIdx = formValues.findIndex(
             (formValue) => formValue.id === column?.id
@@ -310,7 +311,7 @@ const getFileToSignSender = async (id, itemId) => {
             });
           }
         } else {
-          boardFormulaColumnValues.set(column.id, '0');
+          boardFormulaColumnValues.set(column.id, "0");
           const alreadyExistsIdx = formValues.findIndex(
             (formValue) => formValue.id === column?.id
           );
@@ -318,11 +319,11 @@ const getFileToSignSender = async (id, itemId) => {
           if (alreadyExistsIdx > -1) {
             formValues[alreadyExistsIdx].text = parsedFormula.symbol
               ? `${parsedFormula?.symbol}${0}`
-              : '0';
+              : "0";
           } else {
             formValues.push({
               ...column,
-              text: parsedFormula.symbol ? `${parsedFormula?.symbol}${0}` : '0',
+              text: parsedFormula.symbol ? `${parsedFormula?.symbol}${0}` : "0",
             });
           }
         }
@@ -336,16 +337,16 @@ const getFileToSignSender = async (id, itemId) => {
     };
   }
 
-  const url = s3.getSignedUrl('getObject', {
+  const url = s3.getSignedUrl("getObject", {
     Bucket: process.env.BUCKET_NAME,
     Key: alreadySignedByReceiver?.file,
   });
 
   const body = await fetch(url);
-  const contentType = body.headers.get('content-type');
+  const contentType = body.headers.get("content-type");
   const arrBuffer = await body.arrayBuffer();
   const buffer = Buffer.from(arrBuffer);
-  var base64String = buffer.toString('base64');
+  var base64String = buffer.toString("base64");
 
   return {
     fileId: id,
@@ -358,7 +359,7 @@ const getFileToSignSender = async (id, itemId) => {
 const getFileToSignReceiver = async (id, itemId) => {
   try {
     let fileId;
-    const fileFromHistory = await FileHistory.findById(id).populate('fileId');
+    const fileFromHistory = await FileHistory.findById(id).populate("fileId");
     if (!fileFromHistory) {
       return {
         isDeleted: true,
@@ -377,7 +378,7 @@ const getFileToSignReceiver = async (id, itemId) => {
     const isAlreadySigned = await FileHistory.findOne({
       fileId,
       itemId,
-      status: 'signed_by_receiver',
+      status: "signed_by_receiver",
     }).exec();
 
     if (isAlreadySigned) {
@@ -391,7 +392,7 @@ const getFileToSignReceiver = async (id, itemId) => {
     const getFileToSignKey = await FileHistory.findOne({
       fileId,
       itemId,
-      status: 'signed_by_sender',
+      status: "signed_by_sender",
     }).exec();
 
     try {
@@ -401,10 +402,10 @@ const getFileToSignReceiver = async (id, itemId) => {
         const formValues = [
           ...(columnValues?.data?.items?.[0]?.column_values || []),
           {
-            id: 'item-name',
-            text: columnValues?.data?.items?.[0]?.name || '',
-            title: 'Item Name',
-            type: 'text',
+            id: "item-name",
+            text: columnValues?.data?.items?.[0]?.name || "",
+            title: "Item Name",
+            type: "text",
           },
         ];
 
@@ -441,7 +442,7 @@ const getFileToSignReceiver = async (id, itemId) => {
             parsedFormulaColumn?.formulaColumns?.map((item) => {
               let currentItemValue = boardFormulaColumnValues.get(item);
               if (currentItemValue?.formula || currentItemValue) {
-                const globalRegex = new RegExp(`{${item}}`, 'g');
+                const globalRegex = new RegExp(`{${item}}`, "g");
                 parsedRecursiveFormula = parsedRecursiveFormula.replace(
                   globalRegex,
                   currentItemValue || currentItemValue?.formula
@@ -466,9 +467,9 @@ const getFileToSignReceiver = async (id, itemId) => {
                 parsedColumn.formulaColumns.includes(item.id)
               ) {
                 let columnValue;
-                if (item.type === 'formula') {
+                if (item.type === "formula") {
                   columnValue = boardFormulaColumnValues.get(item.id);
-                  columnValue = '=' + columnValue.replace(/'/g, '"');
+                  columnValue = "=" + columnValue.replace(/'/g, '"');
                   columnValue = renameFunctions(columnValue);
                   const parsedFormula = formulaeParser(columnValue);
                   columnValue = parsedFormula.formula;
@@ -488,7 +489,7 @@ const getFileToSignReceiver = async (id, itemId) => {
             for (let index = 0; index < formulaColumnsKeys.length; index++) {
               const key = formulaColumnsKeys[index];
               const chr = String.fromCharCode(97 + index).toUpperCase();
-              const globalRegex = new RegExp(`{${key?.id}}`, 'g');
+              const globalRegex = new RegExp(`{${key?.id}}`, "g");
               finalFormula = finalFormula.replace(globalRegex, `${chr}1`);
             }
 
@@ -498,18 +499,18 @@ const getFileToSignReceiver = async (id, itemId) => {
             if (isNestedFormulae) {
               // Remove 'IF' and remove the nested parentheses
               const ifsFormula = finalFormula
-                .replace(/IF/g, '')
-                .replace(/\(/g, '')
-                .replace(/\)/g, '');
+                .replace(/IF/g, "")
+                .replace(/\(/g, "")
+                .replace(/\)/g, "");
 
               // Split the formula into individual conditions and values
-              const conditionsAndValues = ifsFormula.split(', ');
+              const conditionsAndValues = ifsFormula.split(", ");
 
               // Construct the IFS syntax
-              finalFormula = 'IFS(' + conditionsAndValues.join(', ') + ')';
+              finalFormula = "IFS(" + conditionsAndValues.join(", ") + ")";
             }
 
-            finalFormula = '=' + finalFormula.replace(/'/g, '"');
+            finalFormula = "=" + finalFormula.replace(/'/g, '"');
             finalFormula = renameFunctions(finalFormula);
             const parsedFormula = formulaeParser(finalFormula);
 
@@ -520,7 +521,7 @@ const getFileToSignReceiver = async (id, itemId) => {
             ];
 
             const hfInstance = HyperFormula.buildFromArray([formulaRow], {
-              licenseKey: 'gpl-v3',
+              licenseKey: "gpl-v3",
               useColumnIndex: true,
               smartRounding: false,
             });
@@ -532,7 +533,7 @@ const getFileToSignReceiver = async (id, itemId) => {
             finalFormulaValue = isNaN(finalFormulaValue)
               ? finalFormulaValue
               : toFixed(finalFormulaValue, 2);
-            if (typeof finalFormulaValue !== 'object') {
+            if (typeof finalFormulaValue !== "object") {
               boardFormulaColumnValues.set(column.id, finalFormulaValue);
               const alreadyExistsIdx = formValues.findIndex(
                 (formValue) => formValue.id === column?.id
@@ -551,7 +552,7 @@ const getFileToSignReceiver = async (id, itemId) => {
                 });
               }
             } else {
-              boardFormulaColumnValues.set(column.id, '0');
+              boardFormulaColumnValues.set(column.id, "0");
               const alreadyExistsIdx = formValues.findIndex(
                 (formValue) => formValue.id === column?.id
               );
@@ -559,13 +560,13 @@ const getFileToSignReceiver = async (id, itemId) => {
               if (alreadyExistsIdx > -1) {
                 formValues[alreadyExistsIdx].text = parsedFormula.symbol
                   ? `${parsedFormula?.symbol}${0}`
-                  : '0';
+                  : "0";
               } else {
                 formValues.push({
                   ...column,
                   text: parsedFormula.symbol
                     ? `${parsedFormula?.symbol}${0}`
-                    : '0',
+                    : "0",
                 });
               }
             }
@@ -582,17 +583,17 @@ const getFileToSignReceiver = async (id, itemId) => {
         };
       }
 
-      url = s3.getSignedUrl('getObject', {
+      url = s3.getSignedUrl("getObject", {
         Bucket: process.env.BUCKET_NAME,
         Key: getFileToSignKey?.file,
       });
       fileId = getFileToSignKey.fileId;
 
       const body = await fetch(url);
-      const contentType = body.headers.get('content-type');
+      const contentType = body.headers.get("content-type");
       const arrBuffer = await body.arrayBuffer();
       const buffer = Buffer.from(arrBuffer);
-      var base64String = buffer.toString('base64');
+      var base64String = buffer.toString("base64");
 
       return {
         fileId,
@@ -613,9 +614,9 @@ const downloadContract = async (itemId, fileId) => {
   const signed = await FileHistory.findOne({
     fileId: fileId,
     itemId,
-    status: { $in: ['signed_by_sender', 'signed_by_receiver'] },
+    status: { $in: ["signed_by_sender", "signed_by_receiver"] },
   })
-    .sort({ created_at: 'desc' })
+    .sort({ created_at: "desc" })
     .exec();
 
   return await getFinalContract(signed?._id);
@@ -623,15 +624,15 @@ const downloadContract = async (itemId, fileId) => {
 
 const getFinalContract = async (id, withPdfBytes) => {
   try {
-    const fileHistory = await FileHistory.findById(id).populate('fileId');
+    const fileHistory = await FileHistory.findById(id).populate("fileId");
 
     const url = await getSignedUrl(fileHistory.file);
 
     const body = await fetch(url);
-    const contentType = body.headers.get('content-type');
+    const contentType = body.headers.get("content-type");
     const arrBuffer = await body.arrayBuffer();
     const buffer = Buffer.from(arrBuffer);
-    var base64String = buffer.toString('base64');
+    var base64String = buffer.toString("base64");
 
     let pdfDoc = await PDFDocument.load(
       `data:${contentType};base64,${base64String}`
@@ -646,13 +647,13 @@ const getFinalContract = async (id, withPdfBytes) => {
     const pdfBytes = await withDocumentHistory.save();
 
     const blob = new Blob([new Uint8Array(pdfBytes)], {
-      type: 'application/pdf',
+      type: "application/pdf",
     });
 
     const wihtDocHistoryArrayBuf = await blob.arrayBuffer();
     const withDocBuff = Buffer.from(wihtDocHistoryArrayBuf);
 
-    const contractBase64 = withDocBuff.toString('base64');
+    const contractBase64 = withDocBuff.toString("base64");
 
     return {
       name: fileHistory?.fileId?.file_name,
@@ -689,10 +690,10 @@ const generateFilePreview = async (fileId, itemId, accountId) => {
     const formValues = [
       ...(columnValues?.data?.items?.[0]?.column_values || []),
       {
-        id: 'item-name',
-        text: columnValues?.data?.items?.[0]?.name || '',
-        title: 'Item Name',
-        type: 'text',
+        id: "item-name",
+        text: columnValues?.data?.items?.[0]?.name || "",
+        title: "Item Name",
+        type: "text",
       },
     ];
 
@@ -729,7 +730,7 @@ const generateFilePreview = async (fileId, itemId, accountId) => {
         parsedFormulaColumn?.formulaColumns?.map((item) => {
           let currentItemValue = boardFormulaColumnValues.get(item);
           if (currentItemValue?.formula || currentItemValue) {
-            const globalRegex = new RegExp(`{${item}}`, 'g');
+            const globalRegex = new RegExp(`{${item}}`, "g");
             parsedRecursiveFormula = parsedRecursiveFormula.replace(
               globalRegex,
               currentItemValue || currentItemValue?.formula
@@ -751,8 +752,8 @@ const generateFilePreview = async (fileId, itemId, accountId) => {
             parsedColumn.formulaColumns.includes(item.id)
           ) {
             let columnValue;
-            if (item.type === 'formula') {
-              if (typeof columnValue !== 'object') {
+            if (item.type === "formula") {
+              if (typeof columnValue !== "object") {
                 columnValue = boardFormulaColumnValues.get(item.id);
                 columnValue = columnValue?.replace(/'/g, '"');
                 columnValue = renameFunctions(columnValue);
@@ -775,7 +776,7 @@ const generateFilePreview = async (fileId, itemId, accountId) => {
         for (let index = 0; index < formulaColumnsKeys.length; index++) {
           const key = formulaColumnsKeys[index];
           const chr = String.fromCharCode(97 + index).toUpperCase();
-          const globalRegex = new RegExp(`{${key?.id}}`, 'g');
+          const globalRegex = new RegExp(`{${key?.id}}`, "g");
           finalFormula = finalFormula.replace(globalRegex, `${chr}1`);
         }
 
@@ -785,18 +786,18 @@ const generateFilePreview = async (fileId, itemId, accountId) => {
         if (isNestedFormulae) {
           // Remove 'IF' and remove the nested parentheses
           const ifsFormula = finalFormula
-            .replace(/IF/g, '')
-            .replace(/\(/g, '')
-            .replace(/\)/g, '');
+            .replace(/IF/g, "")
+            .replace(/\(/g, "")
+            .replace(/\)/g, "");
 
           // Split the formula into individual conditions and values
-          const conditionsAndValues = ifsFormula.split(', ');
+          const conditionsAndValues = ifsFormula.split(", ");
 
           // Construct the IFS syntax
-          finalFormula = 'IFS(' + conditionsAndValues.join(', ') + ')';
+          finalFormula = "IFS(" + conditionsAndValues.join(", ") + ")";
         }
 
-        finalFormula = '=' + finalFormula.replace(/'/g, '"');
+        finalFormula = "=" + finalFormula.replace(/'/g, '"');
         finalFormula = renameFunctions(finalFormula);
         const parsedFormula = formulaeParser(finalFormula);
 
@@ -807,7 +808,7 @@ const generateFilePreview = async (fileId, itemId, accountId) => {
         ];
 
         const hfInstance = HyperFormula.buildFromArray([formulaRow], {
-          licenseKey: 'gpl-v3',
+          licenseKey: "gpl-v3",
           useColumnIndex: true,
           smartRounding: false,
         });
@@ -820,7 +821,7 @@ const generateFilePreview = async (fileId, itemId, accountId) => {
           ? finalFormulaValue
           : toFixed(finalFormulaValue, 2);
 
-        if (typeof finalFormulaValue !== 'object') {
+        if (typeof finalFormulaValue !== "object") {
           boardFormulaColumnValues.set(column.id, finalFormulaValue);
           const alreadyExistsIdx = formValues.findIndex(
             (formValue) => formValue.id === column?.id
@@ -839,7 +840,7 @@ const generateFilePreview = async (fileId, itemId, accountId) => {
             });
           }
         } else {
-          boardFormulaColumnValues.set(column.id, '0');
+          boardFormulaColumnValues.set(column.id, "0");
           const alreadyExistsIdx = formValues.findIndex(
             (formValue) => formValue.id === column?.id
           );
@@ -847,11 +848,11 @@ const generateFilePreview = async (fileId, itemId, accountId) => {
           if (alreadyExistsIdx > -1) {
             formValues[alreadyExistsIdx].text = parsedFormula.symbol
               ? `${parsedFormula?.symbol}${0}`
-              : '0';
+              : "0";
           } else {
             formValues.push({
               ...column,
-              text: parsedFormula.symbol ? `${parsedFormula?.symbol}${0}` : '0',
+              text: parsedFormula.symbol ? `${parsedFormula?.symbol}${0}` : "0",
             });
           }
         }
@@ -865,19 +866,19 @@ const generateFilePreview = async (fileId, itemId, accountId) => {
       fields:
         fileDetails?.fields?.filter((field) =>
           [
-            'checkbox',
-            'sign-date',
-            'receiver-initials',
-            'sender-initials',
-            'receiver-signature',
-            'sender-signature',
-            'text-box',
+            "checkbox",
+            "sign-date",
+            "receiver-initials",
+            "sender-initials",
+            "receiver-signature",
+            "sender-signature",
+            "text-box",
           ].includes(field?.itemId)
         ) || [],
     };
   } catch (error) {
     if (user) {
-      if (typeof error === 'object') {
+      if (typeof error === "object") {
         throw {
           ...error,
           userId: user?._id,
@@ -902,10 +903,10 @@ const generateFilePreviewWithPlaceholders = async (
     const formValues = [
       ...(columnValues?.data?.items?.[0]?.column_values || []),
       {
-        id: 'item-name',
-        text: columnValues?.data?.items?.[0]?.name || '',
-        title: 'Item Name',
-        type: 'text',
+        id: "item-name",
+        text: columnValues?.data?.items?.[0]?.name || "",
+        title: "Item Name",
+        type: "text",
       },
     ];
 
@@ -942,7 +943,7 @@ const generateFilePreviewWithPlaceholders = async (
         parsedFormulaColumn?.formulaColumns?.map((item) => {
           let currentItemValue = boardFormulaColumnValues.get(item);
           if (currentItemValue?.formula || currentItemValue) {
-            const globalRegex = new RegExp(`{${item}}`, 'g');
+            const globalRegex = new RegExp(`{${item}}`, "g");
             parsedRecursiveFormula = parsedRecursiveFormula.replace(
               globalRegex,
               currentItemValue || currentItemValue?.formula
@@ -964,9 +965,9 @@ const generateFilePreviewWithPlaceholders = async (
             parsedColumn.formulaColumns.includes(item.id)
           ) {
             let columnValue;
-            if (item.type === 'formula') {
+            if (item.type === "formula") {
               columnValue = boardFormulaColumnValues.get(item.id);
-              if (typeof columnValue !== 'object') {
+              if (typeof columnValue !== "object") {
                 console.log(columnValue);
                 columnValue = columnValue?.replace(/'/g, '"');
                 columnValue = renameFunctions(columnValue);
@@ -989,7 +990,7 @@ const generateFilePreviewWithPlaceholders = async (
         for (let index = 0; index < formulaColumnsKeys.length; index++) {
           const key = formulaColumnsKeys[index];
           const chr = String.fromCharCode(97 + index).toUpperCase();
-          const globalRegex = new RegExp(`{${key?.id}}`, 'g');
+          const globalRegex = new RegExp(`{${key?.id}}`, "g");
           finalFormula = finalFormula.replace(globalRegex, `${chr}1`);
         }
 
@@ -999,18 +1000,18 @@ const generateFilePreviewWithPlaceholders = async (
         if (isNestedFormulae) {
           // Remove 'IF' and remove the nested parentheses
           const ifsFormula = finalFormula
-            .replace(/IF/g, '')
-            .replace(/\(/g, '')
-            .replace(/\)/g, '');
+            .replace(/IF/g, "")
+            .replace(/\(/g, "")
+            .replace(/\)/g, "");
 
           // Split the formula into individual conditions and values
-          const conditionsAndValues = ifsFormula.split(', ');
+          const conditionsAndValues = ifsFormula.split(", ");
 
           // Construct the IFS syntax
-          finalFormula = 'IFS(' + conditionsAndValues.join(', ') + ')';
+          finalFormula = "IFS(" + conditionsAndValues.join(", ") + ")";
         }
 
-        finalFormula = '=' + finalFormula.replace(/'/g, '"');
+        finalFormula = "=" + finalFormula.replace(/'/g, '"');
         finalFormula = renameFunctions(finalFormula);
         const parsedFormula = formulaeParser(finalFormula);
 
@@ -1021,7 +1022,7 @@ const generateFilePreviewWithPlaceholders = async (
         ];
 
         const hfInstance = HyperFormula.buildFromArray([formulaRow], {
-          licenseKey: 'gpl-v3',
+          licenseKey: "gpl-v3",
           useColumnIndex: true,
           smartRounding: false,
         });
@@ -1034,7 +1035,7 @@ const generateFilePreviewWithPlaceholders = async (
           ? finalFormulaValue
           : toFixed(finalFormulaValue, 2);
 
-        if (typeof finalFormulaValue !== 'object') {
+        if (typeof finalFormulaValue !== "object") {
           boardFormulaColumnValues.set(column.id, finalFormulaValue);
           const alreadyExistsIdx = formValues.findIndex(
             (formValue) => formValue.id === column?.id
@@ -1053,7 +1054,7 @@ const generateFilePreviewWithPlaceholders = async (
             });
           }
         } else {
-          boardFormulaColumnValues.set(column.id, '0');
+          boardFormulaColumnValues.set(column.id, "0");
           const alreadyExistsIdx = formValues.findIndex(
             (formValue) => formValue.id === column?.id
           );
@@ -1061,11 +1062,11 @@ const generateFilePreviewWithPlaceholders = async (
           if (alreadyExistsIdx > -1) {
             formValues[alreadyExistsIdx].text = parsedFormula.symbol
               ? `${parsedFormula?.symbol}${0}`
-              : '0';
+              : "0";
           } else {
             formValues.push({
               ...column,
-              text: parsedFormula.symbol ? `${parsedFormula?.symbol}${0}` : '0',
+              text: parsedFormula.symbol ? `${parsedFormula?.symbol}${0}` : "0",
             });
           }
         }
@@ -1083,7 +1084,7 @@ const generateFilePreviewWithPlaceholders = async (
     };
   } catch (error) {
     if (user) {
-      if (typeof error === 'object' && error?.statusCode === 401) {
+      if (typeof error === "object" && error?.statusCode === 401) {
         throw {
           ...error,
           userId: user?._id,
