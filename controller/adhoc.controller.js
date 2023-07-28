@@ -11,7 +11,7 @@ const addSenderDetails = async (req, res, next) => {
       })
       .status(200);
   } catch (error) {
-    throw error;
+    next(error)
   }
 };
 
