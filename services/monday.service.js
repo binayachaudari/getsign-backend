@@ -596,11 +596,26 @@ const getSpecificColumnValue = async (itemId, columnIds) => {
   return getFieldValue(column);
 };
 
-const runMondayQuery = async (
+const runMondayQuery = async ({
+  userId,
+  accountId,
   query,
   queryOptions,
-  callback = data => data
-) => {};
+  callback = data => data,
+}) => {
+  await setMondayToken(userId, accountId);
+
+  return monday
+    .api(query, queryOptions)
+    .then(res => {
+      console.log('Create new column response===>', res);
+      return res;
+    })
+    .catch(err => {
+      console.log('Error while changing new column values ==>', err);
+      throw err;
+    });
+};
 
 /*
 rawColumnDatas type = [
@@ -620,7 +635,33 @@ const updateMultipleTextColumnValues = async ({
 }) => {
   await setMondayToken(userId, accountId);
 
-  let query = `
+  const fetch_board_columns = `
+    query($ids:[Int]){
+      boards(ids:$ids){
+        columns{
+          id
+        }
+      }
+    }
+  `;
+
+  const fetch_board_columns_option = {
+    variables: {
+      ids: Number(boardId),
+    },
+  };
+
+  const fetch_Board_response = await monday.api(
+    fetch_board_columns,
+    fetch_board_columns_option
+  );
+
+  let board_columns =
+    fetch_Board_response?.data?.boards?.[0]?.columns?.map(col => col.id) ||
+    null;
+
+  if (board_columns?.length > 0) {
+    let query = `
     mutation($item_id:Int,$board_id:Int!,$column_values:JSON!){
       change_multiple_column_values(item_id:$item_id,board_id:$board_id,column_values:$column_values){
         id
@@ -628,33 +669,42 @@ const updateMultipleTextColumnValues = async ({
     }
   `;
 
-  const change_multiple_column_values_options = {
-    variables: {
-      item_id: Number(itemId),
-      board_id: Number(boardId),
-    },
-  };
-  let column_values = {};
+    const change_multiple_column_values_options = {
+      variables: {
+        item_id: Number(itemId),
+        board_id: Number(boardId),
+      },
+    };
+    let column_values = {};
 
-  for (const textBoxField of textBoxFields) {
-    if (textBoxField?.content) {
-      column_values[textBoxField.column.value] = textBoxField.content;
+    for (const textBoxField of textBoxFields) {
+      if (
+        textBoxField?.content &&
+        board_columns.includes(textBoxField.column.value)
+      ) {
+        column_values[textBoxField.column.value] = textBoxField.content;
+      }
     }
+
+    change_multiple_column_values_options.variables.column_values =
+      JSON.stringify(column_values);
+
+    return monday
+      .api(query, change_multiple_column_values_options)
+      .then(res => {
+        console.log('Change multiple column values response===>', res);
+        return res;
+      })
+      .catch(err => {
+        console.log(
+          'Error while changing multiple text column values ==>',
+          err
+        );
+        throw err;
+      });
   }
 
-  change_multiple_column_values_options.variables.column_values =
-    JSON.stringify(column_values);
-
-  return monday
-    .api(query, change_multiple_column_values_options)
-    .then(res => {
-      console.log('Change multiple column values response===>', res);
-      return res;
-    })
-    .catch(err => {
-      console.log('Error while changing multiple text column values ==>', err);
-      throw err;
-    });
+  return false;
 };
 
 module.exports = {
