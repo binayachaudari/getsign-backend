@@ -2,7 +2,7 @@ const { PDFDocument } = require('pdf-lib');
 const statusMapper = require('../config/statusMapper');
 const FileDetails = require('../models/FileDetails');
 const FileHistory = require('../models/FileHistory');
-const { setMondayToken, getUserDetails } = require('../utils/monday');
+const { setMondayToken, getUserDetails, monday } = require('../utils/monday');
 const { embedHistory } = require('./embedDocumentHistory');
 const {
   signPDF,
@@ -34,6 +34,7 @@ const addFileHistory = async ({
   itemId,
   interactedFields,
   ipAddress,
+  boardId,
 }) => {
   try {
     const addedHistory = await FileHistory.findOne({
@@ -85,8 +86,8 @@ const getFileHistory = async (itemId, id) => {
         createdAt: 'desc',
       })
       .exec();
-    const data = history?.filter((item) => item?.status !== 'resent');
-    const resendStatus = history?.filter((item) => item?.status === 'resent');
+    const data = history?.filter(item => item?.status !== 'resent');
+    const resendStatus = history?.filter(item => item?.status === 'resent');
 
     return { data, resendStatus };
   } catch (error) {
@@ -177,7 +178,7 @@ const getFileToSignSender = async (id, itemId) => {
     if (formulaColumns.length > 0) {
       const columnDetailsResponse = await getColumnDetails(
         itemId,
-        formulaColumns?.map((column) => column?.id)
+        formulaColumns?.map(column => column?.id)
       );
       const columnDetails =
         columnDetailsResponse?.data?.items?.[0]?.board?.columns || [];
@@ -197,7 +198,7 @@ const getFileToSignSender = async (id, itemId) => {
         );
         let parsedRecursiveFormula = parsedFormulaColumn.formula;
 
-        parsedFormulaColumn?.formulaColumns?.map((item) => {
+        parsedFormulaColumn?.formulaColumns?.map(item => {
           let currentItemValue = boardFormulaColumnValues.get(item);
           if (currentItemValue?.formula || currentItemValue) {
             const globalRegex = new RegExp(`{${item}}`, 'g');
@@ -294,7 +295,7 @@ const getFileToSignSender = async (id, itemId) => {
         if (typeof finalFormulaValue !== 'object') {
           boardFormulaColumnValues.set(column.id, finalFormulaValue);
           const alreadyExistsIdx = formValues.findIndex(
-            (formValue) => formValue.id === column?.id
+            formValue => formValue.id === column?.id
           );
 
           if (alreadyExistsIdx > -1) {
@@ -312,7 +313,7 @@ const getFileToSignSender = async (id, itemId) => {
         } else {
           boardFormulaColumnValues.set(column.id, '0');
           const alreadyExistsIdx = formValues.findIndex(
-            (formValue) => formValue.id === column?.id
+            formValue => formValue.id === column?.id
           );
 
           if (alreadyExistsIdx > -1) {
@@ -418,7 +419,7 @@ const getFileToSignReceiver = async (id, itemId) => {
         if (formulaColumns.length > 0) {
           const columnDetailsResponse = await getColumnDetails(
             itemId,
-            formulaColumns?.map((column) => column?.id)
+            formulaColumns?.map(column => column?.id)
           );
           const columnDetails =
             columnDetailsResponse?.data?.items?.[0]?.board?.columns || [];
@@ -438,7 +439,7 @@ const getFileToSignReceiver = async (id, itemId) => {
             );
             let parsedRecursiveFormula = parsedFormulaColumn.formula;
 
-            parsedFormulaColumn?.formulaColumns?.map((item) => {
+            parsedFormulaColumn?.formulaColumns?.map(item => {
               let currentItemValue = boardFormulaColumnValues.get(item);
               if (currentItemValue?.formula || currentItemValue) {
                 const globalRegex = new RegExp(`{${item}}`, 'g');
@@ -535,7 +536,7 @@ const getFileToSignReceiver = async (id, itemId) => {
             if (typeof finalFormulaValue !== 'object') {
               boardFormulaColumnValues.set(column.id, finalFormulaValue);
               const alreadyExistsIdx = formValues.findIndex(
-                (formValue) => formValue.id === column?.id
+                formValue => formValue.id === column?.id
               );
 
               if (alreadyExistsIdx > -1) {
@@ -553,7 +554,7 @@ const getFileToSignReceiver = async (id, itemId) => {
             } else {
               boardFormulaColumnValues.set(column.id, '0');
               const alreadyExistsIdx = formValues.findIndex(
-                (formValue) => formValue.id === column?.id
+                formValue => formValue.id === column?.id
               );
 
               if (alreadyExistsIdx > -1) {
@@ -706,7 +707,7 @@ const generateFilePreview = async (fileId, itemId, accountId) => {
     if (formulaColumns.length > 0) {
       const columnDetailsResponse = await getColumnDetails(
         itemId,
-        formulaColumns?.map((column) => column?.id)
+        formulaColumns?.map(column => column?.id)
       );
       const columnDetails =
         columnDetailsResponse?.data?.items?.[0]?.board?.columns || [];
@@ -726,7 +727,7 @@ const generateFilePreview = async (fileId, itemId, accountId) => {
         );
         let parsedRecursiveFormula = parsedFormulaColumn.formula;
 
-        parsedFormulaColumn?.formulaColumns?.map((item) => {
+        parsedFormulaColumn?.formulaColumns?.map(item => {
           let currentItemValue = boardFormulaColumnValues.get(item);
           if (currentItemValue?.formula || currentItemValue) {
             const globalRegex = new RegExp(`{${item}}`, 'g');
@@ -823,7 +824,7 @@ const generateFilePreview = async (fileId, itemId, accountId) => {
         if (typeof finalFormulaValue !== 'object') {
           boardFormulaColumnValues.set(column.id, finalFormulaValue);
           const alreadyExistsIdx = formValues.findIndex(
-            (formValue) => formValue.id === column?.id
+            formValue => formValue.id === column?.id
           );
 
           if (alreadyExistsIdx > -1) {
@@ -841,7 +842,7 @@ const generateFilePreview = async (fileId, itemId, accountId) => {
         } else {
           boardFormulaColumnValues.set(column.id, '0');
           const alreadyExistsIdx = formValues.findIndex(
-            (formValue) => formValue.id === column?.id
+            formValue => formValue.id === column?.id
           );
 
           if (alreadyExistsIdx > -1) {
@@ -863,7 +864,7 @@ const generateFilePreview = async (fileId, itemId, accountId) => {
       fileId,
       ...generatedPDF,
       fields:
-        fileDetails?.fields?.filter((field) =>
+        fileDetails?.fields?.filter(field =>
           [
             'checkbox',
             'sign-date',
@@ -919,7 +920,7 @@ const generateFilePreviewWithPlaceholders = async (
     if (formulaColumns.length > 0) {
       const columnDetailsResponse = await getColumnDetails(
         itemId,
-        formulaColumns?.map((column) => column?.id)
+        formulaColumns?.map(column => column?.id)
       );
       const columnDetails =
         columnDetailsResponse?.data?.items?.[0]?.board?.columns || [];
@@ -939,7 +940,7 @@ const generateFilePreviewWithPlaceholders = async (
         );
         let parsedRecursiveFormula = parsedFormulaColumn.formula;
 
-        parsedFormulaColumn?.formulaColumns?.map((item) => {
+        parsedFormulaColumn?.formulaColumns?.map(item => {
           let currentItemValue = boardFormulaColumnValues.get(item);
           if (currentItemValue?.formula || currentItemValue) {
             const globalRegex = new RegExp(`{${item}}`, 'g');
@@ -1037,7 +1038,7 @@ const generateFilePreviewWithPlaceholders = async (
         if (typeof finalFormulaValue !== 'object') {
           boardFormulaColumnValues.set(column.id, finalFormulaValue);
           const alreadyExistsIdx = formValues.findIndex(
-            (formValue) => formValue.id === column?.id
+            formValue => formValue.id === column?.id
           );
 
           if (alreadyExistsIdx > -1) {
@@ -1055,7 +1056,7 @@ const generateFilePreviewWithPlaceholders = async (
         } else {
           boardFormulaColumnValues.set(column.id, '0');
           const alreadyExistsIdx = formValues.findIndex(
-            (formValue) => formValue.id === column?.id
+            formValue => formValue.id === column?.id
           );
 
           if (alreadyExistsIdx > -1) {

@@ -2,7 +2,7 @@ const FileDetails = require('../models/FileDetails');
 const crypto = require('crypto');
 const { emailVerification } = require('./mailer');
 
-const verifyEmailServie = async (token) => {
+const verifyEmailServie = async token => {
   const fileDetails = await FileDetails.findOne({
     email_verification_token: token,
     email_verification_token_expires: { $gt: Date.now() },
@@ -26,7 +26,7 @@ const verifyEmailServie = async (token) => {
   };
 };
 
-const resendVerificationEmail = async (fileId) => {
+const resendVerificationEmail = async fileId => {
   try {
     const fileDetails = await FileDetails.findById(fileId);
     const verificationToken = crypto.randomBytes(20).toString('hex');

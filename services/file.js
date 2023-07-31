@@ -79,7 +79,7 @@ const addFormFields = async (id, payload) => {
       ]);
 
       if (notSignedByBoth?.length > 0) {
-        notSignedByBoth?.forEach(async (item) => {
+        notSignedByBoth?.forEach(async item => {
           // updating status column
           await updateStatusColumn({
             itemId: item?._id,
@@ -91,7 +91,7 @@ const addFormFields = async (id, payload) => {
           });
         });
 
-        const notSignedByBothItemIds = notSignedByBoth.map((item) => item?._id);
+        const notSignedByBothItemIds = notSignedByBoth.map(item => item?._id);
 
         // delete history
         await FileHistory.deleteMany({
@@ -122,15 +122,11 @@ const generatePDF = async (id, fields) => {
     const customFont = await pdfDoc.embedFont(fontBytes, { subset: true });
 
     if (fields?.length && fileDetails?.fields) {
-      fileDetails?.fields?.forEach(async (placeHolder) => {
+      fileDetails?.fields?.forEach(async placeHolder => {
         const currentPage = pages[placeHolder?.formField?.pageIndex];
         if (!currentPage) return;
 
         if (placeHolder?.itemId === 'sign-date') {
-          /**
-           * fontSize for sign-date
-           * @default value is 11
-           */
           const fontSize = placeHolder.fontSize || 11;
           const currentDate = moment(new Date())
             .format(placeHolder?.dateFormat?.format || 'DD/MM/YYYY')
@@ -143,24 +139,33 @@ const generatePDF = async (id, fields) => {
             y:
               placeHolder.formField.coordinates.y -
               fontSize +
-              (fontSize * 1.375 - fontSize) / 2 - // font cap size
-              8, // because coordinate calculation is done from bottom-left and the date has padding of 8
+              (fontSize * 1.375 - fontSize) / 2 -
+              8,
+            font: customFont,
+            size: fontSize,
+          });
+        } else if (placeHolder?.itemId === 'text-box') {
+          const fontSize = placeHolder.fontSize || 11;
+          const height = placeHolder.height || 18.33;
+
+          currentPage.drawText(placeHolder?.content || '', {
+            x: placeHolder.formField.coordinates.x + 8,
+            y:
+              placeHolder.formField.coordinates.y -
+              height +
+              (height - fontSize * 1.375) / 2 -
+              (fontSize * 1.375 - fontSize) / 2,
             font: customFont,
             size: fontSize,
           });
         } else {
-          const value = fields.find((item) => item?.id === placeHolder?.itemId);
+          const value = fields.find(item => item?.id === placeHolder?.itemId);
 
           const calculationError =
             typeof value?.text === 'object' && value?.type === 'formula';
 
           if (value) {
-            /**
-             * fontSize:
-             * @Default is 11 or taken fontSize is taken directly from placeholder
-             */
             const fontSize = placeHolder?.fontSize || 11;
-            // This is pixel to point conversion scale factor
             const scalingFactor = 0.75;
 
             if (calculationError) {
@@ -218,7 +223,7 @@ const generatePDFWithGivenPlaceholders = async (id, placeholders, values) => {
     const customFont = await pdfDoc.embedFont(fontBytes, { subset: true });
 
     if (values?.length && placeholders?.length) {
-      placeholders?.forEach(async (placeHolder) => {
+      placeholders?.forEach(async placeHolder => {
         const currentPage = pages[placeHolder?.formField?.pageIndex];
         if (!currentPage) return;
 
@@ -245,10 +250,6 @@ const generatePDFWithGivenPlaceholders = async (id, placeholders, values) => {
         // }
 
         if (placeHolder?.itemId === 'sign-date') {
-          /**
-           * fontSize for sign-date
-           * @default value is 11
-           */
           const fontSize = placeHolder.fontSize || 11;
           const currentDate = moment(new Date())
             .format(placeHolder?.dateFormat?.format || 'DD/MM/YYYY')
@@ -261,24 +262,33 @@ const generatePDFWithGivenPlaceholders = async (id, placeholders, values) => {
               placeHolder.formField.coordinates.y -
               fontSize +
               (fontSize * 1.375 - fontSize) / 2 -
-              8, // because coordinate calculation is done from bottom-left and the date has padding of 8
+              8,
+            font: customFont,
+            size: fontSize,
+          });
+        } else if (placeHolder?.itemId === 'text-box') {
+          const fontSize = placeHolder.fontSize || 11;
+          const height = placeHolder.height || 18.33;
+
+          currentPage.drawText(placeHolder?.content || '', {
+            x: placeHolder.formField.coordinates.x + 8,
+            y:
+              placeHolder.formField.coordinates.y -
+              height +
+              (height - fontSize * 1.375) / 2 -
+              (fontSize * 1.375 - fontSize) / 2,
             font: customFont,
             size: fontSize,
           });
         } else {
-          const value = values.find((item) => item?.id === placeHolder?.itemId);
+          const value = values.find(item => item?.id === placeHolder?.itemId);
 
           const calculationError =
             typeof value?.text === 'object' && value?.type === 'formula';
 
           if (value) {
-            /**
-             * fontSize:
-             * @Default is 11 or taken fontSize is taken directly from placeholder
-             */
             const fontSize = placeHolder?.fontSize || 11;
 
-            // This is pixel to point conversion scale factor
             const scalingFactor = 0.75;
 
             if (calculationError) {
@@ -322,7 +332,7 @@ const generatePDFWithGivenPlaceholders = async (id, placeholders, values) => {
   }
 };
 
-const loadFile = async (url) => {
+const loadFile = async url => {
   const body = await fetch(url);
   const contentType = body.headers.get('content-type');
   const arrBuffer = await body.arrayBuffer();
@@ -359,7 +369,7 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
     if (formulaColumns.length > 0) {
       const columnDetailsResponse = await getColumnDetails(
         itemId,
-        formulaColumns?.map((column) => column?.id)
+        formulaColumns?.map(column => column?.id)
       );
       const columnDetails =
         columnDetailsResponse?.data?.items?.[0]?.board?.columns || [];
@@ -379,7 +389,7 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
         );
         let parsedRecursiveFormula = parsedFormulaColumn.formula;
 
-        parsedFormulaColumn?.formulaColumns?.map((item) => {
+        parsedFormulaColumn?.formulaColumns?.map(item => {
           let currentItemValue = boardFormulaColumnValues.get(item);
           if (currentItemValue?.formula || currentItemValue) {
             const globalRegex = new RegExp(`{${item}}`, 'g');
@@ -474,7 +484,7 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
         if (typeof finalFormulaValue !== 'object') {
           boardFormulaColumnValues.set(column.id, finalFormulaValue);
           const alreadyExistsIdx = values.findIndex(
-            (formValue) => formValue.id === column?.id
+            formValue => formValue.id === column?.id
           );
 
           if (alreadyExistsIdx > -1) {
@@ -492,7 +502,7 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
         } else {
           boardFormulaColumnValues.set(column.id, '0');
           const alreadyExistsIdx = values.findIndex(
-            (formValue) => formValue.id === column?.id
+            formValue => formValue.id === column?.id
           );
 
           if (alreadyExistsIdx > -1) {
@@ -545,9 +555,8 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
     });
 
     if (fileDetails?.fields) {
-      // Interacted fields are sent from frontend this includes signature and checkboxes
       if (interactedFields?.length) {
-        interactedFields?.forEach(async (placeHolder) => {
+        interactedFields?.forEach(async placeHolder => {
           const currentPage = pages[placeHolder?.formField?.pageIndex];
 
           if (placeHolder?.image?.src) {
@@ -556,15 +565,11 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
 
             currentPage.drawImage(pngImage, {
               x: placeHolder?.formField.coordinates.x,
-              y: placeHolder?.formField.coordinates.y - heightOfSignPlaceholder, // this is done because the signature has to be drawn from the bottom part of the placeholder,
+              y: placeHolder?.formField.coordinates.y - heightOfSignPlaceholder,
               width: placeHolder?.image.width,
               height: placeHolder?.image.height,
             });
           } else if (placeHolder?.itemId === 'sign-date') {
-            /**
-             * fontSize for sign-date
-             * @default value is 11
-             */
             const fontSize = placeHolder.fontSize || 11;
             const currentDate = moment(new Date())
               .format(placeHolder?.dateFormat?.format || 'DD/MM/YYYY')
@@ -576,13 +581,27 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
               y:
                 placeHolder.formField.coordinates.y -
                 fontSize +
-                (fontSize * 1.375 - fontSize) / 2 - // Capsize of 1.375
-                8, // because coordinate calculation is done from bottom-left and the date has padding of 8
+                (fontSize * 1.375 - fontSize) / 2 -
+                8,
+              font: customFont,
+              size: fontSize,
+            });
+          } else if (placeHolder?.itemId === 'text-box') {
+            const fontSize = placeHolder.fontSize || 11;
+            const height = placeHolder.height || 18.33;
+
+            currentPage.drawText(placeHolder?.content || '', {
+              x: placeHolder.formField.coordinates.x + 8,
+              y:
+                placeHolder.formField.coordinates.y -
+                height +
+                (height - fontSize * 1.375) / 2 -
+                (fontSize * 1.375 - fontSize) / 2,
               font: customFont,
               size: fontSize,
             });
           } else if (placeHolder?.itemId === 'checkbox') {
-            const padding = 5; // 6 is done because we have padding+boders in the frontend checkbox box
+            const padding = 5;
             let pngImage = await pdfDoc.embedPng(
               'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAAA8CAYAAAA6/NlyAAAACXBIWXMAACE4AAAhOAFFljFgAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAJ0SURBVHgB7ZtBbhoxFIb/52mlSOmC3gDUA2SAEJEVE7pFKidIjtDcAHEEeoHSEzRINFIXBbKpRkkAr9hEKkjdVk3V2VRqx649MGTS5gLz4k9CzHs2i49nezbPhAfY368HWuPEfAIQisgRBJIaWhLEYDr9fPb/eAbfrxc9D281jCgPlipGU8pwlSa2wr5f84UnxiZVAC9ulYib8upK2iARtpUVnp6nslrrHySop4CJvA4nyAmdTgeD83OflHdqxE4yQ7em0hVb6US4Uq0vzVfRPpt9u9IKR9llkDdMwVCpHJZMOUe0OYPMNh3Pp2GTqtWDtoZ4n042/0Qpz7IpVrpcPiwJDzMT2pWrFaEpFEQ7M6/PQdZCprSFws7SlLaXpoTGsSBNe+kkFcc9MKLRaEAJXGRSAZn9q9NoNg0JzAiCgH5Gv9Qm1AKPDCfMHSfMHSfMHSfMHSfMHSfMHSfMHSfMHSfMHSfMHSfMHSfMHSfMHSfMHSfMHSfMHSfMHSfMHSfMHSfMncctbPuNuRFF0b3YCq/SYPDhYwBG2ALG8Y6fxhqQQqu7blOhENg+Yy4sFgsSXnyaxpQIe+jjLvPadpJzkLbVvbn5WjKPx5uUVqTPknbhcrU+Mg9HSZqwUn/Q9Lzfq1arpbvdLvKEFR0OhxTHT0viCT6ZdVy0eVPDL/NZ+CJzySNplX+e+W3fE/Gb3d1diZwQRc9A9C1QCg27WrFu/bey383WrW4veVj8Ws0XyhvhvnTuWcuql1JeJoXbvpbsvR571cVMsDdcOJxc9iQaryt7uV2lD7b8+9WDNkG8MsN7BO0jR9hrSESYKMI7eR1e/Dv+F5R469eW8mIYAAAAAElFTkSuQmCC'
             );
@@ -593,34 +612,27 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
             }
             currentPage.drawImage(pngImage, {
               x: placeHolder?.formField.coordinates.x + padding,
-              // because coordinate calculation is done from bottom-left and the date has to be in the middle so multiplied by 2
               y:
                 placeHolder?.formField.coordinates.y -
                 (placeHolder?.height || 25) +
-                padding, // substract padding just from bottom and decrease height because coordinates are calculated from bottom left
-              width: (placeHolder?.width || 25) - padding * 1.5, // default width is 34 and padding*2 is done because of padding-X = 6 in UI
-              height: (placeHolder?.height || 25) - padding * 1.5, // default height is 34 and padding*2 is done because of padding-Y = 6 in UI
+                padding,
+              width: (placeHolder?.width || 25) - padding * 1.5,
+              height: (placeHolder?.height || 25) - padding * 1.5,
             });
           }
         });
       }
 
-      // values are the actual values that we get from the board.
       if (values?.length) {
-        fileDetails?.fields?.forEach(async (placeHolder) => {
+        fileDetails?.fields?.forEach(async placeHolder => {
           const currentPage = pages[placeHolder?.formField?.pageIndex];
-          const value = values.find((item) => item?.id === placeHolder?.itemId);
+          const value = values.find(item => item?.id === placeHolder?.itemId);
 
           const calculationError =
             typeof value?.text === 'object' && value?.type === 'formula';
 
           if (value) {
-            /**
-             * fontSize:
-             * @Default is 11 or taken fontSize is taken directly from placeholder
-             */
             const fontSize = placeHolder?.fontSize || 11;
-            // This is pixel to point conversion scale factor
             const scalingFactor = 0.75;
 
             if (calculationError) {

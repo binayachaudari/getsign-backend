@@ -25,6 +25,7 @@ const {
   updateStatusColumn,
   getEmailColumnValue,
   uploadContract,
+  updateMultipleTextColumnValues,
 } = require('../services/monday.service');
 const {
   uploadFile,
@@ -33,6 +34,8 @@ const {
   loadFileDetails,
 } = require('../services/s3');
 const { setMondayToken } = require('../utils/monday');
+
+const TEXT_BOX_ITEM_ID = 'text-box';
 
 module.exports = {
   uploadFile: async (req, res, next) => {
@@ -135,13 +138,29 @@ module.exports = {
     const { status, signatures, itemId, standardFields } = req.body;
     try {
       const template = await FileDetails.findById(id);
-      const senderSignRequired = template?.fields?.filter((field) =>
+      const senderSignRequired = template?.fields?.filter(field =>
         ['Sender Signature', 'Sender Initials'].includes(field?.title)
       )?.length;
 
-      const receiverSignRequired = template?.fields?.filter((field) =>
+      const receiverSignRequired = template?.fields?.filter(field =>
         ['Receiver Signature', 'Receiver Initials'].includes(field?.title)
       )?.length;
+
+      if (standardFields?.length) {
+        let textBoxFields = [];
+        textBoxFields = [...standardFields]?.filter(
+          field =>
+            field.itemId === TEXT_BOX_ITEM_ID && Boolean(field?.column?.value)
+        );
+
+        await updateMultipleTextColumnValues({
+          itemId,
+          boardId: template.board_id,
+          userId: template?.user_id,
+          accountId: template?.account_id,
+          textBoxFields: [...textBoxFields],
+        });
+      }
 
       const result = await addFileHistory({
         id,

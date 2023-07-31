@@ -79,8 +79,8 @@ module.exports = {
     };
 
     docHistory
-      ?.filter((item) => item.status !== 'resent')
-      .forEach((history) => {
+      ?.filter(item => item.status !== 'resent')
+      .forEach(history => {
         switch (history.status) {
           case 'signed_by_sender':
           case 'signed_by_receiver':
