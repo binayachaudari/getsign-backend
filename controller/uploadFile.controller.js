@@ -3,6 +3,7 @@ const ApplicationModel = require('../models/Application.model');
 const FileDetails = require('../models/FileDetails');
 const FileHistory = require('../models/FileHistory');
 const { backOfficeDocumentSigned } = require('../services/backoffice.service');
+const STANDARD_FIELDS = require('../config/standardFields');
 const {
   addFormFields,
   generatePDF,
@@ -136,6 +137,7 @@ module.exports = {
 
     const ip = ips[0].trim();
     const { status, signatures, itemId, standardFields } = req.body;
+
     try {
       const template = await FileDetails.findById(id);
       const senderSignRequired = template?.fields?.filter(field =>
@@ -147,10 +149,12 @@ module.exports = {
       )?.length;
 
       if (standardFields?.length) {
-        let textBoxFields = [];
-        textBoxFields = [...standardFields]?.filter(
+        let fields = [];
+        fields = [...standardFields]?.filter(
           field =>
-            field.itemId === TEXT_BOX_ITEM_ID && Boolean(field?.column?.value)
+            (field.itemId === STANDARD_FIELDS.textBox ||
+              field.itemId === STANDARD_FIELDS.status) &&
+            Boolean(field?.column?.value)
         );
 
         await updateMultipleTextColumnValues({
@@ -158,7 +162,7 @@ module.exports = {
           boardId: template.board_id,
           userId: template?.user_id,
           accountId: template?.account_id,
-          textBoxFields: [...textBoxFields],
+          standardFields: [...fields],
         });
       }
 
