@@ -1,6 +1,8 @@
 const { monday, setMondayToken } = require('../utils/monday');
 const axios = require('axios');
 
+const STANDARD_FIELDS = require('../config/standardFields');
+
 const me = async () => {
   try {
     return await monday.api(`{
@@ -24,6 +26,11 @@ const getItemDetails = async id => {
       board {
         id
         name
+        columns{
+          settings_str
+          id
+          title
+        }
       }
       column_values {
         id
@@ -626,12 +633,27 @@ rawColumnDatas type = [
   }
 ]
 */
+
+const formatColumnValues = (columnValues, newField) => {
+  const { itemId, column, content } = newField;
+
+  switch (itemId) {
+    case STANDARD_FIELDS.textBox:
+      columnValues[column.value] = content;
+      return columnValues;
+    case STANDARD_FIELDS.status:
+      columnValues[column.value] = { label: content || null };
+      return columnValues;
+    default:
+      return columnValues;
+  }
+};
 const updateMultipleTextColumnValues = async ({
   itemId,
   boardId,
   userId,
   accountId,
-  textBoxFields,
+  standardFields,
 }) => {
   await setMondayToken(userId, accountId);
 
@@ -677,12 +699,12 @@ const updateMultipleTextColumnValues = async ({
     };
     let column_values = {};
 
-    for (const textBoxField of textBoxFields) {
+    for (const standardField of standardFields) {
       if (
-        textBoxField?.content &&
-        board_columns.includes(textBoxField.column.value)
+        standardField?.content &&
+        board_columns.includes(standardField.column.value)
       ) {
-        column_values[textBoxField.column.value] = textBoxField.content;
+        formatColumnValues(column_values, standardField);
       }
     }
 
