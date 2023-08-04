@@ -11,10 +11,20 @@ const addSenderDetails = async (req, res, next) => {
       })
       .status(200);
   } catch (error) {
-    next(error)
+    next(error);
+  }
+};
+
+const uploadAdhocDocument = async (req, res, next) => {
+  try {
+    const result = await adhocService.uploadAdhocDocument(req);
+    return res.json({ data: result }).status(200);
+  } catch (err) {
+    next(err);
   }
 };
 
 module.exports = {
   addSenderDetails,
+  uploadAdhocDocument,
 };

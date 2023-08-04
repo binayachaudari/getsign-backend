@@ -94,7 +94,7 @@ const addSenderDetails = async payload => {
   }
 };
 
-const uploadAdhocDocument = async res => {
+const uploadAdhocDocument = async req => {
   const body = req.body;
   const file = req.files.file;
 
@@ -109,7 +109,7 @@ const uploadAdhocDocument = async res => {
 
   const uploadedFile = await uploadContract({
     accountId: body.account_id,
-    columnId: body?.presigned_file_column_id,
+    columnId: fileDetails?.presigned_file_column_id,
     file: file.data,
     userId: body?.user_id,
     itemId: body?.item_id,
@@ -178,6 +178,7 @@ const uploadAdhocDocument = async res => {
   // }
 
   console.log(uploadedFile);
+  console.log({ data: uploadedFile?.data });
 
   // return result;
 };
