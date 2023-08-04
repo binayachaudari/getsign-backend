@@ -10,6 +10,7 @@ const addSenderDetails = async payload => {
       item_id: payload.item_id,
       user_id: payload.user_id,
       itemViewInstanceId: payload.instanceId,
+      type: payload?.type,
     });
 
     if (previous?.length) {
@@ -45,6 +46,7 @@ const addSenderDetails = async payload => {
         item_id: payload.item_id,
         user_id: payload.user_id,
         itemViewInstanceId: payload.instanceId,
+        type: payload.type,
       });
 
       result.email_address = payload?.email_address;
