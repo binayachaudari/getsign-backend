@@ -729,6 +729,56 @@ const updateMultipleTextColumnValues = async ({
   return false;
 };
 
+const uploadPreSignedFile = async ({
+  itemId,
+  columnId,
+  file,
+  userId,
+  accountId,
+}) => {
+  const accessToken = await setMondayToken(userId, accountId);
+  const url = 'https://api.monday.com/v2/file';
+  var query = `mutation add_file($file: File!) { add_file_to_column (file: $file, item_id: ${itemId}, column_id: "${columnId}") { id } }`;
+  var data = '';
+  const boundary = 'xxxxxxxxxxxxxxx';
+
+  try {
+    // construct query part
+    data += '--' + boundary + '\r\n';
+    data += 'Content-Disposition: form-data; name="query"; \r\n';
+    data += 'Content-Type:application/json\r\n\r\n';
+    data += '\r\n' + query + '\r\n';
+
+    // construct file part
+    data += '--' + boundary + '\r\n';
+    data +=
+      'Content-Disposition: form-data; name="variables[file]"; filename="' +
+      file.name +
+      '"\r\n';
+    data += `Content-Type:${file.mimetype}\r\n\r\n`;
+
+    var payload = Buffer.concat([
+      Buffer.from(data, 'utf8'),
+      new Uint8Array(file.data),
+      Buffer.from('\r\n--' + boundary + '--\r\n', 'utf8'),
+    ]);
+
+    return await axios({
+      url,
+      method: 'post',
+      headers: {
+        'Content-Type': 'multipart/form-data; boundary=' + boundary,
+        Authorization: accessToken,
+      },
+      data: payload,
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity,
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
   me,
   getItemDetails,
@@ -740,4 +790,5 @@ module.exports = {
   getSpecificColumnValue,
   runMondayQuery,
   updateMultipleTextColumnValues,
+  uploadPreSignedFile,
 };

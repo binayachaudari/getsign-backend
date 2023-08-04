@@ -1,7 +1,9 @@
 const FileDetails = require('../models/FileDetails');
 const crypto = require('crypto');
 const { emailVerification } = require('./mailer');
-const { uploadContract } = require('./monday.service');
+const { uploadPreSignedFile } = require('./monday.service');
+const ApplicationModel = require('../models/Application.model');
+const { backOfficeUploadedDocument } = require('./backoffice.service');
 
 const addSenderDetails = async payload => {
   try {
@@ -98,30 +100,28 @@ const uploadAdhocDocument = async req => {
   const body = req.body;
   const file = req.files.file;
 
-  const fileDetails = await FileDetails.find({
+  const fileDetails = await FileDetails.findOne({
     account_id: body.account_id,
-    board_id: body.board_id,
-    item_id: body.item_id,
-    user_id: body.user_id,
-    itemViewInstanceId: body.instanceId,
+    board_id: Number(body.board_id),
+    item_id: Number(body.item_id),
     type: 'adhoc',
   });
 
-  const uploadedFile = await uploadContract({
+  const uploadedFile = await uploadPreSignedFile({
     accountId: body.account_id,
     columnId: fileDetails?.presigned_file_column_id,
-    file: file.data,
+    file: file,
     userId: body?.user_id,
     itemId: body?.item_id,
   });
 
-  // get values from previous file that has been deleted
-  const prev = await FileDetails.findOne({
-    account_id: body.account_id,
-    board_id: body.board_id,
-    item_id: body.item_id,
-    is_deleted: true,
-  });
+  // // get values from previous file that has been deleted
+  // const prev = await FileDetails.findOne({
+  //   account_id: body.account_id,
+  //   board_id: body.board_id,
+  //   item_id: body.item_id,
+  //   is_deleted: true,
+  // });
 
   // const result = await FileDetails.create({
   //   account_id: body.account_id,
@@ -144,14 +144,14 @@ const uploadAdhocDocument = async req => {
 
   // await result.save();
 
-  // const appInstallDetails = await ApplicationModel.findOne({
-  //   type: 'install',
-  //   account_id: result.account_id,
-  // }).sort({ created_at: 'desc' });
+  const appInstallDetails = await ApplicationModel.findOne({
+    type: 'install',
+    account_id: body.account_id,
+  }).sort({ created_at: 'desc' });
 
-  // if (appInstallDetails?.back_office_item_id) {
-  //   await backOfficeUploadedDocument(appInstallDetails.back_office_item_id);
-  // }
+  if (appInstallDetails?.back_office_item_id) {
+    await backOfficeUploadedDocument(appInstallDetails.back_office_item_id);
+  }
 
   // if (prev?._id) {
   //   // get itemId that are already signed by receiver or sender
@@ -177,10 +177,7 @@ const uploadAdhocDocument = async req => {
   //   }
   // }
 
-  console.log(uploadedFile);
-  console.log({ data: uploadedFile?.data });
-
-  // return result;
+  return uploadedFile.data;
 };
 
 module.exports = {
