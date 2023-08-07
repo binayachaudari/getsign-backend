@@ -10,6 +10,8 @@ const {
   getColumnDetails,
   getSpecificColumnValue,
 } = require('./monday.service');
+
+const STANDARD_FIELDS = require('../config/standardFields');
 const { Types } = require('mongoose');
 const { backOfficeSavedDocument } = require('./backoffice.service');
 const ApplicationModel = require('../models/Application.model');
@@ -586,7 +588,10 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
               font: customFont,
               size: fontSize,
             });
-          } else if (placeHolder?.itemId === 'text-box') {
+          } else if (
+            placeHolder?.itemId === STANDARD_FIELDS.textBox ||
+            placeHolder?.itemId === STANDARD_FIELDS.status
+          ) {
             const fontSize = placeHolder.fontSize || 11;
             const height = placeHolder.height || 18.33;
 
