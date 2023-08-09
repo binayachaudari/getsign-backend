@@ -230,6 +230,38 @@ const getUsers = async usersIds => {
   }
 };
 
+// Get public url
+const getPublicURL = async assedId => {
+  const res = await monday.api(
+    `
+    query getPublicUrl($ids: [Int]!){
+      assets(ids: $ids) {
+        public_url
+        created_at
+        file_extension
+        file_size
+        id
+        name
+        url   
+      }
+    }
+    `,
+    { variables: { ids: [Number(assedId)] } }
+  );
+  if (
+    res.hasOwnProperty('error_message') ||
+    res.hasOwnProperty('error_code') ||
+    res.hasOwnProperty('errors')
+  ) {
+    throw {
+      status: 403,
+      message: res?.errors?.[0]?.message,
+    };
+  }
+
+  return res?.data?.assets;
+};
+
 // Get team data by id
 const getTeams = async teamsIds => {
   try {
@@ -536,17 +568,19 @@ async function getFieldValue(column, itemId, searchMode = true) {
       for (let index = 0; index < files.length; index++) {
         const file = files[index];
         if (file.fileType === 'ASSET') {
-          // // const assetsIds = files.map(file => file.assetId);
-          // if (file.assetId) {
-          //   const monday_files = await Monday.getFile([file.assetId]);
-          //   if (monday_files.length > 0) {
-          //     allFilesList = [...allFilesList, ...monday_files];
-          //     //    files_urls = monday_files.map(file => file.public_url)
-          //   }
-          // }
-        } else {
-          allFilesList.push(file);
+          const assetsIds = files.map(file => file.assetId);
+          if (file.assetId) {
+            const monday_files = await getPublicURL([file.assetId]);
+            if (monday_files.length > 0) {
+              allFilesList = [...allFilesList, ...monday_files];
+              files_urls = monday_files.map(file => file.public_url);
+              return files_urls;
+            }
+          }
         }
+        //  else {
+        //   allFilesList.push(file);
+        // }
       }
     }
     value = JSON.stringify(allFilesList);
