@@ -106,18 +106,18 @@ const getFile = async (id, accountId) => {
       account_id: accountId,
     }).lean();
     if (fileDetails.type === 'adhoc') {
-      url = await getSpecificColumnValue(
+      const urls = await getSpecificColumnValue(
         fileDetails?.item_id,
         fileDetails.presigned_file_column_id
       );
-    } else {
-      const urls = s3.getSignedUrl('getObject', {
-        Bucket: process.env.BUCKET_NAME,
-        Key: fileDetails.file,
-      });
       if (urls.length) {
         url = urls?.[0];
       }
+    } else {
+      url = s3.getSignedUrl('getObject', {
+        Bucket: process.env.BUCKET_NAME,
+        Key: fileDetails.file,
+      });
     }
     const body = await fetch(url);
     const contentType = body.headers.get('content-type');
