@@ -44,6 +44,15 @@ const getItemDetails = async id => {
         id
       }
       state
+      subitems{
+        column_values {
+          id
+          text
+          title
+          type
+          value
+        }
+      }
     }
   }
   `,
