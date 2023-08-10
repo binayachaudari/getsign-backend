@@ -10,10 +10,16 @@ if [ "$DEPLOYMENT_GROUP_NAME" == "GetSignBackEndCICDDev" ]; then
   sudo yarn --frozen-lockfile
 fi
 
+if [ "$DEPLOYMENT_GROUP_NAME" == "GetSignBackEndCICDQA" ]; then
+  cd /var/www/GetSign-QA/jetsign-backend
+  sudo yarn --frozen-lockfile
+fi
+
 if [ "$DEPLOYMENT_GROUP_NAME" == "GetSignBackEndCICDProd" ]; then
   cd /home/ubuntu/GetSign/jetsign-backend
   sudo yarn --frozen-lockfile
 fi
+
 
 
 

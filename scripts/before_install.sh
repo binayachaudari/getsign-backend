@@ -8,12 +8,19 @@ echo "Node Version"
 sudo node -v
 
 if [ "$DEPLOYMENT_GROUP_NAME" == "GetSignBackEndCICDDev" ]; then
-  DESTINATION_PATH="/var/www/GetSign-Dev/jetsign-backend/"
+  DESTINATION_PATH="/var/www/GetSign-Temp/jetsign-backend/"
+  sudo cp -R /var/www/GetSign-Temp/jetsign-backend/* $DESTINATION_PATH
 fi
+
+if [ "$DEPLOYMENT_GROUP_NAME" == "GetSignBackEndCICDQA" ]; then
+  DESTINATION_PATH="/var/www/GetSign-QA/jetsign-backend/"
+  sudo cp -R /var/www/GetSign-Temp/jetsign-backend/* $DESTINATION_PATH
+fi
+
 
 if [ "$DEPLOYMENT_GROUP_NAME" == "GetSignBackEndCICDProd" ]; then
   DESTINATION_PATH="/home/ubuntu/GetSign/jetsign-backend/"
-  # sudo cp -R /var/www/GetSign-Dev/jetsign-backend/* $DESTINATION_PATH
+  sudo cp -R /var/www/GetSign-Temp/jetsign-backend/* $DESTINATION_PATH
 fi
 
 cd $DESTINATION_PATH
