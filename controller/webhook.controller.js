@@ -134,7 +134,11 @@ const applicationWebhook = async (req, res, next) => {
           : null,
     };
 
-    await updateColumnValues(backOfficeItemId, JSON.stringify(values));
+    const updatedColumnValues = await updateColumnValues(
+      backOfficeItemId,
+      JSON.stringify(values)
+    );
+    console.log('backoffice=> update column values', updatedColumnValues);
   }
 
   const app = await ApplicationModel.create({

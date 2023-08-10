@@ -10,4 +10,10 @@ router.post(
   adhocController.addSenderDetails
 );
 
+router.post(
+  '/upload-adhoc-document',
+  verifySessionToken,
+  adhocController.uploadAdhocDocument
+);
+
 module.exports = router;
