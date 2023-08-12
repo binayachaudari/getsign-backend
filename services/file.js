@@ -10,7 +10,6 @@ const {
   getColumnDetails,
   getSpecificColumnValue,
 } = require('./monday.service');
-
 const STANDARD_FIELDS = require('../config/standardFields');
 const { Types } = require('mongoose');
 const { backOfficeSavedDocument } = require('./backoffice.service');
@@ -27,10 +26,12 @@ const {
   parseFormulaColumnIds,
   renameFunctions,
   hasNestedIF,
+  getSubItems,
 } = require('../utils/formula');
 const { formulaeParser } = require('../utils/mondayFormulaConverter');
 const { HyperFormula } = require('hyperformula');
 const { toFixed } = require('../utils/number');
+const { createTable } = require('../utils/table');
 
 const scalingFactor = 0.75;
 
@@ -211,7 +212,12 @@ const generatePDF = async (id, fields) => {
   }
 };
 
-const generatePDFWithGivenPlaceholders = async (id, placeholders, values) => {
+const generatePDFWithGivenPlaceholders = async (
+  id,
+  placeholders,
+  values,
+  items_subItem = []
+) => {
   try {
     const fileDetails = await loadFileDetails(id);
 
@@ -281,6 +287,23 @@ const generatePDFWithGivenPlaceholders = async (id, placeholders, values) => {
               (fontSize * 1.375 - fontSize) / 2,
             font: customFont,
             size: fontSize,
+          });
+        } else if (placeHolder?.itemId === 'line-item') {
+          const tableData = getSubItems(
+            placeHolder?.subItemSettings,
+            items_subItem
+          );
+
+          console.log('Table columns ===>', JSON.stringify(tableData));
+          createTable({
+            currentPage,
+            tableData,
+            // tableData,
+            // initialXCoordinate,
+            // initialYCoordinate,
+            // tableData,
+            // customFont,
+            // fontSize,
           });
         } else {
           const value = values.find(item => item?.id === placeHolder?.itemId);

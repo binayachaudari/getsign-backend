@@ -1,5 +1,58 @@
+// const { async } = require('regenerator-runtime');
+// const { getFieldValue } = require('../services/monday.service');
+
 const getFormulaColumns = columnValues => {
   return columnValues.filter(column => column.type === 'formula');
+};
+
+/*
+
+Formatted Table Data Structure
+
+tableData = [
+
+  [ {name,width} ]  //Columns
+  [  ]// Row 1
+  [  ]// Row 2
+  [  ]// Row 3
+]
+
+*/
+
+const getSubItems = (subItemSettings = [], items_subItem) => {
+  const formattedTableData = [];
+  formattedTableData[0] = [];
+  let rowCount = 0;
+  const { selectedColumn } = subItemSettings;
+  formattedTableData[0][0] = { id: 'item-name', value: 'Item Name', size: 150 };
+
+  selectedColumn?.forEach(col => {
+    formattedTableData[0].push({ ...col, value: col?.title, size: 150 });
+  });
+
+  for (let i = 0; i < items_subItem?.length; i++) {
+    if (rowCount > 19) break;
+    const subItem = items_subItem[i];
+    const rowData = [];
+    rowData[0] = { id: 'item-name', value: subItem?.name || '' };
+
+    for (let j = 0; j < selectedColumn.length; j++) {
+      if (j > 4) break;
+      let column = subItem?.column_values?.find(
+        col => col.id === selectedColumn[j].id
+      );
+      // const formatCol = await getFieldValue(column, null, false);
+      const colValue = {
+        id: column.id,
+        value: column?.value,
+      };
+      rowData.push(colValue);
+    }
+
+    rowCount = +1;
+    formattedTableData.push(rowData);
+  }
+  return formattedTableData;
 };
 
 const parseFormulaColumnIds = formulaStr => {
@@ -85,4 +138,5 @@ module.exports = {
   renameFunctions,
   hasNestedIF,
   convertToNestedIFS,
+  getSubItems,
 };

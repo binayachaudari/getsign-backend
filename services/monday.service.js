@@ -163,6 +163,19 @@ const getColumnValues = async itemId => {
           title
           type
         }
+        subitems{
+          id
+          name
+          column_values{
+            additional_info
+            id
+            title
+            text
+            type
+            value
+          }
+        }
+
       }
     }
     `,
@@ -834,4 +847,5 @@ module.exports = {
   runMondayQuery,
   updateMultipleTextColumnValues,
   uploadPreSignedFile,
+  getFieldValue,
 };
