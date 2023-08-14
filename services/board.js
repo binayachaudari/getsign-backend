@@ -54,13 +54,27 @@ const getStoredBoardFile = async (boardId, itemId, instanceId) => {
     if (fileItem && fileItem?.type === 'adhoc') {
       doc = fileItem;
     } else {
-      doc = await FileDetails.findOne({
+      const docDetails = await FileDetails.findOne({
         board_id: boardId,
         itemViewInstanceId: instanceId,
         is_deleted: false,
+        type: 'adhoc',
       })
         .select('-email_verification_token -email_verification_token_expires')
         .exec();
+
+      if (docDetails) {
+        doc = docDetails;
+        doc.fields = [];
+      } else {
+        doc = await FileDetails.findOne({
+          board_id: boardId,
+          itemViewInstanceId: instanceId,
+          is_deleted: false,
+        })
+          .select('-email_verification_token -email_verification_token_expires')
+          .exec();
+      }
     }
 
     const alreadySignedFile = await FileHistory.findOne({
