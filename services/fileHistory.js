@@ -972,7 +972,6 @@ const generateFilePreviewWithPlaceholders = async (
             if (item.type === 'formula') {
               columnValue = boardFormulaColumnValues.get(item.id);
               if (typeof columnValue !== 'object') {
-                console.log(columnValue);
                 columnValue = columnValue?.replace(/'/g, '"');
                 columnValue = renameFunctions(columnValue);
                 const parsedFormula = formulaeParser(columnValue);
@@ -1081,7 +1080,8 @@ const generateFilePreviewWithPlaceholders = async (
       fileId,
       placeholders,
       formValues,
-      items_subItem
+      [...items_subItem],
+      itemId
     );
     return {
       fileId,

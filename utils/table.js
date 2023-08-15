@@ -33,12 +33,6 @@ const createTable = ({
   //     ['Row 1, Cell 1', 'Row 1, Cell 2', 'Row 1, Cell 3'],
   //     ['Row 2, Cell 1', 'Row 2, Cell 2', 'Row 2, Cell 3'],
   //   ];
-  console.log("'Reached create table ===>", {
-    width,
-    height,
-    currentPage,
-    tableData,
-  });
 
   const margin = 0;
 
@@ -54,7 +48,6 @@ const createTable = ({
     for (let j = 0; j < tableCols; j++) {
       const text = tableData[i][j]?.value || '';
 
-      console.log({ text, col: tableData[i][j] });
       const cellTopY = tableTopY - i * 20;
       const cellLeftX =
         margin + columnWidths.slice(0, j).reduce((a, b) => a + b, 0);

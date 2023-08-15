@@ -1,5 +1,5 @@
 // const { async } = require('regenerator-runtime');
-// const { getFieldValue } = require('../services/monday.service');
+const { getFieldValue } = require('../services/monday.service');
 
 const getFormulaColumns = columnValues => {
   return columnValues.filter(column => column.type === 'formula');
@@ -19,7 +19,7 @@ tableData = [
 
 */
 
-const getSubItems = (subItemSettings = [], items_subItem) => {
+const getSubItems = async (subItemSettings = [], items_subItem) => {
   const formattedTableData = [];
   formattedTableData[0] = [];
   let rowCount = 0;
@@ -33,6 +33,7 @@ const getSubItems = (subItemSettings = [], items_subItem) => {
   for (let i = 0; i < items_subItem?.length; i++) {
     if (rowCount > 19) break;
     const subItem = items_subItem[i];
+
     const rowData = [];
     rowData[0] = { id: 'item-name', value: subItem?.name || '' };
 
@@ -41,10 +42,18 @@ const getSubItems = (subItemSettings = [], items_subItem) => {
       let column = subItem?.column_values?.find(
         col => col.id === selectedColumn[j].id
       );
-      // const formatCol = await getFieldValue(column, null, false);
+
+      let formatCol;
+
+      if (column.type == 'formula') {
+        formatCol = column?.text || '';
+      } else {
+        formatCol = await getFieldValue(column, null);
+      }
+
       const colValue = {
         id: column.id,
-        value: column?.value,
+        value: formatCol,
       };
       rowData.push(colValue);
     }
@@ -58,6 +67,7 @@ const getSubItems = (subItemSettings = [], items_subItem) => {
 const parseFormulaColumnIds = formulaStr => {
   const formulaObject = JSON.parse(formulaStr);
   const finalFormula = formulaObject.formula;
+
   const formulaColumns = finalFormula.match(/\{(.*?)\}/g);
 
   return {
@@ -131,6 +141,8 @@ const renameFunctions = formula => {
   }
   return newFormula;
 };
+
+const calculateFormulaValue = async () => {};
 
 module.exports = {
   parseFormulaColumnIds,

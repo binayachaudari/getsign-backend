@@ -166,6 +166,14 @@ const getColumnValues = async itemId => {
         subitems{
           id
           name
+            board{
+              columns{
+                id
+                type
+                settings_str
+                title
+              }
+            }
           column_values{
             additional_info
             id
@@ -659,6 +667,37 @@ const getSpecificColumnValue = async (itemId, columnIds) => {
   return getFieldValue(column);
 };
 
+const getSpecificSubItemColumnValue = async (itemId, subItemId, columnIds) => {
+  const res = await monday.api(
+    `
+    query getSpecificColumnValue($ids: [Int], $columnIds: [String]) {
+      items(ids: $ids) {
+        id
+        subitems{
+          id
+          column_values (ids: $columnIds) {
+            id
+            text
+            title
+            type
+            value
+            additional_info
+          }
+        }
+      
+      }
+    }
+    `,
+    { variables: { ids: [Number(itemId)], columnIds } }
+  );
+
+  const column = res?.data?.items?.[0]?.subitems?.find(
+    subItem => subItem.id == subItemId
+  )?.column_values?.[0];
+
+  return getFieldValue(column);
+};
+
 const runMondayQuery = async ({
   userId,
   accountId,
@@ -671,7 +710,6 @@ const runMondayQuery = async ({
   return monday
     .api(query, queryOptions)
     .then(res => {
-      console.log('Create new column response===>', res);
       return res;
     })
     .catch(err => {
@@ -848,4 +886,5 @@ module.exports = {
   updateMultipleTextColumnValues,
   uploadPreSignedFile,
   getFieldValue,
+  getSpecificSubItemColumnValue,
 };
