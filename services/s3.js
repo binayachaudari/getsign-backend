@@ -140,16 +140,27 @@ const getFile = async (id, accountId) => {
 
 const loadFileDetails = async id => {
   try {
+    let url;
     const fileDetails = await FileDetailsModel.findById(id).lean();
-    const url = s3.getSignedUrl('getObject', {
-      Bucket: process.env.BUCKET_NAME,
-      Key: fileDetails.file,
-    });
+    if (fileDetails?.type === 'adhoc') {
+      const urls = await getSpecificColumnValue(
+        fileDetails?.item_id,
+        fileDetails.presigned_file_column_id
+      );
+      if (urls.length) {
+        url = urls?.[0];
+      }
+    } else {
+      url = s3.getSignedUrl('getObject', {
+        Bucket: process.env.BUCKET_NAME,
+        Key: fileDetails.file,
+      });
+    }
     const body = await fetch(url);
     const contentType = body.headers.get('content-type');
     const arrBuffer = await body.arrayBuffer();
     const buffer = Buffer.from(arrBuffer);
-    var base64String = buffer.toString('base64');
+    const base64String = buffer.toString('base64');
 
     fileDetails.file = `data:${contentType};base64,${base64String}`;
 
