@@ -134,6 +134,9 @@ const getFile = async (id, accountId) => {
 
     return fileDetails;
   } catch (error) {
+    if (error.status) {
+      error.statusCode = error.status;
+    }
     throw error;
   }
 };
