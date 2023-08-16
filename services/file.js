@@ -518,6 +518,8 @@ const generatePDFWithGivenPlaceholders = async (
             items_subItem
           );
 
+          console.log({ placeHolder: JSON.stringify(placeHolder) });
+
           const initialXCoordinate = placeHolder.formField.coordinates.x + 8;
           const initialYCoordinate = placeHolder.formField.coordinates.y;
 
@@ -526,6 +528,29 @@ const generatePDFWithGivenPlaceholders = async (
             tableData,
             initialXCoordinate,
             initialYCoordinate,
+            tableWidth: placeHolder?.width,
+            tableSetting: {
+              sum: {
+                checked: false,
+                column: '',
+                label: 'Sum',
+              },
+              header: {
+                checked: false,
+                color: 'grey',
+              },
+              tax: {
+                checked: true,
+                type: 'percentage',
+                value: '100',
+                label: 'Tax',
+              },
+              currency: {
+                checked: false,
+                position: 'before-the-value',
+              },
+              ...(placeHolder?.subItemSettings || {}),
+            },
           });
         } else {
           const value = values.find(item => item?.id === placeHolder?.itemId);

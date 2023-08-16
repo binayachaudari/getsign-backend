@@ -7,6 +7,7 @@ const createTableHead = ({
   yCoordinate,
   customFont,
   fontSize,
+  tableWidth,
 }) => {
   currentPage?.drawRectangle({
     x: xCoordinate,
@@ -23,13 +24,15 @@ const createTable = ({
   initialXCoordinate,
   initialYCoordinate,
   tableData,
+  tableWidth,
+  tableSetting,
 }) => {
-  const { width, height } = currentPage.getSize();
+  console.log({ tableSetting });
   const tableRows = tableData.length;
   const tableCols = tableData[0].length;
 
   const columnWidths = Array.from({ length: tableCols }, (_, index) =>
-    Math.ceil(width / tableCols)
+    Math.floor(tableWidth / tableCols)
   );
 
   const marginY = 30;
@@ -46,13 +49,21 @@ const createTable = ({
       const text = tableData[currentRowPosition][currentColumn]?.value || '';
       const cellMargin = 5;
 
-      currentPage.drawRectangle({
+      const drawRectangleOption = {
         x: currentXCoordinate,
         y: currentYCoordinate,
         width: columnWidths[currentColumn],
         height: defaultRowHeight,
         borderColor: rgb(0, 0, 0),
-        borderWidth: 1,
+        borderWidth: 0,
+      };
+
+      if (currentRowPosition === 0) {
+        drawRectangleOption.color = rgb(0.4, 0.4, 0.4);
+      }
+
+      currentPage.drawRectangle({
+        ...drawRectangleOption,
       });
 
       const textPosX = currentXCoordinate + cellMargin;
@@ -72,6 +83,46 @@ const createTable = ({
     currentYCoordinate =
       currentYCoordinate -
       (currentRowPosition < 1 ? 1 : currentRowPosition) * defaultRowHeight;
+  }
+  currentYCoordinate += 20;
+
+  currentPage.drawLine({
+    start: { x: currentXCoordinate, y: currentYCoordinate },
+    end: { x: currentXCoordinate + tableWidth, y: currentYCoordinate },
+    thickness: 1,
+    color: rgb(0, 0, 0),
+  });
+  currentYCoordinate -= 20;
+
+  if (tableSetting?.tax?.checked) {
+    const taxLabelXCoordinate = currentXCoordinate + 5;
+    // currentPage.drawText(tableSetting?.tax?.label || 'Tax', {});
+
+    currentPage.drawText(tableSetting?.tax?.label || 'Tax', {
+      x: taxLabelXCoordinate,
+      y: currentYCoordinate,
+      size: 14,
+      color: rgb(0, 0, 0),
+    });
+
+    const taxValue =
+      tableSetting?.tax?.type === 'percentage'
+        ? tableSetting?.tax?.value + '%'
+        : tableSetting?.tax?.value;
+
+    let xCoordinate = tableWidth;
+    taxValue
+      ?.split('')
+      ?.reverse()
+      ?.forEach(str => {
+        currentPage.drawText(str, {
+          x: xCoordinate,
+          y: currentYCoordinate,
+          size: 14,
+          color: rgb(0, 0, 0),
+        });
+        xCoordinate -= 8;
+      });
   }
 };
 
