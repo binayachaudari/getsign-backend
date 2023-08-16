@@ -901,6 +901,9 @@ const generateFilePreviewWithPlaceholders = async (
     await setMondayToken(fileDetails.user_id, fileDetails.account_id);
     user = await getUserDetails(fileDetails.user_id, fileDetails.account_id);
     const columnValues = await getColumnValues(itemId);
+
+    const items_subItem = columnValues?.data?.items?.[0]?.subitems || [];
+
     const formValues = [
       ...(columnValues?.data?.items?.[0]?.column_values || []),
       {
@@ -969,7 +972,6 @@ const generateFilePreviewWithPlaceholders = async (
             if (item.type === 'formula') {
               columnValue = boardFormulaColumnValues.get(item.id);
               if (typeof columnValue !== 'object') {
-                console.log(columnValue);
                 columnValue = columnValue?.replace(/'/g, '"');
                 columnValue = renameFunctions(columnValue);
                 const parsedFormula = formulaeParser(columnValue);
@@ -1077,7 +1079,9 @@ const generateFilePreviewWithPlaceholders = async (
     const generatedPDF = await generatePDFWithGivenPlaceholders(
       fileId,
       placeholders,
-      formValues
+      formValues,
+      [...items_subItem],
+      itemId
     );
     return {
       fileId,

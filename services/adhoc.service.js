@@ -40,6 +40,7 @@ const addSenderDetails = async payload => {
         item.file_column_id = payload?.file_column_id;
         item.presigned_file_column_id = payload?.presigned_file_column_id;
         item.sender_name = payload?.sender_name;
+        item.itemViewInstanceId = payload?.instanceId;
         item.save();
       });
     } else {
@@ -74,19 +75,19 @@ const addSenderDetails = async payload => {
       await result.save();
     }
 
-    const statusColumnAlreadyUsed = await FileDetails.find({
-      board_id: payload?.board_id,
-      status_column_id: payload?.status_column_id,
-      itemViewInstanceId: { $ne: payload.instanceId },
-      is_deleted: false,
-    });
+    // const statusColumnAlreadyUsed = await FileDetails.find({
+    //   board_id: payload?.board_id,
+    //   status_column_id: payload?.status_column_id,
+    //   itemViewInstanceId: { $ne: payload.instanceId },
+    //   is_deleted: false,
+    // });
 
-    if (statusColumnAlreadyUsed.length) {
-      throw {
-        statusCode: 400,
-        message: 'Status column already used',
-      };
-    }
+    // if (statusColumnAlreadyUsed.length) {
+    //   throw {
+    //     statusCode: 400,
+    //     message: 'Status column already used',
+    //   };
+    // }
 
     return {
       ...payload,

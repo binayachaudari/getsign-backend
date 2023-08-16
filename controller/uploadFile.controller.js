@@ -8,7 +8,6 @@ const {
   addFormFields,
   generatePDF,
   addSenderDetails,
-  generatePDFWithGivenPlaceholders,
 } = require('../services/file');
 const {
   addFileHistory,

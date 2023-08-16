@@ -105,10 +105,10 @@ const getFile = async (id, accountId) => {
       _id: id,
       account_id: accountId,
     }).lean();
-    if (fileDetails.type === 'adhoc') {
+    if (fileDetails?.type === 'adhoc') {
       const urls = await getSpecificColumnValue(
         fileDetails?.item_id,
-        fileDetails.presigned_file_column_id
+        fileDetails?.presigned_file_column_id
       );
       if (urls.length) {
         url = urls?.[0];
