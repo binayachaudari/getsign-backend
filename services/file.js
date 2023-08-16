@@ -518,12 +518,16 @@ const generatePDFWithGivenPlaceholders = async (
             items_subItem
           );
 
+          const initialXCoordinate = placeHolder.formField.coordinates.x + 8;
+          const initialYCoordinate = placeHolder.formField.coordinates.y;
+          console.log({ placeHolder });
+
           createTable({
             currentPage,
             tableData,
             // tableData,
-            // initialXCoordinate,
-            // initialYCoordinate,
+            initialXCoordinate,
+            initialYCoordinate,
             // tableData,
             // customFont,
             // fontSize,

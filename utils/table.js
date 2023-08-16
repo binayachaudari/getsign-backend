@@ -28,6 +28,8 @@ const createTable = ({
 }) => {
   const { width, height } = currentPage.getSize();
 
+  console.log({ width });
+
   //   const tableData = [
   //     ['Column 1', 'Column 2', 'Column 3'],
   //     ['Row 1, Cell 1', 'Row 1, Cell 2', 'Row 1, Cell 3'],
@@ -36,12 +38,18 @@ const createTable = ({
 
   const margin = 0;
 
-  const columnWidths = [150, 150, 150, 150]; // Replace with your desired column widths
   const tableTopY = height - margin - (tableData.length + 1) * 20; //
 
   //   const drawTable = () => {
   const tableRows = tableData.length;
   const tableCols = tableData[0].length;
+
+  const columnWidths = Array.from({ length: tableCols }, (_, index) =>
+    Math.ceil(width / tableCols)
+  );
+
+  console.log({ tableCols, columnWidths });
+
   const cellMargin = 5;
 
   for (let i = 0; i < tableRows; i++) {
@@ -58,8 +66,8 @@ const createTable = ({
         y: cellTopY,
         width: columnWidths[j],
         height: 20,
-        borderColor: rgb(0, 0, 0),
-        borderWidth: 1,
+        borderColor: rgb(0.3, 0.3, 0.3),
+        borderWidth: 0,
       });
 
       // Adjust text position in the cell
