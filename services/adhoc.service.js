@@ -103,7 +103,6 @@ const uploadAdhocDocument = async req => {
   const fileDetails = await FileDetails.findOne({
     account_id: body.account_id,
     board_id: Number(body.board_id),
-    item_id: Number(body.item_id),
     type: 'adhoc',
   });
 
@@ -123,26 +122,27 @@ const uploadAdhocDocument = async req => {
   //   is_deleted: true,
   // });
 
-  // const result = await FileDetails.create({
-  //   account_id: body.account_id,
-  //   board_id: body.board_id,
-  //   file: s3Res.Key,
-  //   item_id: body.item_id,
-  //   user_id: body.user_id,
-  //   file_name: file.name,
-  //   itemViewInstanceId: body.instanceId,
-  // });
+  const result = await FileDetails.create({
+    account_id: body.account_id,
+    board_id: body.board_id,
+    item_id: body.item_id,
+    user_id: body.user_id,
+    file_name: file.name,
+    itemViewInstanceId: body.instanceId,
+    type: 'adhoc',
+  });
 
-  // result.email_address = prev?.email_address;
-  // result.email_column_id = prev?.email_column_id;
-  // result.status_column_id = prev?.status_column_id;
-  // result.file_column_id = prev?.file_column_id;
-  // result.sender_name = prev?.sender_name;
-  // result.email_title = prev?.email_title;
-  // result.message = prev?.message;
-  // result.is_email_verified = prev?.is_email_verified;
+  result.email_address = fileDetails?.email_address;
+  result.email_column_id = fileDetails?.email_column_id;
+  result.status_column_id = fileDetails?.status_column_id;
+  result.file_column_id = fileDetails?.file_column_id;
+  result.sender_name = fileDetails?.sender_name;
+  result.email_title = fileDetails?.email_title;
+  result.message = fileDetails?.message;
+  result.is_email_verified = fileDetails?.is_email_verified;
+  result.presigned_file_column_id = fileDetails?.presigned_file_column_id;
 
-  // await result.save();
+  await result.save();
 
   const appInstallDetails = await ApplicationModel.findOne({
     type: 'install',
