@@ -518,7 +518,7 @@ const generatePDFWithGivenPlaceholders = async (
             items_subItem
           );
 
-          console.log({ placeHolder: JSON.stringify(placeHolder) });
+          // console.log({ placeHolder: JSON.stringify(placeHolder) });
 
           const initialXCoordinate = placeHolder.formField.coordinates.x + 8;
           const initialYCoordinate = placeHolder.formField.coordinates.y;
@@ -531,9 +531,10 @@ const generatePDFWithGivenPlaceholders = async (
             tableWidth: placeHolder?.width,
             tableSetting: {
               sum: {
-                checked: false,
+                checked: true,
                 column: '',
                 label: 'Sum',
+                value: '10000',
               },
               header: {
                 checked: false,
@@ -546,7 +547,7 @@ const generatePDFWithGivenPlaceholders = async (
                 label: 'Tax',
               },
               currency: {
-                checked: false,
+                checked: true,
                 position: 'before-the-value',
               },
               ...(placeHolder?.subItemSettings || {}),

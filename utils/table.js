@@ -27,7 +27,7 @@ const createTable = ({
   tableWidth,
   tableSetting,
 }) => {
-  console.log({ tableSetting });
+  // console.log({ tableSetting });
   const tableRows = tableData.length;
   const tableCols = tableData[0].length;
 
@@ -54,7 +54,7 @@ const createTable = ({
         y: currentYCoordinate,
         width: columnWidths[currentColumn],
         height: defaultRowHeight,
-        borderColor: rgb(0, 0, 0),
+        borderColor: rgb(1, 1, 1),
         borderWidth: 0,
       };
 
@@ -110,7 +110,7 @@ const createTable = ({
         ? tableSetting?.tax?.value + '%'
         : tableSetting?.tax?.value;
 
-    let xCoordinate = tableWidth;
+    let xCoordinate = tableWidth + initialXCoordinate - 5;
     taxValue
       ?.split('')
       ?.reverse()
@@ -123,6 +123,46 @@ const createTable = ({
         });
         xCoordinate -= 8;
       });
+  }
+
+  if (tableSetting?.sum?.checked) {
+    currentYCoordinate -= 40;
+
+    const sumLabel = (tableSetting?.sum?.label || 'Sum')?.split('')?.reverse();
+    let sumValue = tableSetting?.sum?.value;
+    if (tableSetting?.currency?.checked) {
+      sumValue =
+        tableSetting?.currency?.position === 'before-the-value'
+          ? '$' + sumValue
+          : sumValue + '$';
+    }
+
+    let xCoordinate = tableWidth + initialXCoordinate - 5;
+
+    sumValue
+      ?.split('')
+      ?.reverse()
+      ?.forEach(str => {
+        currentPage.drawText(str, {
+          x: xCoordinate,
+          y: currentYCoordinate,
+          size: 14,
+          color: rgb(0, 0, 0),
+        });
+        xCoordinate -= 8;
+      });
+
+    xCoordinate -= 16;
+
+    sumLabel?.forEach(str => {
+      currentPage.drawText(str, {
+        x: xCoordinate,
+        y: currentYCoordinate,
+        size: 14,
+        color: rgb(0, 0, 0),
+      });
+      xCoordinate -= 8;
+    });
   }
 };
 
