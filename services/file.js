@@ -113,11 +113,9 @@ const addFormFields = async (id, payload) => {
   }
 };
 
-const generatePDF = async (id, fields, items_subItem, itemId) => {
+const generatePDF = async (id, fields, items_subItem) => {
   try {
     const fileDetails = await loadFileDetails(id);
-
-    // await setMondayToken(fileDetails?.user_id, fileDetails?.account_id);
 
     const pdfDoc = await PDFDocument.load(fileDetails?.file);
     const pages = pdfDoc.getPages();
