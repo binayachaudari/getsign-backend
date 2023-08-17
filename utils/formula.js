@@ -48,12 +48,14 @@ const getSubItems = async (subItemSettings = [], items_subItem) => {
         col => col.id === selectedColumn[j].id
       );
 
-      let formatCol;
+      let formatCol = '';
 
-      if (column.type == 'formula') {
-        formatCol = column?.text || '';
-      } else {
-        formatCol = await getFieldValue(column, null);
+      if (column) {
+        if (column.type == 'formula') {
+          formatCol = column?.text || '';
+        } else {
+          formatCol = await getFieldValue(column, null);
+        }
       }
 
       const colValue = {

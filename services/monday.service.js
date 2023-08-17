@@ -47,6 +47,14 @@ const getItemDetails = async id => {
       subitems{
         id
         name
+        board{
+          columns{
+            id
+            type
+            settings_str
+            title
+          }
+        }
         column_values {
           id
           text

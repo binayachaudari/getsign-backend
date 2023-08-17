@@ -52,7 +52,7 @@ const createTable = ({
 
   const marginY = 30;
   let defaultRowHeight = 20;
-  let currentXCoordinate = initialXCoordinate;
+  let currentXCoordinate = initialXCoordinate - 8;
   let currentYCoordinate = initialYCoordinate - marginY;
 
   for (
@@ -74,7 +74,15 @@ const createTable = ({
       };
 
       if (currentRowPosition === 0) {
-        drawRectangleOption.color = rgb(0.4, 0.4, 0.4);
+        const R = parseFloat(Number(tableSetting?.header?.rgb?.r || 0) / 255);
+
+        const G = parseFloat(Number(tableSetting?.header?.rgb?.g || 0) / 255);
+
+        const B = parseFloat(Number(tableSetting?.header?.rgb?.b || 0) / 255);
+
+        if (tableSetting?.header?.checked) {
+          drawRectangleOption.color = rgb(Number(R), Number(G), Number(B));
+        }
       }
 
       currentPage.drawRectangle({
@@ -94,19 +102,21 @@ const createTable = ({
       currentXCoordinate = currentXCoordinate + columnWidths[currentColumn];
     }
 
-    currentXCoordinate = initialXCoordinate;
+    currentXCoordinate = initialXCoordinate - 8;
     currentYCoordinate =
       currentYCoordinate -
       (currentRowPosition < 1 ? 1 : currentRowPosition) * defaultRowHeight;
   }
   currentYCoordinate += 20;
 
-  currentPage.drawLine({
-    start: { x: currentXCoordinate, y: currentYCoordinate },
-    end: { x: currentXCoordinate + tableWidth, y: currentYCoordinate },
-    thickness: 1,
-    color: rgb(0, 0, 0),
-  });
+  if (tableSetting?.sum?.checked || tableSetting?.tax?.checked) {
+    currentPage.drawLine({
+      start: { x: currentXCoordinate, y: currentYCoordinate },
+      end: { x: currentXCoordinate + tableWidth, y: currentYCoordinate },
+      thickness: 1,
+      color: rgb(0, 0, 0),
+    });
+  }
   currentYCoordinate -= 20;
 
   if (tableSetting?.tax?.checked) {
@@ -124,7 +134,7 @@ const createTable = ({
         ? tableSetting?.tax?.value + '%'
         : tableSetting?.tax?.value;
 
-    let xCoordinate = tableWidth + initialXCoordinate - 5;
+    let xCoordinate = tableWidth + initialXCoordinate - 12;
     taxValue
       ?.split('')
       ?.reverse()
