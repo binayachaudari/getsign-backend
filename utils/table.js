@@ -27,7 +27,6 @@ const createTable = ({
   tableWidth,
   tableSetting,
 }) => {
-  // console.log({ tableSetting });
   const tableRows = tableData.length;
   const tableCols = tableData[0].length;
 
@@ -129,17 +128,42 @@ const createTable = ({
     currentYCoordinate -= 40;
 
     const sumLabel = (tableSetting?.sum?.label || 'Sum')?.split('')?.reverse();
-    let sumValue = tableSetting?.sum?.value;
+
+    let totalSum = 0;
+
+    for (
+      let currentRowPosition = 1;
+      currentRowPosition < tableRows;
+      currentRowPosition++
+    ) {
+      for (let currentColumn = 0; currentColumn < tableCols; currentColumn++) {
+        const column = tableData[currentRowPosition][currentColumn];
+
+        if (column.id === tableSetting?.sum?.column) {
+          totalSum += parseFloat(column.value);
+        }
+      }
+    }
+
+    if (tableSetting?.tax?.checked) {
+      if (tableSetting?.tax?.type === 'percentage') {
+        totalSum += (parseFloat(tableSetting?.tax?.value) / 100) * totalSum;
+        console.log({ totalSum });
+      } else {
+        totalSum += parseFloat(tableSetting?.tax?.value);
+      }
+    }
+
     if (tableSetting?.currency?.checked) {
-      sumValue =
+      totalSum =
         tableSetting?.currency?.position === 'before-the-value'
-          ? '$' + sumValue
-          : sumValue + '$';
+          ? '$' + totalSum
+          : totalSum + '$';
     }
 
     let xCoordinate = tableWidth + initialXCoordinate - 5;
 
-    sumValue
+    totalSum
       ?.split('')
       ?.reverse()
       ?.forEach(str => {

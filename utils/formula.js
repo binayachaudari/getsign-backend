@@ -142,7 +142,12 @@ const renameFunctions = formula => {
   return newFormula;
 };
 
-const calculateFormulaValue = async () => {};
+const calculateFormulaValue = async ({
+  boardColumns,
+  boardColumnValues,
+  itemId,
+  columnId,
+}) => {};
 
 module.exports = {
   parseFormulaColumnIds,

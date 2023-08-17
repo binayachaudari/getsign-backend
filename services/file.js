@@ -532,7 +532,7 @@ const generatePDFWithGivenPlaceholders = async (
             tableSetting: {
               sum: {
                 checked: true,
-                column: '',
+                column: 'formula',
                 label: 'Sum',
                 value: '10000',
               },
