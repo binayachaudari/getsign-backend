@@ -166,9 +166,8 @@ module.exports = {
         });
       }
 
-      const lineItemFields = template?.fields?.filter(
-        field => field.itemId === 'line-item'
-      );
+      const lineItemFields =
+        template?.fields?.filter(field => field.itemId === 'line-item') || [];
 
       const result = await addFileHistory({
         id,
