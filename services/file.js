@@ -271,6 +271,7 @@ const generatePDFWithGivenPlaceholders = async (
         for (const [subItemIndex, subItem] of items_subItem?.entries()) {
           const formulaColumnValues = new Map();
           const parsedColumn = parseFormulaColumnIds(column?.settings_str);
+
           finalFormula = parsedColumn.formula;
           for (const itemColumnValue of subItem?.column_values) {
             if (
@@ -302,6 +303,7 @@ const generatePDFWithGivenPlaceholders = async (
           }
 
           const formulaColumnsKeys = Array.from(formulaColumnValues.keys());
+
           for (let index = 0; index < formulaColumnsKeys.length; index++) {
             const key = formulaColumnsKeys[index];
             const chr = String.fromCharCode(97 + index).toUpperCase();

@@ -676,6 +676,7 @@ const generateFilePreview = async (fileId, itemId, accountId) => {
       _id: fileId,
       account_id: accountId,
     });
+
     if (!fileDetails) {
       return {
         fields: [],

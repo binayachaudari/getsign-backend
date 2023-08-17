@@ -19,6 +19,22 @@ const createTableHead = ({
   });
 };
 
+const TAX_TYPE = {
+  percentage: 'percentage',
+  fixed: 'fixed',
+};
+
+const CURRENCY_POSITION_TYPES = {
+  before: 'before',
+  after: 'after',
+};
+
+const CURRENCY_TYPE = {
+  usd: { label: 'USD', symbol: '$' },
+  aud: { label: 'AUD', symbol: 'AUD' },
+  cad: { label: 'CAD', symbol: 'CAD' },
+};
+
 const createTable = ({
   currentPage,
   initialXCoordinate,
@@ -95,7 +111,6 @@ const createTable = ({
 
   if (tableSetting?.tax?.checked) {
     const taxLabelXCoordinate = currentXCoordinate + 5;
-    // currentPage.drawText(tableSetting?.tax?.label || 'Tax', {});
 
     currentPage.drawText(tableSetting?.tax?.label || 'Tax', {
       x: taxLabelXCoordinate,
@@ -105,7 +120,7 @@ const createTable = ({
     });
 
     const taxValue =
-      tableSetting?.tax?.type === 'percentage'
+      tableSetting?.tax?.type?.value === TAX_TYPE.percentage
         ? tableSetting?.tax?.value + '%'
         : tableSetting?.tax?.value;
 
@@ -139,16 +154,15 @@ const createTable = ({
       for (let currentColumn = 0; currentColumn < tableCols; currentColumn++) {
         const column = tableData[currentRowPosition][currentColumn];
 
-        if (column.id === tableSetting?.sum?.column) {
+        if (column.id === tableSetting?.sum?.column?.id) {
           totalSum += parseFloat(column.value);
         }
       }
     }
 
     if (tableSetting?.tax?.checked) {
-      if (tableSetting?.tax?.type === 'percentage') {
+      if (tableSetting?.tax?.type?.value === TAX_TYPE.percentage) {
         totalSum += (parseFloat(tableSetting?.tax?.value) / 100) * totalSum;
-        console.log({ totalSum });
       } else {
         totalSum += parseFloat(tableSetting?.tax?.value);
       }
@@ -156,9 +170,18 @@ const createTable = ({
 
     if (tableSetting?.currency?.checked) {
       totalSum =
-        tableSetting?.currency?.position === 'before-the-value'
-          ? '$' + totalSum
-          : totalSum + '$';
+        tableSetting?.currency?.position?.value ===
+        CURRENCY_POSITION_TYPES.before
+          ? `${
+              CURRENCY_TYPE[tableSetting?.currency?.type?.value]?.symbol ||
+              '$' + ' '
+            }` + totalSum
+          : totalSum +
+            `${
+              ' ' +
+                CURRENCY_TYPE[tableSetting?.currency?.type?.value]?.symbol ||
+              '$'
+            }`;
     }
 
     let xCoordinate = tableWidth + initialXCoordinate - 5;
