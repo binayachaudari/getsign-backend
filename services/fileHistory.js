@@ -158,6 +158,8 @@ const getFileToSignSender = async (id, itemId) => {
   if (!alreadySignedByReceiver) {
     await setMondayToken(fileDetails.user_id, fileDetails.account_id);
     const columnValues = await getColumnValues(itemId);
+    const items_subItem = columnValues?.data?.items?.[0]?.subitems || [];
+
     const formValues = [
       ...(columnValues?.data?.items?.[0]?.column_values || []),
       {
@@ -330,7 +332,7 @@ const getFileToSignSender = async (id, itemId) => {
       }
     }
 
-    const generatedPDF = await generatePDF(id, formValues);
+    const generatedPDF = await generatePDF(id, formValues, items_subItem);
     return {
       fileId: id,
       ...generatedPDF,
@@ -399,6 +401,9 @@ const getFileToSignReceiver = async (id, itemId) => {
       let url;
       if (!getFileToSignKey?.file) {
         const columnValues = await getColumnValues(itemId);
+
+        const items_subItem = columnValues?.data?.items?.[0]?.subitems || [];
+
         const formValues = [
           ...(columnValues?.data?.items?.[0]?.column_values || []),
           {
@@ -573,7 +578,9 @@ const getFileToSignReceiver = async (id, itemId) => {
           }
         }
 
-        const generatedPDF = await generatePDF(template?.id, formValues);
+        const generatedPDF = await generatePDF(template?.id, formValues, [
+          ...items_subItem,
+        ]);
         return {
           fileId: template.id,
           ...generatedPDF,

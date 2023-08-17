@@ -695,6 +695,8 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
     await setMondayToken(fileDetails.user_id, fileDetails.account_id);
     const valuesToFill = await getColumnValues(itemId);
 
+    const items_subItem = valuesToFill?.data?.items?.[0]?.subitems || [];
+
     const values = [
       ...(valuesToFill?.data?.items?.[0]?.column_values || []),
       {
@@ -902,7 +904,9 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
 
     if (fileDetails?.fields) {
       if (interactedFields?.length) {
-        interactedFields?.forEach(async placeHolder => {
+        // interactedFields?.forEach(async placeHolder =>
+
+        for (const placeHolder of interactedFields) {
           const currentPage = pages[placeHolder?.formField?.pageIndex];
 
           if (placeHolder?.image?.src) {
@@ -931,6 +935,45 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
                 8,
               font: customFont,
               size: fontSize,
+            });
+          } else if (placeHolder?.itemId === 'line-item') {
+            const tableData = await getSubItems(
+              placeHolder?.subItemSettings,
+              items_subItem
+            );
+
+            const initialXCoordinate = placeHolder.formField.coordinates.x + 8;
+            const initialYCoordinate = placeHolder.formField.coordinates.y;
+
+            createTable({
+              currentPage,
+              tableData,
+              initialXCoordinate,
+              initialYCoordinate,
+              tableWidth: placeHolder?.width,
+              tableSetting: {
+                sum: {
+                  checked: true,
+                  column: 'formula',
+                  label: 'Sum',
+                  value: '10000',
+                },
+                header: {
+                  checked: false,
+                  color: 'grey',
+                },
+                tax: {
+                  checked: true,
+                  type: 'percentage',
+                  value: '100',
+                  label: 'Tax',
+                },
+                currency: {
+                  checked: true,
+                  position: 'before-the-value',
+                },
+                ...(placeHolder?.subItemSettings || {}),
+              },
             });
           } else if (
             placeHolder?.itemId === STANDARD_FIELDS.textBox ||
@@ -969,7 +1012,7 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
               height: (placeHolder?.height || 25) - padding * 1.5,
             });
           }
-        });
+        }
       }
 
       if (values?.length) {
