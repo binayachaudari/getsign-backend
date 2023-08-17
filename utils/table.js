@@ -52,7 +52,7 @@ const createTable = ({
 
   const marginY = 30;
   let defaultRowHeight = 20;
-  let currentXCoordinate = initialXCoordinate;
+  let currentXCoordinate = initialXCoordinate - 8;
   let currentYCoordinate = initialYCoordinate - marginY;
 
   for (
@@ -102,7 +102,7 @@ const createTable = ({
       currentXCoordinate = currentXCoordinate + columnWidths[currentColumn];
     }
 
-    currentXCoordinate = initialXCoordinate;
+    currentXCoordinate = initialXCoordinate - 8;
     currentYCoordinate =
       currentYCoordinate -
       (currentRowPosition < 1 ? 1 : currentRowPosition) * defaultRowHeight;
@@ -134,7 +134,7 @@ const createTable = ({
         ? tableSetting?.tax?.value + '%'
         : tableSetting?.tax?.value;
 
-    let xCoordinate = tableWidth + initialXCoordinate - 5;
+    let xCoordinate = tableWidth + initialXCoordinate - 12;
     taxValue
       ?.split('')
       ?.reverse()

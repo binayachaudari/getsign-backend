@@ -956,7 +956,7 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
               items_subItem
             );
 
-            const initialXCoordinate = placeHolder.formField.coordinates.x + 8;
+            const initialXCoordinate = placeHolder.formField.coordinates.x - 12;
             const initialYCoordinate = placeHolder.formField.coordinates.y;
 
             createTable({
