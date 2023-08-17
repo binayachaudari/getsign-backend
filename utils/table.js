@@ -74,19 +74,15 @@ const createTable = ({
       };
 
       if (currentRowPosition === 0) {
-        const R = parseFloat(
-          Number(tableSetting?.header?.rgb?.r || 0) / 255
-        ).toFixed(3);
+        const R = parseFloat(Number(tableSetting?.header?.rgb?.r || 0) / 255);
 
-        const G = parseFloat(
-          Number(tableSetting?.header?.rgb?.g || 0) / 255
-        ).toFixed(3);
+        const G = parseFloat(Number(tableSetting?.header?.rgb?.g || 0) / 255);
 
-        const B = parseFloat(
-          Number(tableSetting?.header?.rgb?.b || 0) / 255
-        ).toFixed(3);
+        const B = parseFloat(Number(tableSetting?.header?.rgb?.b || 0) / 255);
 
-        drawRectangleOption.color = rgb(Number(R), Number(G), Number(B));
+        if (tableSetting?.header?.checked) {
+          drawRectangleOption.color = rgb(Number(R), Number(G), Number(B));
+        }
       }
 
       currentPage.drawRectangle({
