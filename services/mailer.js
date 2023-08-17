@@ -86,7 +86,7 @@ const sendSignedDocuments = async (document, to) => {
     from: `${document.senderName} - via GetSign <${process.env.EMAIL_USERNAME}>`,
     replyTo: document.senderEmail,
     to,
-    subject: `You just signed ${document.name}`,
+    subject: `You just signed ${document.name || ''}`,
     text: `You have successfully signed your document!
     
     You can view the document as an attachment below (if it's under 25 MB) or by clicking this link. 
@@ -99,7 +99,7 @@ const sendSignedDocuments = async (document, to) => {
     GetSign.
     `,
     html: signedDocument({
-      documentName: document.name,
+      documentName: document.name || '',
       url: `${HOST}/download/${document.fileId}`,
     }),
     attachments,
@@ -170,12 +170,17 @@ module.exports = {
       throw error;
     }
   },
-  emailRequestToSign: async (itemId, id) => {
+  emailRequestToSign: async (itemId, id, message = '') => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
       const template = await FileDetails.findById(id);
+      if (message) {
+        template.message = message;
+        await template.save();
+      }
+
       if (!template) throw new Error('No file with such ID');
 
       if (!template?.is_email_verified) {

@@ -16,4 +16,10 @@ router.post(
   adhocController.uploadAdhocDocument
 );
 
+router.post(
+  '/send-adhoc-document',
+  verifySessionToken,
+  adhocController.requestSignature
+);
+
 module.exports = router;
