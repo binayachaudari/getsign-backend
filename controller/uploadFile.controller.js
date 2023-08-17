@@ -139,6 +139,7 @@ module.exports = {
 
     try {
       const template = await FileDetails.findById(id);
+
       const senderSignRequired = template?.fields?.filter(field =>
         ['Sender Signature', 'Sender Initials'].includes(field?.title)
       )?.length;
@@ -165,11 +166,15 @@ module.exports = {
         });
       }
 
+      const lineItemFields = template?.fields?.filter(
+        field => field.itemId === 'line-item'
+      );
+
       const result = await addFileHistory({
         id,
         itemId,
         status,
-        interactedFields: [...signatures, ...standardFields],
+        interactedFields: [...signatures, ...standardFields, ...lineItemFields],
         ipAddress: ip,
       });
 
