@@ -612,6 +612,11 @@ const generatePDFWithGivenPlaceholders = async (
               header: {
                 checked: false,
                 color: 'grey',
+                rgb: {
+                  r: 160,
+                  g: 156,
+                  b: 156,
+                },
               },
               tax: {
                 checked: true,
@@ -624,6 +629,15 @@ const generatePDFWithGivenPlaceholders = async (
                 position: 'before-the-value',
               },
               ...(placeHolder?.subItemSettings || {}),
+              header: {
+                checked: false,
+                color: 'grey',
+                rgb: {
+                  r: 160,
+                  g: 156,
+                  b: 156,
+                },
+              },
             },
           });
         } else {

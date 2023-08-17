@@ -74,7 +74,19 @@ const createTable = ({
       };
 
       if (currentRowPosition === 0) {
-        drawRectangleOption.color = rgb(0.4, 0.4, 0.4);
+        const R = parseFloat(
+          Number(tableSetting?.header?.rgb?.r || 0) / 255
+        ).toFixed(3);
+
+        const G = parseFloat(
+          Number(tableSetting?.header?.rgb?.g || 0) / 255
+        ).toFixed(3);
+
+        const B = parseFloat(
+          Number(tableSetting?.header?.rgb?.b || 0) / 255
+        ).toFixed(3);
+
+        drawRectangleOption.color = rgb(Number(R), Number(G), Number(B));
       }
 
       currentPage.drawRectangle({
