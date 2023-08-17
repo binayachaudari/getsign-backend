@@ -45,6 +45,8 @@ const getItemDetails = async id => {
       }
       state
       subitems{
+        id
+        name
         column_values {
           id
           text
