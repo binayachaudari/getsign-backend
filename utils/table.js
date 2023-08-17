@@ -109,12 +109,14 @@ const createTable = ({
   }
   currentYCoordinate += 20;
 
-  currentPage.drawLine({
-    start: { x: currentXCoordinate, y: currentYCoordinate },
-    end: { x: currentXCoordinate + tableWidth, y: currentYCoordinate },
-    thickness: 1,
-    color: rgb(0, 0, 0),
-  });
+  if (tableSetting?.sum?.checked || tableSetting?.tax?.checked) {
+    currentPage.drawLine({
+      start: { x: currentXCoordinate, y: currentYCoordinate },
+      end: { x: currentXCoordinate + tableWidth, y: currentYCoordinate },
+      thickness: 1,
+      color: rgb(0, 0, 0),
+    });
+  }
   currentYCoordinate -= 20;
 
   if (tableSetting?.tax?.checked) {
