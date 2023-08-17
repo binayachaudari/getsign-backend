@@ -28,6 +28,7 @@ const {
   renameFunctions,
   hasNestedIF,
   getSubItems,
+  getFormulaValueOfItem,
 } = require('../utils/formula');
 const { formulaeParser } = require('../utils/mondayFormulaConverter');
 const { HyperFormula } = require('hyperformula');
@@ -112,9 +113,11 @@ const addFormFields = async (id, payload) => {
   }
 };
 
-const generatePDF = async (id, fields) => {
+const generatePDF = async (id, fields, items_subItem, itemId) => {
   try {
     const fileDetails = await loadFileDetails(id);
+
+    // await setMondayToken(fileDetails?.user_id, fileDetails?.account_id);
 
     const pdfDoc = await PDFDocument.load(fileDetails?.file);
     const pages = pdfDoc.getPages();
@@ -126,7 +129,9 @@ const generatePDF = async (id, fields) => {
     const customFont = await pdfDoc.embedFont(fontBytes, { subset: true });
 
     if (fields?.length && fileDetails?.fields) {
-      fileDetails?.fields?.forEach(async placeHolder => {
+      // fileDetails?.fields?.forEach(async placeHolder =>
+
+      for (const placeHolder of fileDetails?.fields) {
         const currentPage = pages[placeHolder?.formField?.pageIndex];
         if (!currentPage) return;
 
@@ -162,6 +167,74 @@ const generatePDF = async (id, fields) => {
             font: customFont,
             size: fontSize,
           });
+        } else if (placeHolder?.itemId === 'line-item') {
+          for (const [subItemIndex, subItem] of items_subItem?.entries()) {
+            const formulaColumnValues = await getFormulaValueOfItem({
+              itemId: subItem.id,
+              boardColumns: subItem?.board?.columns || [],
+              boardColumnValues: subItem?.column_values || [],
+            });
+
+            for (const columnValue of formulaColumnValues) {
+              const alreadyExistsIdx = subItem.column_values.findIndex(
+                formValue => formValue.id === columnValue?.id
+              );
+
+              if (alreadyExistsIdx > -1) {
+                items_subItem[subItemIndex]?.column_values?.forEach(
+                  (col, index) => {
+                    if (col.id == columnValue.id) {
+                      col = columnValue;
+                    }
+
+                    items_subItem[subItemIndex].column_values[index] = col;
+                  }
+                );
+              } else {
+                items_subItem[subItemIndex]?.column_values?.push({
+                  ...columnValue,
+                });
+              }
+            }
+          }
+
+          const tableData = await getSubItems(
+            placeHolder?.subItemSettings || {},
+            items_subItem
+          );
+          const initialXCoordinate = placeHolder.formField.coordinates.x + 8;
+          const initialYCoordinate = placeHolder.formField.coordinates.y;
+
+          createTable({
+            currentPage,
+            tableData,
+            initialXCoordinate,
+            initialYCoordinate,
+            tableWidth: placeHolder?.width || 564,
+            tableSetting: {
+              sum: {
+                checked: true,
+                column: 'formula',
+                label: 'Sum',
+                value: '10000',
+              },
+              header: {
+                checked: false,
+                color: 'grey',
+              },
+              tax: {
+                checked: true,
+                type: 'percentage',
+                value: '100',
+                label: 'Tax',
+              },
+              currency: {
+                checked: true,
+                position: 'before-the-value',
+              },
+              ...(placeHolder?.subItemSettings || {}),
+            },
+          });
         } else {
           const value = fields.find(item => item?.id === placeHolder?.itemId);
 
@@ -193,7 +266,7 @@ const generatePDF = async (id, fields) => {
             });
           }
         }
-      });
+      }
 
       const pdfBytes = await pdfDoc.save();
       const blob = new Blob([new Uint8Array(pdfBytes)], {

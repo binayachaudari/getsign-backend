@@ -687,7 +687,11 @@ const generateFilePreview = async (fileId, itemId, accountId) => {
     }
     await setMondayToken(fileDetails.user_id, fileDetails.account_id);
     user = await getUserDetails(fileDetails.user_id, fileDetails.account_id);
+
     const columnValues = await getColumnValues(itemId);
+
+    const items_subItem = columnValues?.data?.items?.[0]?.subitems || [];
+
     const formValues = [
       ...(columnValues?.data?.items?.[0]?.column_values || []),
       {
@@ -860,7 +864,12 @@ const generateFilePreview = async (fileId, itemId, accountId) => {
       }
     }
 
-    const generatedPDF = await generatePDF(fileId, formValues);
+    const generatedPDF = await generatePDF(
+      fileId,
+      formValues,
+      [...items_subItem],
+      itemId
+    );
     return {
       fileId,
       ...generatedPDF,

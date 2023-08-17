@@ -3,6 +3,8 @@ const {
   getFieldValue,
   getSpecificColumnValue,
 } = require('../services/monday.service');
+const { formulaeParser } = require('./mondayFormulaConverter');
+const { toFixed } = require('./number');
 
 const getFormulaColumns = columnValues => {
   return columnValues.filter(column => column.type === 'formula');
@@ -40,7 +42,7 @@ const getSubItems = async (subItemSettings = [], items_subItem) => {
     const rowData = [];
     rowData[0] = { id: 'item-name', value: subItem?.name || '' };
 
-    for (let j = 0; j < selectedColumn.length; j++) {
+    for (let j = 0; j < selectedColumn?.length; j++) {
       if (j > 4) break;
       let column = subItem?.column_values?.find(
         col => col.id === selectedColumn[j].id
@@ -183,6 +185,7 @@ const getFormulaValueOfItem = async ({
       const parsedFormulaColumn = parseFormulaColumnIds(
         columnValue.settings_str
       );
+
       let parsedRecursiveFormula = parsedFormulaColumn.formula;
 
       parsedFormulaColumn?.formulaColumns?.map(item => {
@@ -263,22 +266,25 @@ const getFormulaValueOfItem = async ({
         ...Array.from(formulaColumnValues.values()),
         parsedFormula.formula,
       ];
+
       const hfInstance = HyperFormula.buildFromArray([formulaRow], {
         licenseKey: 'gpl-v3',
         useColumnIndex: true,
         smartRounding: false,
       });
+
       let finalFormulaValue = hfInstance.getCellValue({
         sheet: 0,
         col: formulaRow.length - 1,
         row: 0,
       });
+
       finalFormulaValue = isNaN(finalFormulaValue)
         ? finalFormulaValue
         : toFixed(finalFormulaValue, 2);
       if (typeof finalFormulaValue !== 'object') {
         boardFormulaColumnValues.set(column.id, finalFormulaValue);
-        const alreadyExistsIdx = values.findIndex(
+        const alreadyExistsIdx = formulas.findIndex(
           formValue => formValue.id === column?.id
         );
 
@@ -296,7 +302,7 @@ const getFormulaValueOfItem = async ({
         }
       } else {
         boardFormulaColumnValues.set(column.id, '0');
-        const alreadyExistsIdx = values.findIndex(
+        const alreadyExistsIdx = formulas.findIndex(
           formValue => formValue.id === column?.id
         );
         if (alreadyExistsIdx > -1) {
