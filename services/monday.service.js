@@ -130,6 +130,10 @@ const uploadContract = async ({
     data += 'Content-Type:application/json\r\n\r\n';
     data += '\r\n' + query + '\r\n';
 
+    if (!file.name) {
+      file.name = 'signed-adhoc-contract.pdf';
+    }
+
     // construct file part
     data += '--' + boundary + '\r\n';
     data +=

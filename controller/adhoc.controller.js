@@ -1,4 +1,5 @@
 const adhocService = require('../services/adhoc.service');
+const mailService = require('../services/mailer');
 
 const addSenderDetails = async (req, res, next) => {
   try {
@@ -24,7 +25,19 @@ const uploadAdhocDocument = async (req, res, next) => {
   }
 };
 
+const requestSignature = async (req, res, next) => {
+  try {
+    const { itemId, id } = req.params;
+    const { message } = req.query;
+    const result = await mailService.emailRequestToSign(itemId, id, message);
+    return res.json({ data: result }).status(200);
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   addSenderDetails,
   uploadAdhocDocument,
+  requestSignature,
 };
