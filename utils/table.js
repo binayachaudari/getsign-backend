@@ -46,9 +46,13 @@ const createTable = async ({
   const tableRows = tableData.length;
   const tableCols = tableData[0].length;
 
-  const columnWidths = Array.from({ length: tableCols }, (_, index) =>
-    Math.floor(tableWidth / tableCols)
+  const firstColumnWidth = tableWidth * 0.35;
+
+  const columnWidths = Array.from({ length: tableCols - 1 }, (_, index) =>
+    Math.floor((tableWidth - firstColumnWidth) / (tableCols - 1))
   );
+
+  columnWidths.unshift(firstColumnWidth);
 
   const marginY = 48 * 0.75;
   let defaultRowHeight = 45 * 0.75;
