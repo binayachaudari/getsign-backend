@@ -12,36 +12,40 @@ const itemDetails = async (req, res, next) => {
 
     const items_subItem = result?.data?.items?.[0]?.subitems || [];
 
-    for (const [subItemIndex, subItem] of items_subItem?.entries()) {
-      const formulaColumnValues = await getFormulaValueOfItem({
-        itemId: subItem.id,
-        boardColumns: subItem?.board?.columns || [],
-        boardColumnValues: subItem?.column_values || [],
-      });
+    if (items_subItem?.length > 0) {
+      for (const [subItemIndex, subItem] of items_subItem?.entries()) {
+        const formulaColumnValues = await getFormulaValueOfItem({
+          itemId: subItem.id,
+          boardColumns: subItem?.board?.columns || [],
+          boardColumnValues: subItem?.column_values || [],
+        });
 
-      for (const columnValue of formulaColumnValues) {
-        const alreadyExistsIdx = subItem.column_values.findIndex(
-          formValue => formValue.id === columnValue?.id
-        );
+        for (const columnValue of formulaColumnValues) {
+          const alreadyExistsIdx = subItem.column_values.findIndex(
+            formValue => formValue.id === columnValue?.id
+          );
 
-        if (alreadyExistsIdx > -1) {
-          items_subItem[subItemIndex]?.column_values?.forEach((col, index) => {
-            if (col.id == columnValue.id) {
-              col = columnValue;
-            }
+          if (alreadyExistsIdx > -1) {
+            items_subItem[subItemIndex]?.column_values?.forEach(
+              (col, index) => {
+                if (col.id == columnValue.id) {
+                  col = columnValue;
+                }
 
-            items_subItem[subItemIndex].column_values[index] = col;
-          });
-        } else {
-          items_subItem[subItemIndex]?.column_values?.push({
-            ...columnValue,
-          });
+                items_subItem[subItemIndex].column_values[index] = col;
+              }
+            );
+          } else {
+            items_subItem[subItemIndex]?.column_values?.push({
+              ...columnValue,
+            });
+          }
         }
       }
-    }
 
-    if (result?.data?.items?.[0]?.subitems?.length) {
-      result.data.items[0].subitems = [...items_subItem];
+      if (result?.data?.items?.[0]?.subitems?.length) {
+        result.data.items[0].subitems = [...items_subItem];
+      }
     }
 
     return res.json({ ...result }).status(200);

@@ -70,7 +70,7 @@ module.exports = {
   },
   getBoardFile: async (req, res, next) => {
     const { boardId, itemId } = req.params;
-    const { instanceId } = req.query;
+    const { instanceId, type } = req.query;
 
     try {
       const boardDetails = await getStoredBoardFile(
