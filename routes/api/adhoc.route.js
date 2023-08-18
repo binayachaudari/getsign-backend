@@ -16,7 +16,7 @@ router.post(
   adhocController.uploadAdhocDocument
 );
 
-router.post(
+router.get(
   '/send-adhoc-document',
   verifySessionToken,
   adhocController.requestSignature
