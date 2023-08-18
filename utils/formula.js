@@ -29,7 +29,7 @@ const getSubItems = async (subItemSettings = [], items_subItem) => {
   formattedTableData[0] = [];
   let rowCount = 0;
   const { columns: selectedColumn } = subItemSettings;
-  formattedTableData[0][0] = { id: 'item-name', value: 'Item Name', size: 150 };
+  formattedTableData[0][0] = { id: 'item-name', value: 'Item', size: 150 };
 
   selectedColumn?.forEach(col => {
     formattedTableData[0].push({ ...col, value: col?.title, size: 150 });

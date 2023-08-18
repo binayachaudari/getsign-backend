@@ -1,4 +1,4 @@
-const { rgb } = require('pdf-lib');
+const { rgb, PDFDocument } = require('pdf-lib');
 
 const createTableHead = ({
   currentPage,
@@ -35,7 +35,7 @@ const CURRENCY_TYPE = {
   cad: { label: 'CAD', symbol: 'CAD' },
 };
 
-const createTable = ({
+const createTable = async ({
   currentPage,
   initialXCoordinate,
   initialYCoordinate,
@@ -50,8 +50,8 @@ const createTable = ({
     Math.floor(tableWidth / tableCols)
   );
 
-  const marginY = 30;
-  let defaultRowHeight = 20;
+  const marginY = 48 * 0.75;
+  let defaultRowHeight = 45 * 0.75;
   let currentXCoordinate = initialXCoordinate - 8;
   let currentYCoordinate = initialYCoordinate - marginY;
 
@@ -82,22 +82,46 @@ const createTable = ({
 
         if (tableSetting?.header?.checked) {
           drawRectangleOption.color = rgb(Number(R), Number(G), Number(B));
+        } else {
+          const defaultRGB = {
+            r: 245,
+            g: 246,
+            b: 248,
+          };
+
+          drawRectangleOption.color = rgb(
+            Number(defaultRGB.r / 255),
+            Number(defaultRGB.g / 255),
+            Number(defaultRGB.b / 255)
+          );
         }
+        // const helveticaFont = await currentPage.embedFont(
+        //   PDFDocument.Font.Helvetica
+        // );
       }
 
       currentPage.drawRectangle({
         ...drawRectangleOption,
       });
 
+      let fontHeight = currentRowPosition === 0 ? 12 : 10;
       const textPosX = currentXCoordinate + cellMargin;
-      const textPosY = currentYCoordinate + cellMargin;
+      const textPosY =
+        currentYCoordinate + defaultRowHeight / 2 - fontHeight / 5;
 
-      currentPage.drawText(text, {
+      const textOptions = {
         x: textPosX,
         y: textPosY,
-        size: currentRowPosition === 0 ? 14 : 12,
+        size: fontHeight,
         color: rgb(0, 0, 0),
-      });
+      };
+
+      if (currentRowPosition === 0) {
+        textOptions.bold = true;
+        // textOptions.size = 12;
+      }
+
+      currentPage.drawText(text, textOptions);
 
       currentXCoordinate = currentXCoordinate + columnWidths[currentColumn];
     }
@@ -107,7 +131,7 @@ const createTable = ({
       currentYCoordinate -
       (currentRowPosition < 1 ? 1 : currentRowPosition) * defaultRowHeight;
   }
-  currentYCoordinate += 20;
+  currentYCoordinate += defaultRowHeight * 2 * 0.75;
 
   if (tableSetting?.sum?.checked || tableSetting?.tax?.checked) {
     currentPage.drawLine({
@@ -117,7 +141,7 @@ const createTable = ({
       color: rgb(0, 0, 0),
     });
   }
-  currentYCoordinate -= 20;
+  currentYCoordinate -= defaultRowHeight;
 
   if (tableSetting?.tax?.checked) {
     const taxLabelXCoordinate = currentXCoordinate + 5;
@@ -134,7 +158,7 @@ const createTable = ({
         ? tableSetting?.tax?.value + '%'
         : tableSetting?.tax?.value;
 
-    let xCoordinate = tableWidth + initialXCoordinate - 12;
+    let xCoordinate = tableWidth + initialXCoordinate - 25 * 0.75;
     taxValue
       ?.split('')
       ?.reverse()
@@ -142,7 +166,7 @@ const createTable = ({
         currentPage.drawText(str, {
           x: xCoordinate,
           y: currentYCoordinate,
-          size: 14,
+          size: 12,
           color: rgb(0, 0, 0),
         });
         xCoordinate -= 8;
@@ -194,7 +218,7 @@ const createTable = ({
             }`;
     }
 
-    let xCoordinate = tableWidth + initialXCoordinate - 5;
+    let xCoordinate = tableWidth + initialXCoordinate - 25 * 0.75;
 
     totalSum
       .toString()
@@ -204,7 +228,7 @@ const createTable = ({
         currentPage.drawText(str, {
           x: xCoordinate,
           y: currentYCoordinate,
-          size: 14,
+          size: 12,
           color: rgb(0, 0, 0),
         });
         xCoordinate -= 8;
