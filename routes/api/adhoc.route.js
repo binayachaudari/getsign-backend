@@ -17,7 +17,7 @@ router.post(
 );
 
 router.get(
-  '/send-adhoc-document',
+  '/send-adhoc-document/:itemId/:id',
   verifySessionToken,
   adhocController.requestSignature
 );
