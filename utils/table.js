@@ -197,6 +197,7 @@ const createTable = ({
     let xCoordinate = tableWidth + initialXCoordinate - 5;
 
     totalSum
+      .toString()
       ?.split('')
       ?.reverse()
       ?.forEach(str => {
