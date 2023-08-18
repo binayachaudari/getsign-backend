@@ -239,7 +239,7 @@ module.exports = {
         await sendFinalContract(
           {
             file: finalFile.file,
-            name: template.file_name,
+            name: template.file_name || 'signed-adhoc-contract.pdf',
             size: finalFile?.size,
             itemId,
             fileId: result._id,
