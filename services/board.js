@@ -64,11 +64,10 @@ const getStoredBoardFile = async (boardId, itemId, instanceId) => {
 
       if (docDetails) {
         doc = docDetails;
-        doc.fields = [];
-      } else {
+      } else if (docDetails?.type === 'adhoc') {
         doc = docDetails;
-      }
-      //  else {
+        doc.fields = [];
+      } //  else {
       //   doc = await FileDetails.create({
       //     board_id: boardId,
       //     item_id: itemId,
