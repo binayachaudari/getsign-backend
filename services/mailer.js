@@ -61,12 +61,12 @@ const sendRequestToSign = async ({ template, to, itemId, fileId }) => {
     `,
     html: requestSignature({
       requestedBy: {
-        name: template.sender_name,
-        email: template.email_address,
+        name: template.sender_name || '',
+        email: template.email_address || '',
       },
-      documentName: template.file_name,
-      message: template.message,
-      emailTitle: template?.email_title,
+      documentName: template.file_name || '',
+      message: template.message || '',
+      emailTitle: template?.email_title || '',
       url: `${HOST}/sign/${itemId}/${fileId}?receiver=true`,
     }),
   });

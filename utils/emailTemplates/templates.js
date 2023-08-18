@@ -133,7 +133,13 @@ const requestSignature = ({
                                       <tr>
                                         <td valign="top" class="mcnTextContent" style="padding: 0px 18px 9px;color: #000000;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;word-break: break-word;font-family: Helvetica;font-size: 16px;line-height: 150%;text-align: left;">
                                           <div style="text-align: center">
-                                            ${requestedBy.name} (<a href="mailto:${requestedBy.email}" target="_blank" style="mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;color: #007c89;font-weight: normal;text-decoration: underline;">${requestedBy.email}</a>) has requested a signature.
+                                            ${
+                                              requestedBy.name
+                                            } (<a href="mailto:${
+                                              requestedBy.email
+                                            }" target="_blank" style="mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;color: #007c89;font-weight: normal;text-decoration: underline;">${
+                                              requestedBy.email
+                                            }</a>) has requested a signature.
                                           </div>
                                         </td>
                                       </tr>
@@ -210,9 +216,19 @@ const requestSignature = ({
                                                 font-family: roboto,
                                                   helvetica neue, helvetica, arial,
                                                   sans-serif;
-                                              "><span style="font-size: 13px">${emailTitle}<br>
-                                                Document: ${documentName}<br>
-                                                Message from ${requestedBy.name}: ${message}
+                                              "><span style="font-size: 13px">${
+                                                emailTitle
+                                                  ? `${emailTitle}<br>`
+                                                  : ''
+                                              }
+                                               ${
+                                                 documentName
+                                                   ? `Document: ${documentName}<br>`
+                                                   : ``
+                                               }
+                                                Message from ${
+                                                  requestedBy.name
+                                                }: ${message}
                                           </span></span></h3>
                                         </td>
                                       </tr>
