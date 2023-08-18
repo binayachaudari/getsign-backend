@@ -131,11 +131,11 @@ const createTable = async ({
     }
 
     currentXCoordinate = initialXCoordinate - 8;
-    currentYCoordinate =
-      currentYCoordinate -
-      (currentRowPosition < 1 ? 1 : currentRowPosition) * defaultRowHeight;
+    currentYCoordinate -= defaultRowHeight;
+    // currentYCoordinate -
+    // (currentRowPosition < 1 ? 1 : currentRowPosition) * defaultRowHeight;
   }
-  currentYCoordinate += defaultRowHeight * 2 * 0.75;
+  currentYCoordinate += defaultRowHeight * (2 * 0.75);
 
   if (tableSetting?.sum?.checked || tableSetting?.tax?.checked) {
     currentPage.drawLine({
