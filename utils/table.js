@@ -135,7 +135,7 @@ const createTable = async ({
     // currentYCoordinate -
     // (currentRowPosition < 1 ? 1 : currentRowPosition) * defaultRowHeight;
   }
-  // currentYCoordinate -= defaultRowHeight * (3 * 0.75);
+  currentYCoordinate += 24 * 0.75;
 
   if (tableSetting?.sum?.checked || tableSetting?.tax?.checked) {
     currentPage.drawLine({
@@ -145,9 +145,10 @@ const createTable = async ({
       color: rgb(0, 0, 0),
     });
   }
-  currentYCoordinate -= defaultRowHeight;
 
   if (tableSetting?.tax?.checked) {
+    currentYCoordinate -= 25 * 0.75;
+
     const taxLabelXCoordinate = currentXCoordinate + 5;
 
     currentPage.drawText(tableSetting?.tax?.label || 'Tax', {
@@ -178,7 +179,7 @@ const createTable = async ({
   }
 
   if (tableSetting?.sum?.checked) {
-    currentYCoordinate -= 40;
+    currentYCoordinate -= 60 * 0.75;
 
     const sumLabel = (tableSetting?.sum?.label || 'Sum')?.split('')?.reverse();
 
