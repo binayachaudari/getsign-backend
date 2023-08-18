@@ -673,20 +673,20 @@ const generatePDFWithGivenPlaceholders = async (
           }
         }
       }
-
-      const pdfBytes = await pdfDoc.save();
-      const blob = new Blob([new Uint8Array(pdfBytes)], {
-        type: 'application/pdf',
-      });
-      const type = blob.type;
-      const arrayBuffer = await blob.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      const base64String = buffer.toString('base64');
-      return {
-        name: fileDetails.file_name,
-        file: `data:${type};base64,${base64String}`,
-      };
     }
+
+    const pdfBytes = await pdfDoc.save();
+    const blob = new Blob([new Uint8Array(pdfBytes)], {
+      type: 'application/pdf',
+    });
+    const type = blob.type;
+    const arrayBuffer = await blob.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const base64String = buffer.toString('base64');
+    return {
+      name: fileDetails.file_name,
+      file: `data:${type};base64,${base64String}`,
+    };
   } catch (error) {
     throw error;
   }
