@@ -58,33 +58,37 @@ const getStoredBoardFile = async (boardId, itemId, instanceId) => {
         board_id: boardId,
         itemViewInstanceId: instanceId,
         is_deleted: false,
-        type: 'adhoc',
       })
         .select('-email_verification_token -email_verification_token_expires')
         .exec();
 
       if (docDetails) {
-        doc = await FileDetails.create({
-          board_id: boardId,
-          item_id: itemId,
-          itemViewInstanceId: instanceId,
-          account_id: docDetails.account_id,
-          type: docDetails.type,
-          user_id: docDetails.user_id,
-        });
-        doc.account_id = docDetails.account_id;
-        doc.type = docDetails.type;
-        doc.is_email_verified = docDetails.is_email_verified;
-        doc.email_column_id = docDetails.email_column_id;
-        doc.email_address = docDetails.email_address;
-        doc.email_column_id = docDetails.email_column_id;
-        doc.status_column_id = docDetails.status_column_id;
-        doc.file_column_id = docDetails.file_column_id;
-        doc.presigned_file_column_id = docDetails.presigned_file_column_id;
-        doc.sender_name = docDetails.sender_name;
-
-        await doc.save();
+        doc = docDetails;
+        doc.fields = [];
+      } else {
+        doc = docDetails;
       }
+      //  else {
+      //   doc = await FileDetails.create({
+      //     board_id: boardId,
+      //     item_id: itemId,
+      //     itemViewInstanceId: instanceId,
+      //     account_id: docDetails.account_id,
+      //     type: docDetails.type,
+      //     user_id: docDetails.user_id,
+      //   });
+      //   doc.account_id = docDetails.account_id;
+      //   doc.type = docDetails.type;
+      //   doc.is_email_verified = docDetails.is_email_verified;
+      //   doc.email_column_id = docDetails.email_column_id;
+      //   doc.email_address = docDetails.email_address;
+      //   doc.email_column_id = docDetails.email_column_id;
+      //   doc.status_column_id = docDetails.status_column_id;
+      //   doc.file_column_id = docDetails.file_column_id;
+      //   doc.presigned_file_column_id = docDetails.presigned_file_column_id;
+      //   doc.sender_name = docDetails.sender_name;
+      //   await doc.save();
+      // }
     }
 
     const alreadySignedFile = await FileHistory.findOne({
