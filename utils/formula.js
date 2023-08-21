@@ -48,6 +48,10 @@ const getSubItems = async (subItemSettings = [], items_subItem) => {
         col => col.id === selectedColumn[j].id
       );
 
+      const boardColumn = subItem?.board?.columns?.find(
+        col => col.id === selectedColumn[j].id
+      );
+
       let formatCol = '';
 
       if (column) {
@@ -61,6 +65,8 @@ const getSubItems = async (subItemSettings = [], items_subItem) => {
       const colValue = {
         id: column.id,
         value: formatCol,
+        settings_str: boardColumn?.settings_str || JSON.stringify({}),
+        type: column.type,
       };
 
       rowData.push(colValue);

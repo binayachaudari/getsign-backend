@@ -1,4 +1,4 @@
-const { rgb, PDFDocument } = require('pdf-lib');
+const { rgb } = require('pdf-lib');
 
 const createTableHead = ({
   currentPage,
@@ -124,8 +124,19 @@ const createTable = async ({
     let maxRowHeight = Math.max(
       defaultRowHeight,
       ...tableData[currentRowPosition].map((col, j) => {
+        let textVal = col?.value || '';
+
+        if (col.type === 'numeric') {
+          const colSetting = JSON.parse(col?.settings_str || '{}');
+
+          textVal =
+            colSetting?.unit?.direction === 'left'
+              ? (colSetting?.unit?.symbol || '') + textVal
+              : textVal + (colSetting?.unit?.symbol || '');
+        }
+
         const { rowHeight, lines } = calculateRowHeight({
-          text: col?.value || '',
+          text: textVal || '',
           currentPage,
           defaultRowHeight,
           fontSize: 12,
