@@ -35,6 +35,63 @@ const CURRENCY_TYPE = {
   cad: { label: 'CAD', symbol: 'CAD' },
 };
 
+const calculateRowHeight = ({
+  columnWidth,
+  text,
+  fontSize = 12,
+  currentPage,
+  cellMargin = 5,
+  defaultRowHeight,
+}) => {
+  const words = text.split(' ');
+  let lines = [''];
+  let currentLine = 0;
+
+  const pdfDoc = currentPage.doc || null;
+  const pdfFont = pdfDoc?.fonts?.[0] || [];
+
+  for (const word of words) {
+    const currentLineText = lines[currentLine];
+    const testLine =
+      currentLineText === '' ? word : `${currentLineText} ${word}`;
+
+    const width = pdfFont.widthOfTextAtSize(testLine, fontSize);
+
+    if (width <= columnWidth - 2 * cellMargin) {
+      lines[currentLine] = testLine;
+    } else {
+      currentLine++;
+      lines[currentLine] = word;
+    }
+  }
+
+  return {
+    rowHeight: Math.max(lines.length * fontSize, defaultRowHeight),
+    lines,
+  };
+};
+
+const writeMultiplineText = ({
+  currentPage,
+  lines,
+  initialTextX,
+  initialTextY,
+  fontSize,
+}) => {
+  let textPosY = initialTextY;
+  let textPosX = initialTextX;
+
+  for (const line of lines) {
+    currentPage.drawText(line, {
+      x: textPosX,
+      y: textPosY,
+      size: fontSize,
+      color: rgb(0, 0, 0),
+    });
+    textPosY -= fontSize;
+  }
+};
+
 const createTable = async ({
   currentPage,
   initialXCoordinate,
@@ -45,36 +102,53 @@ const createTable = async ({
 }) => {
   const tableRows = tableData.length;
   const tableCols = tableData[0].length;
-
   const firstColumnWidth = tableWidth * 0.35;
-
-  const columnWidths = Array.from({ length: tableCols - 1 }, (_, index) =>
-    Math.floor((tableWidth - firstColumnWidth) / (tableCols - 1))
+  // const columnWidths = Array.from({ length: tableCols - 1 }, (_, index) =>
+  //   Math.floor((tableWidth - firstColumnWidth) / (tableCols - 1))
+  // );
+  // columnWidths.unshift(firstColumnWidth);
+  const columnWidths = Array.from({ length: tableCols }, (_, index) =>
+    Math.floor(tableWidth / tableCols)
   );
 
-  columnWidths.unshift(firstColumnWidth);
-
   const marginY = 48 * 0.75;
-  let defaultRowHeight = 45 * 0.75;
+  const defaultRowHeight = 45 * 0.75;
   let currentXCoordinate = initialXCoordinate - 8;
-  let currentYCoordinate = initialYCoordinate - marginY;
+  let currentYCoordinate = initialYCoordinate;
 
   for (
     let currentRowPosition = 0;
     currentRowPosition < tableRows;
     currentRowPosition++
   ) {
+    let maxRowHeight = Math.max(
+      defaultRowHeight,
+      ...tableData[currentRowPosition].map((col, j) => {
+        const { rowHeight, lines } = calculateRowHeight({
+          text: col?.value || '',
+          currentPage,
+          defaultRowHeight,
+          fontSize: 12,
+          columnWidth: columnWidths[j],
+        });
+
+        tableData[currentRowPosition][j].lines = lines;
+        return parseFloat(rowHeight);
+      })
+    );
+
     for (let currentColumn = 0; currentColumn < tableCols; currentColumn++) {
-      const text = tableData[currentRowPosition][currentColumn]?.value || '';
       const cellMargin = 5;
+      const lines = tableData[currentRowPosition][currentColumn]?.lines || [];
 
       const drawRectangleOption = {
         x: currentXCoordinate,
-        y: currentYCoordinate,
+        y: currentYCoordinate - maxRowHeight,
         width: columnWidths[currentColumn],
-        height: defaultRowHeight,
+        height: maxRowHeight,
         borderColor: rgb(1, 1, 1),
         borderWidth: 0,
+        borderOpacity: 0,
       };
 
       if (currentRowPosition === 0) {
@@ -99,9 +173,6 @@ const createTable = async ({
             Number(defaultRGB.b / 255)
           );
         }
-        // const helveticaFont = await currentPage.embedFont(
-        //   PDFDocument.Font.Helvetica
-        // );
       }
 
       currentPage.drawRectangle({
@@ -111,31 +182,24 @@ const createTable = async ({
       let fontHeight = currentRowPosition === 0 ? 12 : 10;
       const textPosX = currentXCoordinate + cellMargin;
       const textPosY =
-        currentYCoordinate + defaultRowHeight / 2 - fontHeight / 5;
+        currentYCoordinate -
+        maxRowHeight / (lines.length > 1 ? lines.length : 2);
 
-      const textOptions = {
-        x: textPosX,
-        y: textPosY,
-        size: fontHeight,
-        color: rgb(0, 0, 0),
-      };
-
-      if (currentRowPosition === 0) {
-        textOptions.bold = true;
-        // textOptions.size = 12;
-      }
-
-      currentPage.drawText(text, textOptions);
+      writeMultiplineText({
+        currentPage,
+        initialTextX: textPosX,
+        initialTextY: textPosY,
+        fontSize: fontHeight,
+        lines,
+      });
 
       currentXCoordinate = currentXCoordinate + columnWidths[currentColumn];
     }
 
     currentXCoordinate = initialXCoordinate - 8;
-    currentYCoordinate -= defaultRowHeight;
-    // currentYCoordinate -
-    // (currentRowPosition < 1 ? 1 : currentRowPosition) * defaultRowHeight;
+    currentYCoordinate -= maxRowHeight;
   }
-  currentYCoordinate += 24 * 0.75;
+  currentYCoordinate -= 24 * 0.75;
 
   if (tableSetting?.sum?.checked || tableSetting?.tax?.checked) {
     currentPage.drawLine({
