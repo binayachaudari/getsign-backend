@@ -4,11 +4,19 @@ const {
   runMondayQuery,
 } = require('../services/monday.service');
 const { getFormulaValueOfItem } = require('../utils/formula');
+const { handleFormatNumericColumn } = require('../utils/monday');
 
 const itemDetails = async (req, res, next) => {
   const { itemId } = req.params;
   try {
     const result = await getItemDetails(Number(itemId));
+
+    let item = result?.data?.items?.[0];
+    item = handleFormatNumericColumn(item);
+
+    if (item) {
+      result.data.items[0] = item;
+    }
 
     const items_subItem = result?.data?.items?.[0]?.subitems || [];
 

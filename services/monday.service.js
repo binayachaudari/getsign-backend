@@ -23,12 +23,13 @@ const getItemDetails = async id => {
   query getItemDetails($ids: [Int]) {
     items(ids: $ids) {
       id
-      board {
+      board{
         id
         name
         columns{
-          settings_str
           id
+          type
+          settings_str
           title
         }
       }
@@ -44,6 +45,7 @@ const getItemDetails = async id => {
         id
       }
       state
+
       subitems{
         id
         name
