@@ -15,6 +15,31 @@ const addSenderDetails = async payload => {
       type: payload?.type,
     });
 
+    const columnAlreadyUsed = await FileDetails.find({
+      board_id: payload?.board_id,
+      $or: [
+        {
+          status_column_id: payload?.status_column_id,
+        },
+        {
+          file_column_id: payload?.file_column_id,
+        },
+        {
+          presigned_file_column_id: payload?.presigned_file_column_id,
+        },
+      ],
+      itemViewInstanceId: { $ne: null },
+      type: { $ne: 'adhoc' },
+      is_deleted: false,
+    });
+
+    if (columnAlreadyUsed.length) {
+      throw {
+        statusCode: 400,
+        message: 'Status/File column already used',
+      };
+    }
+
     const currentItem = await FileDetails.findOne({
       account_id: payload.account_id,
       board_id: payload.board_id,
