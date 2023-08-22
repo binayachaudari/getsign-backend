@@ -63,6 +63,7 @@ const getSubItems = async (subItemSettings = [], items_subItem) => {
       }
 
       const colValue = {
+        ...column,
         id: column.id,
         value: formatCol,
         settings_str: boardColumn?.settings_str || JSON.stringify({}),

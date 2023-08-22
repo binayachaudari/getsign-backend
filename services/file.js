@@ -255,13 +255,25 @@ const generatePDF = async (id, fields, items_subItem) => {
                 size: fontSize,
               });
             }
-
-            currentPage.drawText(value?.text || '', {
-              x: placeHolder.formField.coordinates.x,
-              y: placeHolder.formField.coordinates.y - fontSize * scalingFactor,
-              font: customFont,
-              size: fontSize,
-            });
+            if (value?.type === 'numeric') {
+              currentPage.drawText(value?.formattedValue || value?.text || '', {
+                x: placeHolder.formField.coordinates.x,
+                y:
+                  placeHolder.formField.coordinates.y -
+                  fontSize * scalingFactor,
+                font: customFont,
+                size: fontSize,
+              });
+            } else {
+              currentPage.drawText(value?.text || '', {
+                x: placeHolder.formField.coordinates.x,
+                y:
+                  placeHolder.formField.coordinates.y -
+                  fontSize * scalingFactor,
+                font: customFont,
+                size: fontSize,
+              });
+            }
           }
         }
       }
@@ -603,41 +615,7 @@ const generatePDFWithGivenPlaceholders = async (
             initialYCoordinate,
             tableWidth: placeHolder?.width,
             tableSetting: {
-              // sum: {
-              //   checked: true,
-              //   column: 'formula',
-              //   label: 'Sum',
-              //   value: '10000',
-              // },
-              // header: {
-              //   checked: false,
-              //   color: 'grey',
-              //   rgb: {
-              //     r: 160,
-              //     g: 156,
-              //     b: 156,
-              //   },
-              // },
-              // tax: {
-              //   checked: true,
-              //   type: 'percentage',
-              //   value: '100',
-              //   label: 'Tax',
-              // },
-              // currency: {
-              //   checked: true,
-              //   position: 'before-the-value',
-              // },
               ...(placeHolder?.subItemSettings || {}),
-              // header: {
-              //   checked: false,
-              //   color: 'grey',
-              //   rgb: {
-              //     r: 160,
-              //     g: 156,
-              //     b: 156,
-              //   },
-              // },
             },
           });
         } else {
@@ -664,12 +642,25 @@ const generatePDFWithGivenPlaceholders = async (
               });
             }
 
-            currentPage.drawText(value?.text || '', {
-              x: placeHolder.formField.coordinates.x,
-              y: placeHolder.formField.coordinates.y - fontSize * scalingFactor,
-              font: customFont,
-              size: fontSize,
-            });
+            if (value?.type === 'numeric') {
+              currentPage.drawText(value?.formattedValue || '', {
+                x: placeHolder.formField.coordinates.x,
+                y:
+                  placeHolder.formField.coordinates.y -
+                  fontSize * scalingFactor,
+                font: customFont,
+                size: fontSize,
+              });
+            } else {
+              currentPage.drawText(value?.text || '', {
+                x: placeHolder.formField.coordinates.x,
+                y:
+                  placeHolder.formField.coordinates.y -
+                  fontSize * scalingFactor,
+                font: customFont,
+                size: fontSize,
+              });
+            }
           }
         }
       }

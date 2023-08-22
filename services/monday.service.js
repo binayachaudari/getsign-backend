@@ -171,6 +171,14 @@ const getColumnValues = async itemId => {
       items(ids: $ids) {
         id
         name
+        board{
+          columns{
+            id
+            type
+            settings_str
+            title
+          }
+        }
         column_values {
           id
           text

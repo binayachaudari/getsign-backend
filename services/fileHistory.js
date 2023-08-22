@@ -2,7 +2,12 @@ const { PDFDocument } = require('pdf-lib');
 const statusMapper = require('../config/statusMapper');
 const FileDetails = require('../models/FileDetails');
 const FileHistory = require('../models/FileHistory');
-const { setMondayToken, getUserDetails, monday } = require('../utils/monday');
+const {
+  setMondayToken,
+  getUserDetails,
+  monday,
+  handleFormatNumericColumn,
+} = require('../utils/monday');
 const { embedHistory } = require('./embedDocumentHistory');
 const {
   signPDF,
@@ -158,6 +163,13 @@ const getFileToSignSender = async (id, itemId) => {
   if (!alreadySignedByReceiver) {
     await setMondayToken(fileDetails.user_id, fileDetails.account_id);
     const columnValues = await getColumnValues(itemId);
+
+    let item = columnValues?.data?.items?.[0];
+    item = handleFormatNumericColumn(item);
+
+    if (item) {
+      columnValues.data.items[0] = item;
+    }
     const items_subItem = columnValues?.data?.items?.[0]?.subitems || [];
 
     const formValues = [
@@ -401,6 +413,13 @@ const getFileToSignReceiver = async (id, itemId) => {
       let url;
       if (!getFileToSignKey?.file) {
         const columnValues = await getColumnValues(itemId);
+
+        let item = columnValues?.data?.items?.[0];
+        item = handleFormatNumericColumn(item);
+
+        if (item) {
+          columnValues.data.items[0] = item;
+        }
 
         const items_subItem = columnValues?.data?.items?.[0]?.subitems || [];
 
@@ -697,6 +716,13 @@ const generateFilePreview = async (fileId, itemId, accountId) => {
 
     const columnValues = await getColumnValues(itemId);
 
+    let item = columnValues?.data?.items?.[0];
+    item = handleFormatNumericColumn(item);
+
+    if (item) {
+      columnValues.data.items[0] = item;
+    }
+
     const items_subItem = columnValues?.data?.items?.[0]?.subitems || [];
 
     const formValues = [
@@ -915,9 +941,17 @@ const generateFilePreviewWithPlaceholders = async (
   let user;
   try {
     const fileDetails = await FileDetails.findById(fileId);
+
     await setMondayToken(fileDetails.user_id, fileDetails.account_id);
     user = await getUserDetails(fileDetails.user_id, fileDetails.account_id);
     const columnValues = await getColumnValues(itemId);
+
+    let item = columnValues?.data?.items?.[0];
+    item = handleFormatNumericColumn(item);
+
+    if (item) {
+      columnValues.data.items[0] = item;
+    }
 
     const items_subItem = columnValues?.data?.items?.[0]?.subitems || [];
 
