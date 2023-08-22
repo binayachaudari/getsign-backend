@@ -36,8 +36,19 @@ const requestSignature = async (req, res, next) => {
   }
 };
 
+const deleteFile = async (req, res, next) => {
+  try {
+    const { fileId } = req.params;
+    const result = await adhocService.deleteFile(fileId);
+    return res.json({ data: result }).status(200);
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   addSenderDetails,
   uploadAdhocDocument,
   requestSignature,
+  deleteFile,
 };

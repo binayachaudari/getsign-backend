@@ -22,4 +22,10 @@ router.get(
   adhocController.requestSignature
 );
 
+router.delete(
+  '/delete-file/:fileId',
+  verifySessionToken,
+  adhocController.deleteFile
+);
+
 module.exports = router;

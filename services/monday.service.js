@@ -897,6 +897,40 @@ const uploadPreSignedFile = async ({
   }
 };
 
+const clearFileColumn = async ({
+  itemId,
+  boardId,
+  columnId,
+  userId,
+  accountId,
+}) => {
+  await setMondayToken(userId, accountId);
+  const value = JSON.stringify({
+    clear_all: true,
+  });
+  try {
+    const result = await monday.api(
+      `mutation clearFileColumn($boardId: Int!, $itemId: Int!, $columnId: String!, $value: JSON!) {
+        change_column_value(board_id: $boardId, item_id: $itemId, value: $value, column_id: $columnId) {
+      id
+    }
+  }`,
+      {
+        variables: {
+          boardId: Number(boardId),
+          itemId: Number(itemId),
+          columnId,
+          value,
+        },
+      }
+    );
+    console.log('delete file from board', result);
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
   me,
   getItemDetails,
@@ -911,4 +945,5 @@ module.exports = {
   uploadPreSignedFile,
   getFieldValue,
   getSpecificSubItemColumnValue,
+  clearFileColumn,
 };

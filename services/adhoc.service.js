@@ -1,7 +1,7 @@
 const FileDetails = require('../models/FileDetails');
 const crypto = require('crypto');
 const { emailVerification } = require('./mailer');
-const { uploadPreSignedFile } = require('./monday.service');
+const { uploadPreSignedFile, clearFileColumn } = require('./monday.service');
 const ApplicationModel = require('../models/Application.model');
 const { backOfficeUploadedDocument } = require('./backoffice.service');
 
@@ -243,7 +243,32 @@ const uploadAdhocDocument = async req => {
   return uploadedFile.data;
 };
 
+const deleteFile = async fileId => {
+  const details = await FileDetails.findById(fileId);
+  if (!details) {
+    throw {
+      statusCode: 404,
+      message: 'File not found',
+    };
+  }
+
+  await clearFileColumn({
+    itemId: details?.item_id,
+    boardId: details?.board_id,
+    accountId: details?.account_id,
+    columnId: details.presigned_file_column_id,
+    userId: details?.user_id,
+  });
+
+  details.fields = [];
+
+  await details.save();
+
+  return details;
+};
+
 module.exports = {
   addSenderDetails,
   uploadAdhocDocument,
+  deleteFile,
 };
