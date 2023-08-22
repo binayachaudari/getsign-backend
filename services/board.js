@@ -63,7 +63,7 @@ const getStoredBoardFile = async (boardId, itemId, instanceId) => {
         is_deleted: false,
       });
 
-      type = template.type;
+      type = template?.type || 'template';
     }
 
     if (type === 'adhoc') {
