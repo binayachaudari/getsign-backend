@@ -37,13 +37,13 @@ const CURRENCY_TYPE = {
 
 const calculateRowHeight = ({
   columnWidth,
-  text,
+  text = '',
   fontSize = 12,
   currentPage,
   cellMargin = 5,
   defaultRowHeight,
 }) => {
-  const words = text.split(' ');
+  const words = text?.split(' ');
   let lines = [''];
   let currentLine = 0;
 
@@ -124,15 +124,25 @@ const createTable = async ({
     let maxRowHeight = Math.max(
       defaultRowHeight,
       ...tableData[currentRowPosition].map((col, j) => {
-        let textVal = col?.value || '';
+        let textVal = col?.value || 0;
 
-        if (col.type === 'numeric') {
+        if (currentRowPosition > 0 && col.type === 'numeric') {
           const colSetting = JSON.parse(col?.settings_str || '{}');
+
+          const absValue = Math.abs(textVal);
 
           textVal =
             colSetting?.unit?.direction === 'left'
-              ? (colSetting?.unit?.symbol || '') + textVal
-              : textVal + (colSetting?.unit?.symbol || '');
+              ? ` ${
+                  String(textVal < 0 ? '-' : '') +
+                  String(colSetting?.unit?.symbol || '') +
+                  String(absValue)
+                }`
+              : `${
+                  String(textVal < 0 ? '-' : '') +
+                  String(absValue) +
+                  String(colSetting?.unit?.symbol || '')
+                }`;
         }
 
         const { rowHeight, lines } = calculateRowHeight({
@@ -305,25 +315,36 @@ const createTable = async ({
       ?.split('')
       ?.reverse()
       ?.forEach(str => {
+        const pdfDoc = currentPage.doc || null;
+        const pdfFont = pdfDoc?.fonts?.[pdfDoc?.fonts?.length - 1] || [];
+        const width = pdfFont.widthOfTextAtSize(str, 12);
+
         currentPage.drawText(str, {
           x: xCoordinate,
           y: currentYCoordinate,
           size: 12,
           color: rgb(0, 0, 0),
         });
-        xCoordinate -= 8;
+        xCoordinate -= width + 2;
       });
 
     xCoordinate -= 16;
 
     sumLabel?.forEach(str => {
+      const pdfDoc = currentPage.doc || null;
+      const pdfFont = pdfDoc?.fonts?.[pdfDoc?.fonts?.length - 1] || [];
+      const width = pdfFont.widthOfTextAtSize(str, 14);
+
       currentPage.drawText(str, {
         x: xCoordinate,
         y: currentYCoordinate,
         size: 14,
         color: rgb(0, 0, 0),
       });
-      xCoordinate -= 8;
+      xCoordinate -= width + 5;
+      if (['a', '0', 'T'].includes(str)) {
+        xCoordinate += 8;
+      }
     });
   }
 };
