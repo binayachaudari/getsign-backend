@@ -10,22 +10,30 @@ const addSenderDetails = async payload => {
     const previous = await FileDetails.find({
       account_id: payload.account_id,
       board_id: payload.board_id,
-      item_id: payload.item_id,
       user_id: payload.user_id,
       itemViewInstanceId: payload.instanceId,
       type: payload?.type,
     });
+
+    const currentItem = await FileDetails.findOne({
+      account_id: payload.account_id,
+      board_id: payload.board_id,
+      item_id: payload.item_id,
+      user_id: payload.user_id,
+      itemViewInstanceId: payload.instanceId,
+      type: payload?.type,
+    }).sort({ updated_at: -1 });
 
     if (previous?.length) {
       if (previous?.[0]?.email_address !== payload.email_address) {
         const verificationToken = crypto.randomBytes(20).toString('hex');
         const verificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000;
 
-        previous.forEach(item => {
+        for (const item of previous) {
           item.is_email_verified = false;
           item.email_verification_token = verificationToken;
           item.email_verification_token_expires = verificationTokenExpires;
-        });
+        }
 
         await emailVerification(
           previous?.[0].email_verification_token,
@@ -33,7 +41,11 @@ const addSenderDetails = async payload => {
         );
       }
 
-      previous.forEach(item => {
+      for (const item of previous) {
+        item.is_email_verified = currentItem.is_email_verified;
+        item.email_verification_token = currentItem.email_verification_token;
+        item.email_verification_token_expires =
+          currentItem.email_verification_token_expires;
         item.email_address = payload?.email_address;
         item.email_column_id = payload?.email_column_id;
         item.status_column_id = payload?.status_column_id;
@@ -41,8 +53,8 @@ const addSenderDetails = async payload => {
         item.presigned_file_column_id = payload?.presigned_file_column_id;
         item.sender_name = payload?.sender_name;
         item.itemViewInstanceId = payload?.instanceId;
-        item.save();
-      });
+        await item.save();
+      }
     } else {
       const result = await FileDetails.create({
         account_id: payload.account_id,
@@ -50,7 +62,7 @@ const addSenderDetails = async payload => {
         item_id: payload.item_id,
         user_id: payload.user_id,
         itemViewInstanceId: payload.instanceId,
-        type: payload.type,
+        type: payload?.type,
       });
 
       result.email_address = payload?.email_address;
@@ -105,7 +117,7 @@ const uploadAdhocDocument = async req => {
     account_id: body.account_id,
     board_id: Number(body.board_id),
     type: 'adhoc',
-  });
+  }).sort({ created_at: -1 });
 
   const uploadedFile = await uploadPreSignedFile({
     accountId: body.account_id,
@@ -115,35 +127,40 @@ const uploadAdhocDocument = async req => {
     itemId: body?.item_id,
   });
 
-  // // get values from previous file that has been deleted
-  // const prev = await FileDetails.findOne({
-  //   account_id: body.account_id,
-  //   board_id: body.board_id,
-  //   item_id: body.item_id,
-  //   is_deleted: true,
-  // });
-
-  const result = await FileDetails.create({
+  const exists = await FileDetails.findOne({
     account_id: body.account_id,
     board_id: body.board_id,
     item_id: body.item_id,
     user_id: body.user_id,
     file_name: file.name,
     itemViewInstanceId: body.instanceId,
+    is_deleted: false,
     type: 'adhoc',
   });
 
-  result.email_address = fileDetails?.email_address;
-  result.email_column_id = fileDetails?.email_column_id;
-  result.status_column_id = fileDetails?.status_column_id;
-  result.file_column_id = fileDetails?.file_column_id;
-  result.sender_name = fileDetails?.sender_name;
-  result.email_title = fileDetails?.email_title;
-  result.message = fileDetails?.message;
-  result.is_email_verified = fileDetails?.is_email_verified;
-  result.presigned_file_column_id = fileDetails?.presigned_file_column_id;
+  if (!exists) {
+    const result = await FileDetails.create({
+      account_id: body.account_id,
+      board_id: body.board_id,
+      item_id: body.item_id,
+      user_id: body.user_id,
+      file_name: file.name,
+      itemViewInstanceId: body.instanceId,
+      type: 'adhoc',
+    });
 
-  await result.save();
+    result.email_address = fileDetails?.email_address;
+    result.email_column_id = fileDetails?.email_column_id;
+    result.status_column_id = fileDetails?.status_column_id;
+    result.file_column_id = fileDetails?.file_column_id;
+    result.sender_name = fileDetails?.sender_name;
+    result.email_title = fileDetails?.email_title;
+    result.message = fileDetails?.message;
+    result.is_email_verified = fileDetails?.is_email_verified;
+    result.presigned_file_column_id = fileDetails?.presigned_file_column_id;
+
+    await result.save();
+  }
 
   const appInstallDetails = await ApplicationModel.findOne({
     type: 'install',
