@@ -266,7 +266,7 @@ const createTable = async ({
   if (tableSetting?.sum?.checked) {
     currentYCoordinate -= 60 * 0.75;
 
-    const sumLabel = (tableSetting?.sum?.label || 'Sum')?.split('')?.reverse();
+    const sumLabel = tableSetting?.sum?.label || 'Sum';
 
     let totalSum = 0;
 
@@ -330,22 +330,35 @@ const createTable = async ({
 
     xCoordinate -= 16;
 
-    sumLabel?.forEach(str => {
+    if (sumLabel) {
       const pdfDoc = currentPage.doc || null;
       const pdfFont = pdfDoc?.fonts?.[pdfDoc?.fonts?.length - 1] || [];
-      const width = pdfFont.widthOfTextAtSize(str, 14);
-
-      currentPage.drawText(str, {
+      const width = pdfFont.widthOfTextAtSize(sumLabel, 14);
+      xCoordinate -= width;
+      currentPage.drawText(sumLabel, {
         x: xCoordinate,
         y: currentYCoordinate,
         size: 14,
         color: rgb(0, 0, 0),
       });
-      xCoordinate -= width + 5;
-      if (['a', '0', 'T'].includes(str)) {
-        xCoordinate += 8;
-      }
-    });
+    }
+
+    // sumLabel?.forEach(str => {
+    //   const pdfDoc = currentPage.doc || null;
+    //   const pdfFont = pdfDoc?.fonts?.[pdfDoc?.fonts?.length - 1] || [];
+    //   const width = pdfFont.widthOfTextAtSize(str, 14);
+
+    //   currentPage.drawText(str, {
+    //     x: xCoordinate,
+    //     y: currentYCoordinate,
+    //     size: 14,
+    //     color: rgb(0, 0, 0),
+    //   });
+    //   xCoordinate -= width + 5;
+    //   if (['a', '0', 'T'].includes(str)) {
+    //     xCoordinate += 8;
+    //   }
+    // });
   }
 };
 
