@@ -1110,6 +1110,22 @@ const addSenderDetails = async (
       };
     }
 
+    const fileColumnAlreadyUsed = await FileDetails.find({
+      board_id: updated?.board_id,
+      file_column_id: file_column_id,
+      itemViewInstanceId: { $ne: null },
+      type: 'adhoc',
+      _id: { $ne: Types.ObjectId(id) },
+      is_deleted: false,
+    });
+
+    if (fileColumnAlreadyUsed.length) {
+      throw {
+        statusCode: 400,
+        message: 'File column already used',
+      };
+    }
+
     // for (const [key, value] of Object.entries(statusMapper)) {
     //   await updateStatusColumn({
     //     itemId: updated.item_id,
