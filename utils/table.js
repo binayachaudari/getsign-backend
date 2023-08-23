@@ -43,7 +43,7 @@ const calculateRowHeight = ({
   cellMargin = 5,
   defaultRowHeight,
 }) => {
-  const words = text?.split(' ');
+  const words = text?.split('');
   let lines = [''];
   let currentLine = 0;
 
@@ -53,11 +53,11 @@ const calculateRowHeight = ({
   for (const word of words) {
     const currentLineText = lines[currentLine];
     const testLine =
-      currentLineText === '' ? word : `${currentLineText} ${word}`;
+      currentLineText === '' ? word : `${currentLineText}${word}`;
 
     const width = pdfFont.widthOfTextAtSize(testLine, fontSize);
 
-    if (width <= columnWidth - 2 * cellMargin) {
+    if (width <= columnWidth - cellMargin) {
       lines[currentLine] = testLine;
     } else {
       currentLine++;
@@ -102,16 +102,11 @@ const createTable = async ({
 }) => {
   const tableRows = tableData.length;
   const tableCols = tableData[0].length;
-  const firstColumnWidth = tableWidth * 0.35;
-  // const columnWidths = Array.from({ length: tableCols - 1 }, (_, index) =>
-  //   Math.floor((tableWidth - firstColumnWidth) / (tableCols - 1))
-  // );
-  // columnWidths.unshift(firstColumnWidth);
-  const columnWidths = Array.from({ length: tableCols }, (_, index) =>
-    Math.floor(tableWidth / tableCols)
-  );
 
-  const marginY = 48 * 0.75;
+  const columnWidths = tableData[0]?.map(col => {
+    return tableWidth * (col.size / 100);
+  });
+
   const defaultRowHeight = 45 * 0.75;
   let currentXCoordinate = initialXCoordinate - 8;
   let currentYCoordinate = initialYCoordinate;
@@ -125,30 +120,9 @@ const createTable = async ({
       defaultRowHeight,
       ...tableData[currentRowPosition].map((col, j) => {
         let textVal = col?.value || 0;
-
         if (currentRowPosition > 0 && col.type === 'numeric') {
           textVal = col?.formattedValue || '';
         }
-
-        // if (currentRowPosition > 0 && col.type === 'numeric') {
-        //   const colSetting = JSON.parse(col?.settings_str || '{}');
-
-        //   const absValue = Math.abs(textVal);
-
-        //   textVal =
-        //     colSetting?.unit?.direction === 'left'
-        //       ? ` ${
-        //           String(textVal < 0 ? '-' : '') +
-        //           String(colSetting?.unit?.symbol || '') +
-        //           String(absValue)
-        //         }`
-        //       : `${
-        //           String(textVal < 0 ? '-' : '') +
-        //           String(absValue) +
-        //           String(colSetting?.unit?.symbol || '')
-        //         }`;
-        // }
-
         const { rowHeight, lines } = calculateRowHeight({
           text: textVal || '',
           currentPage,

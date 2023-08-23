@@ -24,15 +24,24 @@ tableData = [
 
 */
 
-const getSubItems = async (subItemSettings = [], items_subItem) => {
+const getSubItems = async (subItemSettings = {}, items_subItem) => {
   const formattedTableData = [];
+  const columnWidths = subItemSettings?.columnWidth;
   formattedTableData[0] = [];
   let rowCount = 0;
   const { columns: selectedColumn } = subItemSettings;
-  formattedTableData[0][0] = { id: 'item-name', value: 'Item', size: 150 };
+  formattedTableData[0][0] = {
+    id: 'item-name',
+    value: 'Item',
+    size: columnWidths['item'],
+  };
 
   selectedColumn?.forEach(col => {
-    formattedTableData[0].push({ ...col, value: col?.title, size: 150 });
+    formattedTableData[0].push({
+      ...col,
+      value: col?.title,
+      size: columnWidths?.[col.id],
+    });
   });
 
   for (let i = 0; i < items_subItem?.length; i++) {
@@ -72,9 +81,7 @@ const getSubItems = async (subItemSettings = [], items_subItem) => {
 
       rowData.push(colValue);
     }
-
     rowCount += 1;
-
     formattedTableData.push(rowData);
   }
 

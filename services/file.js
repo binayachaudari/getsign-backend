@@ -602,9 +602,6 @@ const generatePDFWithGivenPlaceholders = async (
             placeHolder?.subItemSettings,
             items_subItem
           );
-
-          // console.log({ placeHolder: JSON.stringify(placeHolder) });
-
           const initialXCoordinate = placeHolder.formField.coordinates.x + 8;
           const initialYCoordinate = placeHolder.formField.coordinates.y;
 
