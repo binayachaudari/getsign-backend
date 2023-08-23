@@ -1126,6 +1126,22 @@ const addSenderDetails = async (
       };
     }
 
+    const presignedColumnAlreadyUsed = await FileDetails.find({
+      board_id: updated?.board_id,
+      presigned_file_column_id: file_column_id,
+      itemViewInstanceId: { $ne: null },
+      type: 'adhoc',
+      _id: { $ne: Types.ObjectId(id) },
+      is_deleted: false,
+    });
+
+    if (presignedColumnAlreadyUsed.length) {
+      throw {
+        statusCode: 400,
+        message: 'File column already used as pre-signed file column',
+      };
+    }
+
     // for (const [key, value] of Object.entries(statusMapper)) {
     //   await updateStatusColumn({
     //     itemId: updated.item_id,
