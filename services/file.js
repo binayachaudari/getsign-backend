@@ -3,7 +3,10 @@ const FileDetails = require('../models/FileDetails');
 const { s3, getSignedUrl, loadFileDetails } = require('./s3');
 const fontkit = require('@pdf-lib/fontkit');
 const FileHistory = require('../models/FileHistory');
-const { setMondayToken } = require('../utils/monday');
+const {
+  setMondayToken,
+  handleFormatNumericColumn,
+} = require('../utils/monday');
 const {
   getColumnValues,
   updateStatusColumn,
@@ -603,8 +606,7 @@ const generatePDFWithGivenPlaceholders = async (
             items_subItem
           );
 
-          // console.log({ placeHolder: JSON.stringify(placeHolder) });
-
+          console.log({ tableData });
           const initialXCoordinate = placeHolder.formField.coordinates.x + 8;
           const initialYCoordinate = placeHolder.formField.coordinates.y;
 
@@ -699,6 +701,14 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
     const fileDetails = await loadFileDetails(id);
     await setMondayToken(fileDetails.user_id, fileDetails.account_id);
     const valuesToFill = await getColumnValues(itemId);
+
+    let item = valuesToFill?.data?.items?.[0];
+
+    item = handleFormatNumericColumn(item);
+
+    if (item) {
+      valuesToFill.data.items[0] = item;
+    }
 
     const items_subItem = valuesToFill?.data?.items?.[0]?.subitems || [];
 
@@ -942,6 +952,35 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
               size: fontSize,
             });
           } else if (placeHolder?.itemId === 'line-item') {
+            for (const [subItemIndex, subItem] of items_subItem?.entries()) {
+              const formulaColumnValues = await getFormulaValueOfItem({
+                itemId: subItem.id,
+                boardColumns: subItem?.board?.columns || [],
+                boardColumnValues: subItem?.column_values || [],
+              });
+
+              for (const columnValue of formulaColumnValues) {
+                const alreadyExistsIdx = subItem.column_values.findIndex(
+                  formValue => formValue.id === columnValue?.id
+                );
+
+                if (alreadyExistsIdx > -1) {
+                  items_subItem[subItemIndex]?.column_values?.forEach(
+                    (col, index) => {
+                      if (col.id == columnValue.id) {
+                        col = columnValue;
+                      }
+
+                      items_subItem[subItemIndex].column_values[index] = col;
+                    }
+                  );
+                } else {
+                  items_subItem[subItemIndex]?.column_values?.push({
+                    ...columnValue,
+                  });
+                }
+              }
+            }
             const tableData = await getSubItems(
               placeHolder?.subItemSettings,
               items_subItem

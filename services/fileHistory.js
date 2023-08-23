@@ -380,6 +380,7 @@ const getFileToSignReceiver = async (id, itemId) => {
       };
     }
     const template = fileFromHistory.fileId;
+
     fileId = fileFromHistory.fileId?._id;
 
     await setMondayToken(template?.user_id, template?.account_id);
@@ -415,6 +416,7 @@ const getFileToSignReceiver = async (id, itemId) => {
         const columnValues = await getColumnValues(itemId);
 
         let item = columnValues?.data?.items?.[0];
+
         item = handleFormatNumericColumn(item);
 
         if (item) {
