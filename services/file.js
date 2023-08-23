@@ -3,13 +3,18 @@ const FileDetails = require('../models/FileDetails');
 const { s3, getSignedUrl, loadFileDetails } = require('./s3');
 const fontkit = require('@pdf-lib/fontkit');
 const FileHistory = require('../models/FileHistory');
-const { setMondayToken } = require('../utils/monday');
+const {
+  setMondayToken,
+  handleFormatNumericColumn,
+} = require('../utils/monday');
 const {
   getColumnValues,
   updateStatusColumn,
   getColumnDetails,
   getSpecificColumnValue,
+  getSpecificSubItemColumnValue,
 } = require('./monday.service');
+const STANDARD_FIELDS = require('../config/standardFields');
 const { Types } = require('mongoose');
 const { backOfficeSavedDocument } = require('./backoffice.service');
 const ApplicationModel = require('../models/Application.model');
@@ -25,10 +30,13 @@ const {
   parseFormulaColumnIds,
   renameFunctions,
   hasNestedIF,
+  getSubItems,
+  getFormulaValueOfItem,
 } = require('../utils/formula');
 const { formulaeParser } = require('../utils/mondayFormulaConverter');
 const { HyperFormula } = require('hyperformula');
 const { toFixed } = require('../utils/number');
+const { createTable } = require('../utils/table');
 
 const scalingFactor = 0.75;
 
@@ -108,7 +116,7 @@ const addFormFields = async (id, payload) => {
   }
 };
 
-const generatePDF = async (id, fields) => {
+const generatePDF = async (id, fields, items_subItem) => {
   try {
     const fileDetails = await loadFileDetails(id);
 
@@ -122,7 +130,9 @@ const generatePDF = async (id, fields) => {
     const customFont = await pdfDoc.embedFont(fontBytes, { subset: true });
 
     if (fields?.length && fileDetails?.fields) {
-      fileDetails?.fields?.forEach(async placeHolder => {
+      // fileDetails?.fields?.forEach(async placeHolder =>
+
+      for (const placeHolder of fileDetails?.fields) {
         const currentPage = pages[placeHolder?.formField?.pageIndex];
         if (!currentPage) return;
 
@@ -158,6 +168,74 @@ const generatePDF = async (id, fields) => {
             font: customFont,
             size: fontSize,
           });
+        } else if (placeHolder?.itemId === 'line-item') {
+          for (const [subItemIndex, subItem] of items_subItem?.entries()) {
+            const formulaColumnValues = await getFormulaValueOfItem({
+              itemId: subItem.id,
+              boardColumns: subItem?.board?.columns || [],
+              boardColumnValues: subItem?.column_values || [],
+            });
+
+            for (const columnValue of formulaColumnValues) {
+              const alreadyExistsIdx = subItem.column_values.findIndex(
+                formValue => formValue.id === columnValue?.id
+              );
+
+              if (alreadyExistsIdx > -1) {
+                items_subItem[subItemIndex]?.column_values?.forEach(
+                  (col, index) => {
+                    if (col.id == columnValue.id) {
+                      col = columnValue;
+                    }
+
+                    items_subItem[subItemIndex].column_values[index] = col;
+                  }
+                );
+              } else {
+                items_subItem[subItemIndex]?.column_values?.push({
+                  ...columnValue,
+                });
+              }
+            }
+          }
+
+          const tableData = await getSubItems(
+            placeHolder?.subItemSettings || {},
+            items_subItem
+          );
+          const initialXCoordinate = placeHolder.formField.coordinates.x + 8;
+          const initialYCoordinate = placeHolder.formField.coordinates.y;
+
+          createTable({
+            currentPage,
+            tableData,
+            initialXCoordinate,
+            initialYCoordinate,
+            tableWidth: placeHolder?.width || 564,
+            tableSetting: {
+              // sum: {
+              //   checked: true,
+              //   column: 'formula',
+              //   label: 'Sum',
+              //   value: '10000',
+              // },
+              // header: {
+              //   checked: false,
+              //   color: 'grey',
+              // },
+              // tax: {
+              //   checked: true,
+              //   type: 'percentage',
+              //   value: '100',
+              //   label: 'Tax',
+              // },
+              // currency: {
+              //   checked: true,
+              //   position: 'before-the-value',
+              // },
+              ...(placeHolder?.subItemSettings || {}),
+            },
+          });
         } else {
           const value = fields.find(item => item?.id === placeHolder?.itemId);
 
@@ -180,16 +258,28 @@ const generatePDF = async (id, fields) => {
                 size: fontSize,
               });
             }
-
-            currentPage.drawText(value?.text || '', {
-              x: placeHolder.formField.coordinates.x,
-              y: placeHolder.formField.coordinates.y - fontSize * scalingFactor,
-              font: customFont,
-              size: fontSize,
-            });
+            if (value?.type === 'numeric') {
+              currentPage.drawText(value?.formattedValue || value?.text || '', {
+                x: placeHolder.formField.coordinates.x,
+                y:
+                  placeHolder.formField.coordinates.y -
+                  fontSize * scalingFactor,
+                font: customFont,
+                size: fontSize,
+              });
+            } else {
+              currentPage.drawText(value?.text || '', {
+                x: placeHolder.formField.coordinates.x,
+                y:
+                  placeHolder.formField.coordinates.y -
+                  fontSize * scalingFactor,
+                font: customFont,
+                size: fontSize,
+              });
+            }
           }
         }
-      });
+      }
 
       const pdfBytes = await pdfDoc.save();
       const blob = new Blob([new Uint8Array(pdfBytes)], {
@@ -209,9 +299,239 @@ const generatePDF = async (id, fields) => {
   }
 };
 
-const generatePDFWithGivenPlaceholders = async (id, placeholders, values) => {
+const generatePDFWithGivenPlaceholders = async (
+  id,
+  placeholders,
+  values,
+  items_subItem = [],
+  itemId
+) => {
   try {
     const fileDetails = await loadFileDetails(id);
+
+    await setMondayToken(fileDetails?.user_id, fileDetails?.account_id);
+
+    /* Parse formula columns start */
+
+    const boardFormulaColumnValues = new Map();
+
+    const formulaColumns = getFormulaColumns(
+      items_subItem?.[0]?.column_values || []
+    );
+
+    if (formulaColumns.length > 0) {
+      const subItemBoardColumns = items_subItem?.[0]?.board?.columns?.filter(
+        col => col?.type === 'formula'
+      );
+
+      for (const columnValue of subItemBoardColumns) {
+        boardFormulaColumnValues.set(
+          columnValue.id,
+          parseFormulaColumnIds(columnValue.settings_str)
+        );
+      }
+
+      for (const columnValue of subItemBoardColumns) {
+        const parsedFormulaColumn = parseFormulaColumnIds(
+          columnValue.settings_str
+        );
+        let parsedRecursiveFormula = parsedFormulaColumn.formula;
+
+        parsedFormulaColumn?.formulaColumns?.map(item => {
+          let currentItemValue = boardFormulaColumnValues.get(item);
+          if (currentItemValue?.formula || currentItemValue) {
+            const globalRegex = new RegExp(`{${item}}`, 'g');
+            parsedRecursiveFormula = parsedRecursiveFormula.replace(
+              globalRegex,
+              currentItemValue || currentItemValue?.formula
+            );
+          }
+        });
+
+        boardFormulaColumnValues.set(columnValue.id, parsedRecursiveFormula);
+      }
+
+      let finalFormula;
+
+      for (const column of subItemBoardColumns) {
+        for (const [subItemIndex, subItem] of items_subItem?.entries()) {
+          const formulaColumnValues = new Map();
+          const parsedColumn = parseFormulaColumnIds(column?.settings_str);
+
+          finalFormula = parsedColumn.formula;
+          for (const itemColumnValue of subItem?.column_values) {
+            if (
+              parsedColumn.formulaColumns?.length &&
+              parsedColumn.formulaColumns.includes(itemColumnValue.id)
+            ) {
+              let columnValue;
+
+              if (itemColumnValue.type === 'formula') {
+                columnValue = boardFormulaColumnValues.get(itemColumnValue.id);
+                columnValue = '=' + columnValue.replace(/'/g, '"');
+                columnValue = renameFunctions(columnValue);
+                const parsedFormula = formulaeParser(columnValue);
+                columnValue = parsedFormula.formula;
+              } else {
+                columnValue = await getSpecificSubItemColumnValue(
+                  itemId,
+                  subItem?.id,
+                  itemColumnValue.id
+                );
+              }
+              formulaColumnValues.set(
+                {
+                  id: itemColumnValue.id,
+                },
+                columnValue
+              );
+            }
+          }
+
+          const formulaColumnsKeys = Array.from(formulaColumnValues.keys());
+
+          for (let index = 0; index < formulaColumnsKeys.length; index++) {
+            const key = formulaColumnsKeys[index];
+            const chr = String.fromCharCode(97 + index).toUpperCase();
+            const globalRegex = new RegExp(`{${key?.id}}`, 'g');
+            finalFormula = finalFormula.replace(globalRegex, `${chr}1`);
+          }
+          const isNestedFormulae = hasNestedIF(finalFormula);
+
+          if (isNestedFormulae) {
+            // Remove 'IF' and remove the nested parentheses
+            const ifsFormula = finalFormula
+              .replace(/IF/g, '')
+              .replace(/\(/g, '')
+              .replace(/\)/g, '');
+
+            // Split the formula into individual conditions and values
+            const conditionsAndValues = ifsFormula.split(', ');
+
+            // Construct the IFS syntax
+            finalFormula = 'IFS(' + conditionsAndValues.join(', ') + ')';
+          }
+          finalFormula = '=' + finalFormula.replace(/'/g, '"');
+          finalFormula = renameFunctions(finalFormula);
+          const parsedFormula = formulaeParser(finalFormula);
+
+          // Hyper Formula Plugin
+          const formulaRow = [
+            ...Array.from(formulaColumnValues.values()),
+            parsedFormula.formula,
+          ];
+
+          const hfInstance = HyperFormula.buildFromArray([formulaRow], {
+            licenseKey: 'gpl-v3',
+            useColumnIndex: true,
+            smartRounding: false,
+          });
+          let finalFormulaValue = hfInstance.getCellValue({
+            sheet: 0,
+            col: formulaRow.length - 1,
+            row: 0,
+          });
+          finalFormulaValue = isNaN(finalFormulaValue)
+            ? finalFormulaValue
+            : toFixed(finalFormulaValue, 2);
+
+          if (typeof finalFormulaValue !== 'object') {
+            boardFormulaColumnValues.set(column.id, finalFormulaValue);
+            const alreadyExistsIdx = subItem.column_values.findIndex(
+              formValue => formValue.id === column?.id
+            );
+
+            if (alreadyExistsIdx > -1) {
+              items_subItem[subItemIndex]?.column_values?.forEach(
+                (col, index) => {
+                  if (col.id == column.id) {
+                    col = {
+                      ...col,
+                      text: parsedFormula.symbol
+                        ? `${parsedFormula?.symbol}${finalFormulaValue}`
+                        : finalFormulaValue,
+                    };
+                  }
+
+                  items_subItem[subItemIndex].column_values[index] = col;
+                }
+              );
+            } else {
+              items_subItem[subItemIndex]?.column_values?.push({
+                ...column,
+                text: parsedFormula.symbol
+                  ? `${parsedFormula?.symbol}${finalFormulaValue}`
+                  : finalFormulaValue,
+              });
+            }
+          } else {
+            boardFormulaColumnValues.set(column.id, '0');
+            const alreadyExistsIdx = subItem.column_values.findIndex(
+              formValue => formValue.id === column?.id
+            );
+
+            if (alreadyExistsIdx > -1) {
+              items_subItem[subItemIndex]?.column_values?.forEach(
+                (col, index) => {
+                  if (col.id == column.id) {
+                    col = {
+                      ...col,
+                      text: parsedFormula.symbol
+                        ? `${parsedFormula?.symbol}${0}`
+                        : '0',
+                    };
+                  }
+                  items_subItem[subItemIndex].column_values[index] = col;
+                }
+              );
+            } else {
+              items_subItem[subItemIndex]?.column_values?.push({
+                ...column,
+                text: parsedFormula.symbol
+                  ? `${parsedFormula?.symbol}${0}`
+                  : '0',
+              });
+            }
+          }
+        }
+      }
+
+      // for (const column of subItemBoardColumns) {
+      //   const formulaColumnValues = new Map();
+      //   const parsedColumn = parseFormulaColumnIds(column?.settings_str);
+      //   finalFormula = parsedColumn.formula;
+
+      //   for (const item of items_subItem) {
+      //     for (const column_value of item.column_values) {
+      //       console.log({ column_value, parsedColumn });
+      //       if (
+      //         parsedColumn.formulaColumns?.length &&
+      //         parsedColumn.formulaColumns.includes(column_value.id)
+      //       ) {
+      //         let columnValue;
+      //         if (column_value.type === 'formula') {
+      //           columnValue = boardFormulaColumnValues.get(column_value.id);
+      //           columnValue = '=' + columnValue.replace(/'/g, '"');
+      //           columnValue = renameFunctions(columnValue);
+      //           const parsedFormula = formulaeParser(columnValue);
+      //           columnValue = parsedFormula.formula;
+      //         } else {
+      //           columnValue = column_value?.text;
+      //         }
+
+      //         formulaColumnValues.set(
+      //           {
+      //             id: column_value.id,
+      //           },
+      //           columnValue
+      //         );
+      //       }
+      //     }
+      //   }
+      //   console.log({ formulaColumnValues });
+      // }
+    }
+    /* Parse formula columns end */
 
     const pdfDoc = await PDFDocument.load(fileDetails?.file);
     const pages = pdfDoc.getPages();
@@ -223,7 +543,7 @@ const generatePDFWithGivenPlaceholders = async (id, placeholders, values) => {
     const customFont = await pdfDoc.embedFont(fontBytes, { subset: true });
 
     if (values?.length && placeholders?.length) {
-      placeholders?.forEach(async placeHolder => {
+      for (const placeHolder of placeholders) {
         const currentPage = pages[placeHolder?.formField?.pageIndex];
         if (!currentPage) return;
 
@@ -280,6 +600,26 @@ const generatePDFWithGivenPlaceholders = async (id, placeholders, values) => {
             font: customFont,
             size: fontSize,
           });
+        } else if (placeHolder?.itemId === 'line-item') {
+          const tableData = await getSubItems(
+            placeHolder?.subItemSettings,
+            items_subItem
+          );
+
+          console.log({ tableData });
+          const initialXCoordinate = placeHolder.formField.coordinates.x + 8;
+          const initialYCoordinate = placeHolder.formField.coordinates.y;
+
+          createTable({
+            currentPage,
+            tableData,
+            initialXCoordinate,
+            initialYCoordinate,
+            tableWidth: placeHolder?.width,
+            tableSetting: {
+              ...(placeHolder?.subItemSettings || {}),
+            },
+          });
         } else {
           const value = values.find(item => item?.id === placeHolder?.itemId);
 
@@ -304,29 +644,42 @@ const generatePDFWithGivenPlaceholders = async (id, placeholders, values) => {
               });
             }
 
-            currentPage.drawText(value?.text || '', {
-              x: placeHolder.formField.coordinates.x,
-              y: placeHolder.formField.coordinates.y - fontSize * scalingFactor,
-              font: customFont,
-              size: fontSize,
-            });
+            if (value?.type === 'numeric') {
+              currentPage.drawText(value?.formattedValue || '', {
+                x: placeHolder.formField.coordinates.x,
+                y:
+                  placeHolder.formField.coordinates.y -
+                  fontSize * scalingFactor,
+                font: customFont,
+                size: fontSize,
+              });
+            } else {
+              currentPage.drawText(value?.text || '', {
+                x: placeHolder.formField.coordinates.x,
+                y:
+                  placeHolder.formField.coordinates.y -
+                  fontSize * scalingFactor,
+                font: customFont,
+                size: fontSize,
+              });
+            }
           }
         }
-      });
-
-      const pdfBytes = await pdfDoc.save();
-      const blob = new Blob([new Uint8Array(pdfBytes)], {
-        type: 'application/pdf',
-      });
-      const type = blob.type;
-      const arrayBuffer = await blob.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      const base64String = buffer.toString('base64');
-      return {
-        name: fileDetails.file_name,
-        file: `data:${type};base64,${base64String}`,
-      };
+      }
     }
+
+    const pdfBytes = await pdfDoc.save();
+    const blob = new Blob([new Uint8Array(pdfBytes)], {
+      type: 'application/pdf',
+    });
+    const type = blob.type;
+    const arrayBuffer = await blob.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const base64String = buffer.toString('base64');
+    return {
+      name: fileDetails.file_name,
+      file: `data:${type};base64,${base64String}`,
+    };
   } catch (error) {
     throw error;
   }
@@ -348,6 +701,16 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
     const fileDetails = await loadFileDetails(id);
     await setMondayToken(fileDetails.user_id, fileDetails.account_id);
     const valuesToFill = await getColumnValues(itemId);
+
+    let item = valuesToFill?.data?.items?.[0];
+
+    item = handleFormatNumericColumn(item);
+
+    if (item) {
+      valuesToFill.data.items[0] = item;
+    }
+
+    const items_subItem = valuesToFill?.data?.items?.[0]?.subitems || [];
 
     const values = [
       ...(valuesToFill?.data?.items?.[0]?.column_values || []),
@@ -556,7 +919,9 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
 
     if (fileDetails?.fields) {
       if (interactedFields?.length) {
-        interactedFields?.forEach(async placeHolder => {
+        // interactedFields?.forEach(async placeHolder =>
+
+        for (const placeHolder of interactedFields) {
           const currentPage = pages[placeHolder?.formField?.pageIndex];
 
           if (placeHolder?.image?.src) {
@@ -586,7 +951,78 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
               font: customFont,
               size: fontSize,
             });
-          } else if (placeHolder?.itemId === 'text-box') {
+          } else if (placeHolder?.itemId === 'line-item') {
+            for (const [subItemIndex, subItem] of items_subItem?.entries()) {
+              const formulaColumnValues = await getFormulaValueOfItem({
+                itemId: subItem.id,
+                boardColumns: subItem?.board?.columns || [],
+                boardColumnValues: subItem?.column_values || [],
+              });
+
+              for (const columnValue of formulaColumnValues) {
+                const alreadyExistsIdx = subItem.column_values.findIndex(
+                  formValue => formValue.id === columnValue?.id
+                );
+
+                if (alreadyExistsIdx > -1) {
+                  items_subItem[subItemIndex]?.column_values?.forEach(
+                    (col, index) => {
+                      if (col.id == columnValue.id) {
+                        col = columnValue;
+                      }
+
+                      items_subItem[subItemIndex].column_values[index] = col;
+                    }
+                  );
+                } else {
+                  items_subItem[subItemIndex]?.column_values?.push({
+                    ...columnValue,
+                  });
+                }
+              }
+            }
+            const tableData = await getSubItems(
+              placeHolder?.subItemSettings,
+              items_subItem
+            );
+
+            const initialXCoordinate = placeHolder.formField.coordinates.x - 12;
+            const initialYCoordinate = placeHolder.formField.coordinates.y;
+
+            createTable({
+              currentPage,
+              tableData,
+              initialXCoordinate,
+              initialYCoordinate,
+              tableWidth: placeHolder?.width,
+              tableSetting: {
+                // sum: {
+                //   checked: true,
+                //   column: 'formula',
+                //   label: 'Sum',
+                //   value: '10000',
+                // },
+                // header: {
+                //   checked: false,
+                //   color: 'grey',
+                // },
+                // tax: {
+                //   checked: true,
+                //   type: 'percentage',
+                //   value: '100',
+                //   label: 'Tax',
+                // },
+                // currency: {
+                //   checked: true,
+                //   position: 'before-the-value',
+                // },
+                ...(placeHolder?.subItemSettings || {}),
+              },
+            });
+          } else if (
+            placeHolder?.itemId === STANDARD_FIELDS.textBox ||
+            placeHolder?.itemId === STANDARD_FIELDS.status
+          ) {
             const fontSize = placeHolder.fontSize || 11;
             const height = placeHolder.height || 18.33;
 
@@ -620,7 +1056,7 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
               height: (placeHolder?.height || 25) - padding * 1.5,
             });
           }
-        });
+        }
       }
 
       if (values?.length) {
@@ -710,6 +1146,38 @@ const addSenderDetails = async (
       throw {
         statusCode: 400,
         message: 'Status column already used',
+      };
+    }
+
+    const fileColumnAlreadyUsed = await FileDetails.find({
+      board_id: updated?.board_id,
+      file_column_id: file_column_id,
+      itemViewInstanceId: { $ne: null },
+      type: 'adhoc',
+      _id: { $ne: Types.ObjectId(id) },
+      is_deleted: false,
+    });
+
+    if (fileColumnAlreadyUsed.length) {
+      throw {
+        statusCode: 400,
+        message: 'File column already used',
+      };
+    }
+
+    const presignedColumnAlreadyUsed = await FileDetails.find({
+      board_id: updated?.board_id,
+      presigned_file_column_id: file_column_id,
+      itemViewInstanceId: { $ne: null },
+      type: 'adhoc',
+      _id: { $ne: Types.ObjectId(id) },
+      is_deleted: false,
+    });
+
+    if (presignedColumnAlreadyUsed.length) {
+      throw {
+        statusCode: 400,
+        message: 'File column already used as pre-signed file column',
       };
     }
 

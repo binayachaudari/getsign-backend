@@ -3,11 +3,11 @@ const ApplicationModel = require('../models/Application.model');
 const FileDetails = require('../models/FileDetails');
 const FileHistory = require('../models/FileHistory');
 const { backOfficeDocumentSigned } = require('../services/backoffice.service');
+const STANDARD_FIELDS = require('../config/standardFields');
 const {
   addFormFields,
   generatePDF,
   addSenderDetails,
-  generatePDFWithGivenPlaceholders,
 } = require('../services/file');
 const {
   addFileHistory,
@@ -136,8 +136,10 @@ module.exports = {
 
     const ip = ips[0].trim();
     const { status, signatures, itemId, standardFields } = req.body;
+
     try {
       const template = await FileDetails.findById(id);
+
       const senderSignRequired = template?.fields?.filter(field =>
         ['Sender Signature', 'Sender Initials'].includes(field?.title)
       )?.length;
@@ -147,10 +149,12 @@ module.exports = {
       )?.length;
 
       if (standardFields?.length) {
-        let textBoxFields = [];
-        textBoxFields = [...standardFields]?.filter(
+        let fields = [];
+        fields = [...standardFields]?.filter(
           field =>
-            field.itemId === TEXT_BOX_ITEM_ID && Boolean(field?.column?.value)
+            (field.itemId === STANDARD_FIELDS.textBox ||
+              field.itemId === STANDARD_FIELDS.status) &&
+            Boolean(field?.column?.value)
         );
 
         await updateMultipleTextColumnValues({
@@ -158,15 +162,18 @@ module.exports = {
           boardId: template.board_id,
           userId: template?.user_id,
           accountId: template?.account_id,
-          textBoxFields: [...textBoxFields],
+          standardFields: [...fields],
         });
       }
+
+      const lineItemFields =
+        template?.fields?.filter(field => field.itemId === 'line-item') || [];
 
       const result = await addFileHistory({
         id,
         itemId,
         status,
-        interactedFields: [...signatures, ...standardFields],
+        interactedFields: [...signatures, ...standardFields, ...lineItemFields],
         ipAddress: ip,
       });
 
@@ -232,7 +239,7 @@ module.exports = {
         await sendFinalContract(
           {
             file: finalFile.file,
-            name: template.file_name,
+            name: template.file_name || 'signed-adhoc-contract.pdf',
             size: finalFile?.size,
             itemId,
             fileId: result._id,
