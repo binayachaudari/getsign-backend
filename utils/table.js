@@ -123,6 +123,33 @@ const createTable = async ({
         if (currentRowPosition > 0 && col.type === 'numeric') {
           textVal = col?.formattedValue || '';
         }
+        if (
+          currentRowPosition > 0 &&
+          col.type === 'formula' &&
+          tableSetting?.currency?.checked
+        ) {
+          textVal = parseFloat(textVal);
+          const absValue = Math.abs(textVal);
+          textVal =
+            tableSetting?.currency?.position?.value ===
+            CURRENCY_POSITION_TYPES.before
+              ? ` ${
+                  String(textVal < 0 ? '-' : '') +
+                  String(
+                    CURRENCY_TYPE[tableSetting?.currency?.type?.value]
+                      ?.symbol || ''
+                  ) +
+                  String(absValue)
+                }`
+              : `${
+                  String(textVal < 0 ? '-' : '') +
+                  String(absValue) +
+                  String(
+                    CURRENCY_TYPE[tableSetting?.currency?.type?.value]
+                      ?.symbol || ''
+                  )
+                }`;
+        }
         const { rowHeight, lines } = calculateRowHeight({
           text: textVal || '',
           currentPage,
