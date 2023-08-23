@@ -87,10 +87,10 @@ const addSenderDetails = async payload => {
       }
 
       for (const item of previous) {
-        item.is_email_verified = currentItem.is_email_verified;
-        item.email_verification_token = currentItem.email_verification_token;
+        item.is_email_verified = currentItem?.is_email_verified;
+        item.email_verification_token = currentItem?.email_verification_token;
         item.email_verification_token_expires =
-          currentItem.email_verification_token_expires;
+          currentItem?.email_verification_token_expires;
         item.email_address = payload?.email_address;
         item.email_column_id = payload?.email_column_id;
         item.status_column_id = payload?.status_column_id;
