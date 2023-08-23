@@ -153,6 +153,12 @@ const loadFileDetails = async id => {
       if (urls.length) {
         url = urls?.[0];
       }
+      if (urls !== '[]') {
+        throw {
+          statusCode: 404,
+          message: 'No file in the presigned column',
+        };
+      }
     } else {
       url = s3.getSignedUrl('getObject', {
         Bucket: process.env.BUCKET_NAME,
