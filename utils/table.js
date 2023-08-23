@@ -129,7 +129,9 @@ const createTable = async ({
           tableSetting?.currency?.checked
         ) {
           textVal = parseFloat(textVal);
+
           const absValue = Math.abs(textVal);
+
           textVal =
             tableSetting?.currency?.position?.value ===
             CURRENCY_POSITION_TYPES.before

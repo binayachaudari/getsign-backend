@@ -27,6 +27,7 @@ tableData = [
 const getSubItems = async (subItemSettings = {}, items_subItem) => {
   const formattedTableData = [];
   const columnWidths = subItemSettings?.columnWidth;
+
   formattedTableData[0] = [];
   let rowCount = 0;
   const { columns: selectedColumn } = subItemSettings;
