@@ -8,7 +8,6 @@ const {
   addFormFields,
   generatePDF,
   addSenderDetails,
-  generatePDFWithGivenPlaceholders,
 } = require('../services/file');
 const {
   addFileHistory,
@@ -140,6 +139,7 @@ module.exports = {
 
     try {
       const template = await FileDetails.findById(id);
+
       const senderSignRequired = template?.fields?.filter(field =>
         ['Sender Signature', 'Sender Initials'].includes(field?.title)
       )?.length;
@@ -166,11 +166,14 @@ module.exports = {
         });
       }
 
+      const lineItemFields =
+        template?.fields?.filter(field => field.itemId === 'line-item') || [];
+
       const result = await addFileHistory({
         id,
         itemId,
         status,
-        interactedFields: [...signatures, ...standardFields],
+        interactedFields: [...signatures, ...standardFields, ...lineItemFields],
         ipAddress: ip,
       });
 
@@ -236,7 +239,7 @@ module.exports = {
         await sendFinalContract(
           {
             file: finalFile.file,
-            name: template.file_name,
+            name: template.file_name || 'signed-adhoc-contract.pdf',
             size: finalFile?.size,
             itemId,
             fileId: result._id,

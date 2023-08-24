@@ -43,13 +43,76 @@ const updateInstanceId = async (fileId, instanceId) => {
 
 const getStoredBoardFile = async (boardId, itemId, instanceId) => {
   try {
-    const doc = await FileDetails.findOne({
+    let doc;
+    let type;
+
+    const template = await FileDetails.findOne({
       board_id: boardId,
+      item_id: itemId,
       itemViewInstanceId: instanceId,
       is_deleted: false,
-    })
-      .select('-email_verification_token -email_verification_token_expires')
-      .exec();
+      type: 'adhoc',
+    });
+
+    if (template) {
+      type = template.type;
+    } else {
+      const template = await FileDetails.findOne({
+        board_id: boardId,
+        itemViewInstanceId: instanceId,
+        is_deleted: false,
+      });
+
+      type = template?.type || 'template';
+    }
+
+    if (type === 'adhoc') {
+      doc = await FileDetails.findOne({
+        board_id: boardId,
+        item_id: itemId,
+        itemViewInstanceId: instanceId,
+        is_deleted: false,
+        type: 'adhoc',
+      });
+
+      if (!doc) {
+        const prevFile = await FileDetails.findOne({
+          board_id: boardId,
+          itemViewInstanceId: instanceId,
+          is_deleted: false,
+          type: 'adhoc',
+        });
+
+        doc = await FileDetails.create({
+          board_id: boardId,
+          item_id: itemId,
+          itemViewInstanceId: instanceId,
+          account_id: prevFile.account_id,
+          type: 'adhoc',
+          user_id: prevFile.user_id,
+        });
+
+        doc.account_id = prevFile.account_id;
+        doc.type = prevFile.type;
+        doc.is_email_verified = prevFile.is_email_verified;
+        doc.email_column_id = prevFile.email_column_id;
+        doc.email_address = prevFile.email_address;
+        doc.email_column_id = prevFile.email_column_id;
+        doc.status_column_id = prevFile.status_column_id;
+        doc.file_column_id = prevFile.file_column_id;
+        doc.presigned_file_column_id = prevFile.presigned_file_column_id;
+        doc.sender_name = prevFile.sender_name;
+        await doc.save();
+      }
+    } else {
+      doc = await FileDetails.findOne({
+        board_id: boardId,
+        itemViewInstanceId: instanceId,
+        is_deleted: false,
+      })
+        .select('-email_verification_token -email_verification_token_expires')
+        .exec();
+    }
 
     const alreadySignedFile = await FileHistory.findOne({
       itemId,

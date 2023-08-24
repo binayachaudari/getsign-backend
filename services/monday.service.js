@@ -23,12 +23,13 @@ const getItemDetails = async id => {
   query getItemDetails($ids: [Int]) {
     items(ids: $ids) {
       id
-      board {
+      board{
         id
         name
         columns{
-          settings_str
           id
+          type
+          settings_str
           title
         }
       }
@@ -44,6 +45,26 @@ const getItemDetails = async id => {
         id
       }
       state
+
+      subitems{
+        id
+        name
+        board{
+          columns{
+            id
+            type
+            settings_str
+            title
+          }
+        }
+        column_values {
+          id
+          text
+          title
+          type
+          value
+        }
+      }
     }
   }
   `,
@@ -111,6 +132,10 @@ const uploadContract = async ({
     data += 'Content-Type:application/json\r\n\r\n';
     data += '\r\n' + query + '\r\n';
 
+    if (!file.name) {
+      file.name = 'signed-adhoc-contract.pdf';
+    }
+
     // construct file part
     data += '--' + boundary + '\r\n';
     data +=
@@ -148,12 +173,41 @@ const getColumnValues = async itemId => {
       items(ids: $ids) {
         id
         name
+        board{
+          columns{
+            id
+            type
+            settings_str
+            title
+          }
+        }
         column_values {
           id
           text
           title
           type
         }
+        subitems{
+          id
+          name
+            board{
+              columns{
+                id
+                type
+                settings_str
+                title
+              }
+            }
+          column_values{
+            additional_info
+            id
+            title
+            text
+            type
+            value
+          }
+        }
+
       }
     }
     `,
@@ -228,6 +282,38 @@ const getUsers = async usersIds => {
     console.log('Error while get user', error.message);
     throw error;
   }
+};
+
+// Get public url
+const getPublicURL = async assedId => {
+  const res = await monday.api(
+    `
+    query getPublicUrl($ids: [Int]!){
+      assets(ids: $ids) {
+        public_url
+        created_at
+        file_extension
+        file_size
+        id
+        name
+        url   
+      }
+    }
+    `,
+    { variables: { ids: [Number(assedId)] } }
+  );
+  if (
+    res.hasOwnProperty('error_message') ||
+    res.hasOwnProperty('error_code') ||
+    res.hasOwnProperty('errors')
+  ) {
+    throw {
+      status: 403,
+      message: res?.errors?.[0]?.message,
+    };
+  }
+
+  return res?.data?.assets;
 };
 
 // Get team data by id
@@ -536,17 +622,19 @@ async function getFieldValue(column, itemId, searchMode = true) {
       for (let index = 0; index < files.length; index++) {
         const file = files[index];
         if (file.fileType === 'ASSET') {
-          // // const assetsIds = files.map(file => file.assetId);
-          // if (file.assetId) {
-          //   const monday_files = await Monday.getFile([file.assetId]);
-          //   if (monday_files.length > 0) {
-          //     allFilesList = [...allFilesList, ...monday_files];
-          //     //    files_urls = monday_files.map(file => file.public_url)
-          //   }
-          // }
-        } else {
-          allFilesList.push(file);
+          const assetsIds = files.map(file => file.assetId);
+          if (file.assetId) {
+            const monday_files = await getPublicURL([file.assetId]);
+            if (monday_files.length > 0) {
+              allFilesList = [...allFilesList, ...monday_files];
+              files_urls = monday_files.map(file => file.public_url);
+              return files_urls;
+            }
+          }
         }
+        //  else {
+        //   allFilesList.push(file);
+        // }
       }
     }
     value = JSON.stringify(allFilesList);
@@ -603,6 +691,37 @@ const getSpecificColumnValue = async (itemId, columnIds) => {
   return getFieldValue(column);
 };
 
+const getSpecificSubItemColumnValue = async (itemId, subItemId, columnIds) => {
+  const res = await monday.api(
+    `
+    query getSpecificColumnValue($ids: [Int], $columnIds: [String]) {
+      items(ids: $ids) {
+        id
+        subitems{
+          id
+          column_values (ids: $columnIds) {
+            id
+            text
+            title
+            type
+            value
+            additional_info
+          }
+        }
+      
+      }
+    }
+    `,
+    { variables: { ids: [Number(itemId)], columnIds } }
+  );
+
+  const column = res?.data?.items?.[0]?.subitems?.find(
+    subItem => subItem.id == subItemId
+  )?.column_values?.[0];
+
+  return getFieldValue(column);
+};
+
 const runMondayQuery = async ({
   userId,
   accountId,
@@ -615,7 +734,6 @@ const runMondayQuery = async ({
   return monday
     .api(query, queryOptions)
     .then(res => {
-      console.log('Create new column response===>', res);
       return res;
     })
     .catch(err => {
@@ -729,6 +847,90 @@ const updateMultipleTextColumnValues = async ({
   return false;
 };
 
+const uploadPreSignedFile = async ({
+  itemId,
+  columnId,
+  file,
+  userId,
+  accountId,
+}) => {
+  const accessToken = await setMondayToken(userId, accountId);
+  const url = 'https://api.monday.com/v2/file';
+  var query = `mutation add_file($file: File!) { add_file_to_column (file: $file, item_id: ${itemId}, column_id: "${columnId}") { id } }`;
+  var data = '';
+  const boundary = 'xxxxxxxxxxxxxxx';
+
+  try {
+    // construct query part
+    data += '--' + boundary + '\r\n';
+    data += 'Content-Disposition: form-data; name="query"; \r\n';
+    data += 'Content-Type:application/json\r\n\r\n';
+    data += '\r\n' + query + '\r\n';
+
+    // construct file part
+    data += '--' + boundary + '\r\n';
+    data +=
+      'Content-Disposition: form-data; name="variables[file]"; filename="' +
+      file.name +
+      '"\r\n';
+    data += `Content-Type:${file.mimetype}\r\n\r\n`;
+
+    var payload = Buffer.concat([
+      Buffer.from(data, 'utf8'),
+      new Uint8Array(file.data),
+      Buffer.from('\r\n--' + boundary + '--\r\n', 'utf8'),
+    ]);
+
+    return await axios({
+      url,
+      method: 'post',
+      headers: {
+        'Content-Type': 'multipart/form-data; boundary=' + boundary,
+        Authorization: accessToken,
+      },
+      data: payload,
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity,
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
+const clearFileColumn = async ({
+  itemId,
+  boardId,
+  columnId,
+  userId,
+  accountId,
+}) => {
+  await setMondayToken(userId, accountId);
+  const value = JSON.stringify({
+    clear_all: true,
+  });
+  try {
+    const result = await monday.api(
+      `mutation clearFileColumn($boardId: Int!, $itemId: Int!, $columnId: String!, $value: JSON!) {
+        change_column_value(board_id: $boardId, item_id: $itemId, value: $value, column_id: $columnId) {
+      id
+    }
+  }`,
+      {
+        variables: {
+          boardId: Number(boardId),
+          itemId: Number(itemId),
+          columnId,
+          value,
+        },
+      }
+    );
+    console.log('delete file from board', result);
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
   me,
   getItemDetails,
@@ -740,4 +942,8 @@ module.exports = {
   getSpecificColumnValue,
   runMondayQuery,
   updateMultipleTextColumnValues,
+  uploadPreSignedFile,
+  getFieldValue,
+  getSpecificSubItemColumnValue,
+  clearFileColumn,
 };
