@@ -203,7 +203,7 @@ const generatePDF = async (id, fields, items_subItem) => {
             placeHolder?.subItemSettings || {},
             items_subItem
           );
-          const initialXCoordinate = placeHolder.formField.coordinates.x + 8;
+          const initialXCoordinate = placeHolder.formField.coordinates.x;
           const initialYCoordinate = placeHolder.formField.coordinates.y;
 
           createTable({
@@ -213,26 +213,6 @@ const generatePDF = async (id, fields, items_subItem) => {
             initialYCoordinate,
             tableWidth: placeHolder?.width || 564,
             tableSetting: {
-              // sum: {
-              //   checked: true,
-              //   column: 'formula',
-              //   label: 'Sum',
-              //   value: '10000',
-              // },
-              // header: {
-              //   checked: false,
-              //   color: 'grey',
-              // },
-              // tax: {
-              //   checked: true,
-              //   type: 'percentage',
-              //   value: '100',
-              //   label: 'Tax',
-              // },
-              // currency: {
-              //   checked: true,
-              //   position: 'before-the-value',
-              // },
               ...(placeHolder?.subItemSettings || {}),
             },
           });
@@ -606,8 +586,7 @@ const generatePDFWithGivenPlaceholders = async (
             items_subItem
           );
 
-          console.log({ tableData });
-          const initialXCoordinate = placeHolder.formField.coordinates.x + 8;
+          const initialXCoordinate = placeHolder.formField.coordinates.x;
           const initialYCoordinate = placeHolder.formField.coordinates.y;
 
           createTable({
@@ -986,7 +965,7 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
               items_subItem
             );
 
-            const initialXCoordinate = placeHolder.formField.coordinates.x - 12;
+            const initialXCoordinate = placeHolder.formField.coordinates.x;
             const initialYCoordinate = placeHolder.formField.coordinates.y;
 
             createTable({
@@ -996,26 +975,6 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
               initialYCoordinate,
               tableWidth: placeHolder?.width,
               tableSetting: {
-                // sum: {
-                //   checked: true,
-                //   column: 'formula',
-                //   label: 'Sum',
-                //   value: '10000',
-                // },
-                // header: {
-                //   checked: false,
-                //   color: 'grey',
-                // },
-                // tax: {
-                //   checked: true,
-                //   type: 'percentage',
-                //   value: '100',
-                //   label: 'Tax',
-                // },
-                // currency: {
-                //   checked: true,
-                //   position: 'before-the-value',
-                // },
                 ...(placeHolder?.subItemSettings || {}),
               },
             });
