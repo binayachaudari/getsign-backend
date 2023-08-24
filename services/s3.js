@@ -99,12 +99,12 @@ const uploadFile = async req => {
 };
 
 const getFile = async (id, accountId) => {
+  let url;
+  const fileDetails = await FileDetailsModel.findOne({
+    _id: id,
+    account_id: accountId,
+  }).lean();
   try {
-    let url;
-    const fileDetails = await FileDetailsModel.findOne({
-      _id: id,
-      account_id: accountId,
-    }).lean();
     if (fileDetails?.type === 'adhoc') {
       const urls = await getSpecificColumnValue(
         fileDetails?.item_id,
@@ -136,6 +136,7 @@ const getFile = async (id, accountId) => {
   } catch (error) {
     if (error.status) {
       error.statusCode = error.status;
+      error.userId = fileDetails.user_id;
     }
     throw error;
   }

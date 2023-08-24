@@ -36,12 +36,16 @@ const isUserAuthenticated = async (userId, accountId) => {
 };
 
 const updateUserToken = async (userId, token) => {
-  const user = await UserModel.findById(userId);
+  const users = await UserModel.find({ user_id: userId }).exec();
 
-  user.accessToken = token;
-  await user.save();
+  if (users?.length) {
+    for (const user of users) {
+      user.accessToken = token;
+      await user.save();
+    }
+  }
 
-  return user;
+  return users?.[0];
 };
 
 module.exports = { storeOrUpdateUser, isUserAuthenticated, updateUserToken };
