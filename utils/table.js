@@ -94,6 +94,8 @@ const createTable = async ({
     return tableWidth * (col.size / 100);
   });
 
+  const currencyColumns = tableSetting?.currency?.column || [];
+
   const columnWidthDiff = tableWidth - columnWidths.reduce((a, b) => a + b);
 
   if (columnWidthDiff > 0) {
@@ -119,10 +121,12 @@ const createTable = async ({
         if (currentRowPosition > 0 && col.type === 'numeric') {
           textVal = col?.formattedValue || '';
         }
+
         if (
           currentRowPosition > 0 &&
           col.type === 'formula' &&
-          tableSetting?.currency?.checked
+          tableSetting?.currency?.checked &&
+          currencyColumns?.includes(col.id)
         ) {
           textVal = parseFloat(textVal);
 
