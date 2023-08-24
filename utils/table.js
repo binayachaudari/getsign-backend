@@ -66,7 +66,10 @@ const calculateRowHeight = ({
   }
 
   return {
-    rowHeight: Math.max(lines.length * fontSize, defaultRowHeight),
+    rowHeight: Math.max(
+      lines.length * fontSize + lines.length * 3,
+      defaultRowHeight
+    ),
     lines,
   };
 };
@@ -77,6 +80,7 @@ const writeMultiplineText = ({
   initialTextX,
   initialTextY,
   fontSize,
+  lineGap = 3,
 }) => {
   let textPosY = initialTextY;
   let textPosX = initialTextX;
@@ -88,7 +92,7 @@ const writeMultiplineText = ({
       size: fontSize,
       color: rgb(0, 0, 0),
     });
-    textPosY -= fontSize;
+    textPosY -= fontSize + lineGap;
   }
 };
 
@@ -100,22 +104,25 @@ const createTable = async ({
   tableWidth,
   tableSetting,
 }) => {
+  const lineGap = 3;
   const tableRows = tableData.length;
   const tableCols = tableData[0].length;
-
+  const paddingX = 3 * 0.75;
+  const paddingY = 3 * 0.75;
   const columnWidths = tableData[0]?.map(col => {
     return tableWidth * (col.size / 100);
   });
 
   const defaultRowHeight = 45 * 0.75;
-  let currentXCoordinate = initialXCoordinate - 8;
-  let currentYCoordinate = initialYCoordinate;
+  let currentXCoordinate = initialXCoordinate + paddingX;
+  let currentYCoordinate = initialYCoordinate - paddingY;
 
   for (
     let currentRowPosition = 0;
     currentRowPosition < tableRows;
     currentRowPosition++
   ) {
+    const fontSize = currentRowPosition === 0 ? 14 * 0.9 : 12 * 0.9;
     let maxRowHeight = Math.max(
       defaultRowHeight,
       ...tableData[currentRowPosition].map((col, j) => {
@@ -156,7 +163,7 @@ const createTable = async ({
           text: textVal || '',
           currentPage,
           defaultRowHeight,
-          fontSize: 12,
+          fontSize: fontSize,
           columnWidth: columnWidths[j],
         });
 
@@ -164,9 +171,10 @@ const createTable = async ({
         return parseFloat(rowHeight);
       })
     );
+    maxRowHeight += lineGap * 0.75;
 
     for (let currentColumn = 0; currentColumn < tableCols; currentColumn++) {
-      const cellMargin = 5;
+      const cellMargin = 4 * 0.75;
       const lines = tableData[currentRowPosition][currentColumn]?.lines || [];
 
       const drawRectangleOption = {
@@ -207,27 +215,30 @@ const createTable = async ({
         ...drawRectangleOption,
       });
 
-      let fontHeight = currentRowPosition === 0 ? 12 : 10;
       const textPosX = currentXCoordinate + cellMargin;
       const textPosY =
         currentYCoordinate -
+        cellMargin -
         maxRowHeight / (lines.length > 1 ? lines.length : 2);
 
       writeMultiplineText({
         currentPage,
         initialTextX: textPosX,
         initialTextY: textPosY,
-        fontSize: fontHeight,
+        fontSize: fontSize,
         lines,
+        lineGap,
       });
 
       currentXCoordinate = currentXCoordinate + columnWidths[currentColumn];
     }
 
-    currentXCoordinate = initialXCoordinate - 8;
-    currentYCoordinate -= maxRowHeight;
+    currentXCoordinate = initialXCoordinate + paddingX;
+    if (currentRowPosition < tableRows) {
+      currentYCoordinate -= maxRowHeight;
+    }
   }
-  currentYCoordinate -= 24 * 0.75;
+  // currentYCoordinate -= 10 * 0.75;
 
   if (tableSetting?.sum?.checked || tableSetting?.tax?.checked) {
     currentPage.drawLine({
@@ -239,9 +250,9 @@ const createTable = async ({
   }
 
   if (tableSetting?.tax?.checked) {
-    currentYCoordinate -= 25 * 0.75;
+    currentYCoordinate -= (10 + 33 * 0.75) * 0.75; // Padding + font size
 
-    const taxLabelXCoordinate = currentXCoordinate + 5;
+    const taxLabelXCoordinate = currentXCoordinate;
 
     currentPage.drawText(tableSetting?.tax?.label || 'Tax', {
       x: taxLabelXCoordinate,
@@ -255,23 +266,36 @@ const createTable = async ({
         ? tableSetting?.tax?.value + '%'
         : tableSetting?.tax?.value;
 
-    let xCoordinate = tableWidth + initialXCoordinate - 25 * 0.75;
-    taxValue
-      ?.split('')
-      ?.reverse()
-      ?.forEach(str => {
-        currentPage.drawText(str, {
-          x: xCoordinate,
-          y: currentYCoordinate,
-          size: 12,
-          color: rgb(0, 0, 0),
-        });
-        xCoordinate -= 8;
+    let xCoordinate = tableWidth + initialXCoordinate;
+
+    if (taxValue) {
+      const pdfDoc = currentPage.doc || null;
+      const pdfFont = pdfDoc?.fonts?.[pdfDoc?.fonts?.length - 1] || [];
+      const width = pdfFont.widthOfTextAtSize(taxValue, 12 * 0.75);
+      xCoordinate -= width;
+      currentPage.drawText(taxValue, {
+        x: xCoordinate,
+        y: currentYCoordinate,
+        size: 12,
+        color: rgb(0, 0, 0),
       });
+    }
+    // taxValue
+    //   ?.split('')
+    //   ?.reverse()
+    //   ?.forEach(str => {
+    //     currentPage.drawText(str, {
+    //       x: xCoordinate,
+    //       y: currentYCoordinate,
+    //       size: 12,
+    //       color: rgb(0, 0, 0),
+    //     });
+    //     xCoordinate -= 8;
+    //   });
   }
 
   if (tableSetting?.sum?.checked) {
-    currentYCoordinate -= 60 * 0.75;
+    currentYCoordinate -= (20 + 33 * 0.75 + 33 * 0.5 * 0.75) * 0.75;
 
     const sumLabel = tableSetting?.sum?.label || 'Sum';
 
@@ -305,35 +329,46 @@ const createTable = async ({
         CURRENCY_POSITION_TYPES.before
           ? `${
               CURRENCY_TYPE[tableSetting?.currency?.type?.value]?.symbol ||
-              '$' + ' '
+              '$' + ''
             }` + totalSum
           : totalSum +
             `${
-              ' ' +
-                CURRENCY_TYPE[tableSetting?.currency?.type?.value]?.symbol ||
+              '' + CURRENCY_TYPE[tableSetting?.currency?.type?.value]?.symbol ||
               '$'
             }`;
     }
 
-    let xCoordinate = tableWidth + initialXCoordinate - 25 * 0.75;
+    let xCoordinate = tableWidth + initialXCoordinate;
 
-    totalSum
-      .toString()
-      ?.split('')
-      ?.reverse()
-      ?.forEach(str => {
-        const pdfDoc = currentPage.doc || null;
-        const pdfFont = pdfDoc?.fonts?.[pdfDoc?.fonts?.length - 1] || [];
-        const width = pdfFont.widthOfTextAtSize(str, 12);
-
-        currentPage.drawText(str, {
-          x: xCoordinate,
-          y: currentYCoordinate,
-          size: 12,
-          color: rgb(0, 0, 0),
-        });
-        xCoordinate -= width + 2;
+    if (totalSum) {
+      const pdfDoc = currentPage.doc || null;
+      const pdfFont = pdfDoc?.fonts?.[pdfDoc?.fonts?.length - 1] || [];
+      const width = pdfFont.widthOfTextAtSize(totalSum, 12 * 0.75);
+      xCoordinate -= width;
+      currentPage.drawText(totalSum, {
+        x: xCoordinate,
+        y: currentYCoordinate,
+        size: 12,
+        color: rgb(0, 0, 0),
       });
+    }
+    // totalSum
+    //   .toString()
+    //   ?.split('')
+    //   ?.reverse()
+    //   ?.forEach(str => {
+    //     const pdfDoc = currentPage.doc || null;
+    //     const pdfFont = pdfDoc?.fonts?.[pdfDoc?.fonts?.length - 1] || [];
+    //     const width = pdfFont.widthOfTextAtSize(str, 12);
+
+    //     currentPage.drawText(str, {
+    //       x: xCoordinate,
+    //       y: currentYCoordinate,
+    //       size: 12,
+    //       color: rgb(0, 0, 0),
+    //     });
+    //     xCoordinate -= width + 2;
+    //   });
 
     xCoordinate -= 16;
 
