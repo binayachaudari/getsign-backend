@@ -95,7 +95,6 @@ const createTable = async ({
   });
 
   const currencyColumns = tableSetting?.currency?.column || [];
-  console.log({ tableSetting: JSON.stringify(tableSetting), currencyColumns });
 
   const columnWidthDiff = tableWidth - columnWidths.reduce((a, b) => a + b);
 
