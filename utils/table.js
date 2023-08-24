@@ -1,24 +1,5 @@
 const { rgb } = require('pdf-lib');
 
-const createTableHead = ({
-  currentPage,
-  header,
-  xCoordinate,
-  yCoordinate,
-  customFont,
-  fontSize,
-  tableWidth,
-}) => {
-  currentPage?.drawRectangle({
-    x: xCoordinate,
-    y: yCoordinate,
-    width: header?.size || 150,
-    height: 20,
-    borderWidth: 1,
-    color: rgb(0.8, 0.8, 0.8),
-  });
-};
-
 const TAX_TYPE = {
   percentage: 'percentage',
   fixed: 'fixed',
@@ -67,9 +48,9 @@ const calculateRowHeight = ({
 
   return {
     rowHeight: Math.max(
-      lines.length * fontSize + lines.length * 3,
+      lines.length * (fontSize * 1.12) + 2 * 5 * 0.75,
       defaultRowHeight
-    ),
+    ), // fontSize * 1.12 signifies accommodating lineheight as well
     lines,
   };
 };
@@ -109,11 +90,19 @@ const createTable = async ({
   const tableCols = tableData[0].length;
   const paddingX = 3 * 0.75;
   const paddingY = 3 * 0.75;
-  const columnWidths = tableData[0]?.map(col => {
+  let columnWidths = tableData[0]?.map(col => {
     return tableWidth * (col.size / 100);
   });
 
-  const defaultRowHeight = 45 * 0.75;
+  const columnWidthDiff = tableWidth - columnWidths.reduce((a, b) => a + b);
+
+  if (columnWidthDiff > 0) {
+    columnWidths = columnWidths.map(
+      width => width + columnWidthDiff / columnWidths.length
+    );
+  }
+
+  const defaultRowHeight = 37 * 0.75;
   let currentXCoordinate = initialXCoordinate + paddingX;
   let currentYCoordinate = initialYCoordinate - paddingY;
 
@@ -168,6 +157,7 @@ const createTable = async ({
         });
 
         tableData[currentRowPosition][j].lines = lines;
+
         return parseFloat(rowHeight);
       })
     );
@@ -238,7 +228,7 @@ const createTable = async ({
       currentYCoordinate -= maxRowHeight;
     }
   }
-  // currentYCoordinate -= 10 * 0.75;
+  currentYCoordinate -= 3 * 0.75;
 
   if (tableSetting?.sum?.checked || tableSetting?.tax?.checked) {
     currentPage.drawLine({
@@ -266,7 +256,7 @@ const createTable = async ({
         ? tableSetting?.tax?.value + '%'
         : tableSetting?.tax?.value;
 
-    let xCoordinate = tableWidth + initialXCoordinate;
+    let xCoordinate = tableWidth + initialXCoordinate - paddingX;
 
     if (taxValue) {
       const pdfDoc = currentPage.doc || null;
@@ -328,17 +318,15 @@ const createTable = async ({
         tableSetting?.currency?.position?.value ===
         CURRENCY_POSITION_TYPES.before
           ? `${
-              CURRENCY_TYPE[tableSetting?.currency?.type?.value]?.symbol ||
-              '$' + ''
+              CURRENCY_TYPE[tableSetting?.currency?.type?.value]?.symbol || '$'
             }` + totalSum
           : totalSum +
             `${
-              '' + CURRENCY_TYPE[tableSetting?.currency?.type?.value]?.symbol ||
-              '$'
+              CURRENCY_TYPE[tableSetting?.currency?.type?.value]?.symbol || '$'
             }`;
     }
 
-    let xCoordinate = tableWidth + initialXCoordinate;
+    let xCoordinate = tableWidth + initialXCoordinate - paddingX;
 
     if (totalSum) {
       const pdfDoc = currentPage.doc || null;
