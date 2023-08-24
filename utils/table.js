@@ -36,7 +36,7 @@ const calculateRowHeight = ({
     const testLine =
       currentLineText === '' ? word : `${currentLineText}${word}`;
 
-    const width = pdfFont.widthOfTextAtSize(testLine, fontSize);
+    const width = pdfFont.widthOfTextAtSize(`${testLine}`, fontSize);
 
     if (width <= columnWidth - cellMargin) {
       lines[currentLine] = testLine;
@@ -248,7 +248,7 @@ const createTable = async ({
 
     const taxLabelXCoordinate = currentXCoordinate;
 
-    currentPage.drawText(tableSetting?.tax?.label || 'Tax', {
+    currentPage.drawText(`${tableSetting?.tax?.label}` || 'Tax', {
       x: taxLabelXCoordinate,
       y: currentYCoordinate,
       size: 14,
@@ -265,9 +265,9 @@ const createTable = async ({
     if (taxValue) {
       const pdfDoc = currentPage.doc || null;
       const pdfFont = pdfDoc?.fonts?.[pdfDoc?.fonts?.length - 1] || [];
-      const width = pdfFont.widthOfTextAtSize(taxValue, 12 * 0.75);
+      const width = pdfFont.widthOfTextAtSize(`${taxValue}`, 12 * 0.75);
       xCoordinate -= width;
-      currentPage.drawText(taxValue, {
+      currentPage.drawText(`${taxValue}`, {
         x: xCoordinate,
         y: currentYCoordinate,
         size: 12,
@@ -335,9 +335,9 @@ const createTable = async ({
     if (totalSum) {
       const pdfDoc = currentPage.doc || null;
       const pdfFont = pdfDoc?.fonts?.[pdfDoc?.fonts?.length - 1] || [];
-      const width = pdfFont.widthOfTextAtSize(totalSum, 12 * 0.75);
+      const width = pdfFont.widthOfTextAtSize(`${totalSum}`, 12 * 0.75);
       xCoordinate -= width;
-      currentPage.drawText(totalSum, {
+      currentPage.drawText(`${totalSum}`, {
         x: xCoordinate,
         y: currentYCoordinate,
         size: 12,
@@ -367,9 +367,9 @@ const createTable = async ({
     if (sumLabel) {
       const pdfDoc = currentPage.doc || null;
       const pdfFont = pdfDoc?.fonts?.[pdfDoc?.fonts?.length - 1] || [];
-      const width = pdfFont.widthOfTextAtSize(sumLabel, 14);
+      const width = pdfFont.widthOfTextAtSize(`${sumLabel}`, 14);
       xCoordinate -= width;
-      currentPage.drawText(sumLabel, {
+      currentPage.drawText(`${sumLabel}`, {
         x: xCoordinate,
         y: currentYCoordinate,
         size: 14,
