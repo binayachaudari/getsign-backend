@@ -88,6 +88,7 @@ const createTable = async ({
   const lineGap = 3;
   const tableRows = tableData.length;
   const tableCols = tableData[0].length;
+
   const paddingX = 3 * 0.75;
   const paddingY = 3 * 0.75;
   let columnWidths = tableData[0]?.map(col => {

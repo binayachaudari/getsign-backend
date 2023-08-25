@@ -60,15 +60,6 @@ const addSenderDetails = async payload => {
       };
     }
 
-    const currentItem = await FileDetails.findOne({
-      account_id: payload.account_id,
-      board_id: payload.board_id,
-      item_id: payload.item_id,
-      user_id: payload.user_id,
-      itemViewInstanceId: payload.instanceId,
-      type: payload?.type,
-    }).sort({ updated_at: -1 });
-
     if (previous?.length) {
       if (previous?.[0]?.email_address !== payload.email_address) {
         const verificationToken = crypto.randomBytes(20).toString('hex');
@@ -78,27 +69,20 @@ const addSenderDetails = async payload => {
           item.is_email_verified = false;
           item.email_verification_token = verificationToken;
           item.email_verification_token_expires = verificationTokenExpires;
+          item.email_address = payload?.email_address;
+          item.email_column_id = payload?.email_column_id;
+          item.status_column_id = payload?.status_column_id;
+          item.file_column_id = payload?.file_column_id;
+          item.presigned_file_column_id = payload?.presigned_file_column_id;
+          item.sender_name = payload?.sender_name;
+          item.itemViewInstanceId = payload?.instanceId;
+          await item.save();
         }
 
         await emailVerification(
           previous?.[0].email_verification_token,
           payload.email_address
         );
-      }
-
-      for (const item of previous) {
-        item.is_email_verified = currentItem?.is_email_verified;
-        item.email_verification_token = currentItem?.email_verification_token;
-        item.email_verification_token_expires =
-          currentItem?.email_verification_token_expires;
-        item.email_address = payload?.email_address;
-        item.email_column_id = payload?.email_column_id;
-        item.status_column_id = payload?.status_column_id;
-        item.file_column_id = payload?.file_column_id;
-        item.presigned_file_column_id = payload?.presigned_file_column_id;
-        item.sender_name = payload?.sender_name;
-        item.itemViewInstanceId = payload?.instanceId;
-        await item.save();
       }
     } else {
       const result = await FileDetails.create({
