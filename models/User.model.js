@@ -26,6 +26,10 @@ const schema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    editorOnboarded: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: {

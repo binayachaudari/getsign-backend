@@ -13,6 +13,7 @@ const storeOrUpdateUser = async (userDetails, token) => {
       board_id: userDetails?.boardId,
       item_id: userDetails?.itemId,
       workspace_id: userDetails?.workspaceId,
+      editorOnboarded: false,
     });
 
   user.account_id = userDetails?.account?.id;
@@ -21,6 +22,7 @@ const storeOrUpdateUser = async (userDetails, token) => {
   user.item_id = userDetails?.itemId;
   user.workspace_id = userDetails?.workspaceId;
   user.accessToken = token;
+
   user.save();
 
   return user;
