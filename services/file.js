@@ -247,6 +247,22 @@ const generatePDF = async (id, fields, items_subItem) => {
                 font: customFont,
                 size: fontSize,
               });
+            } else if (
+              value?.type === 'date' &&
+              placeHolder?.dateFormat?.format &&
+              value?.text
+            ) {
+              const currentDate = moment(new Date(value?.text))
+                .format(placeHolder?.dateFormat?.format || 'DD/MM/YYYY')
+                .toString();
+              currentPage.drawText(currentDate || '', {
+                x: placeHolder.formField.coordinates.x,
+                y:
+                  placeHolder.formField.coordinates.y -
+                  fontSize * scalingFactor,
+                font: customFont,
+                size: fontSize,
+              });
             } else {
               currentPage.drawText(value?.text || '', {
                 x: placeHolder.formField.coordinates.x,
@@ -625,6 +641,22 @@ const generatePDFWithGivenPlaceholders = async (
 
             if (value?.type === 'numeric') {
               currentPage.drawText(value?.formattedValue || '', {
+                x: placeHolder.formField.coordinates.x,
+                y:
+                  placeHolder.formField.coordinates.y -
+                  fontSize * scalingFactor,
+                font: customFont,
+                size: fontSize,
+              });
+            } else if (
+              value?.type === 'date' &&
+              placeHolder?.dateFormat?.format &&
+              value?.text
+            ) {
+              const currentDate = moment(new Date(value?.text))
+                .format(placeHolder?.dateFormat?.format || 'DD/MM/YYYY')
+                .toString();
+              currentPage.drawText(currentDate || '', {
                 x: placeHolder.formField.coordinates.x,
                 y:
                   placeHolder.formField.coordinates.y -
