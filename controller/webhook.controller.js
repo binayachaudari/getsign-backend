@@ -43,7 +43,12 @@ const applicationWebhook = async (req, res, next) => {
   if (auth) decoded = jwt.decode(auth, process.env.CLIENT_SECRET);
 
   const payload = req.body;
-  console.log({ payload });
+  console.log('Webhook', { payload });
+
+  if (payload?.challenge) {
+    res.status(200).send(req.body);
+    return;
+  }
 
   // reset fields when they uninstall
   if (

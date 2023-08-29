@@ -58,8 +58,8 @@ app.use(
 app.use('/api/v1', require('./routes/api'));
 app.post(
   '/webhook',
-  appSubscriptionValidation(),
-  validateRequest,
+  // appSubscriptionValidation(),
+  // validateRequest,
   require('./controller/webhook.controller')
 );
 
@@ -80,13 +80,11 @@ if (process.env.NODE_ENV === 'production') {
 app.use(Sentry.Handlers.errorHandler());
 
 app.use((err, req, res, next) => {
-  return res
-    .status(err?.statusCode || 500)
-    .json({
-      message: err.message,
-      errorId: res.sentry,
-      ...(err?.userId && { userId: err.userId }),
-    });
+  return res.status(err?.statusCode || 500).json({
+    message: err.message,
+    errorId: res.sentry,
+    ...(err?.userId && { userId: err.userId }),
+  });
 });
 
 app.listen(PORT, () => {
