@@ -218,7 +218,7 @@ const applicationWebhook = async (req, res, next) => {
     });
   }
 
-  return res.status(201).json({ data: app });
+  return res.status(200).send(req.body);
 };
 
 module.exports = applicationWebhook;
