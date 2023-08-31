@@ -236,6 +236,12 @@ module.exports = {
           accountId: template?.account_id,
         });
 
+        const receivers = [to];
+
+        if (!onlyReceiverSigRequired) {
+          receivers.push(template.email_address);
+        }
+
         await sendFinalContract(
           {
             file: finalFile.file,
@@ -246,7 +252,7 @@ module.exports = {
             senderName: template.sender_name,
             senderEmail: template.email_address,
           },
-          [template.email_address, to]
+          receivers
         );
         return res.status(200).json({ data: 'Contract has been sent!' });
       }
