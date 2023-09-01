@@ -242,7 +242,12 @@ const generatePDF = async (id, fields, items_subItem) => {
                 size: fontSize,
               });
             }
-            if (value?.type === 'numeric') {
+            if (value?.type === 'text' || value?.type === 'long-text') {
+              placeHolder.content = value?.text || '';
+
+              let pdfWriter = new PdfWriter(currentPage, placeHolder);
+              pdfWriter.writeTextBox();
+            } else if (value?.type === 'numeric') {
               currentPage.drawText(value?.formattedValue || value?.text || '', {
                 x: placeHolder.formField.coordinates.x,
                 y:
@@ -643,8 +648,12 @@ const generatePDFWithGivenPlaceholders = async (
                 size: fontSize,
               });
             }
+            if (value?.type === 'text' || value?.type === 'long-text') {
+              placeHolder.content = value?.text || '';
 
-            if (value?.type === 'numeric') {
+              let pdfWriter = new PdfWriter(currentPage, placeHolder);
+              pdfWriter.writeTextBox();
+            } else if (value?.type === 'numeric') {
               currentPage.drawText(value?.formattedValue || '', {
                 x: placeHolder.formField.coordinates.x,
                 y:
@@ -1018,7 +1027,10 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
           } else if (placeHolder?.itemId === STANDARD_FIELDS.textBox) {
             let pdfWriter = new PdfWriter(currentPage, placeHolder);
             pdfWriter.writeTextBox();
-          } else if (placeHolder?.itemId === STANDARD_FIELDS.status) {
+          } else if (
+            // placeHolder?.itemId === STANDARD_FIELDS.textBox ||
+            placeHolder?.itemId === STANDARD_FIELDS.status
+          ) {
             const fontSize = placeHolder.fontSize || 11;
             const height = placeHolder.height || 18.33;
 
@@ -1079,13 +1091,21 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
                 size: fontSize,
               });
             }
+            if (value?.type === 'text' || value?.type === 'long-text') {
+              placeHolder.content = value?.text || '';
 
-            currentPage.drawText(value?.text || '', {
-              x: placeHolder.formField.coordinates.x,
-              y: placeHolder.formField.coordinates.y - fontSize * scalingFactor,
-              font: customFont,
-              size: fontSize,
-            });
+              let pdfWriter = new PdfWriter(currentPage, placeHolder);
+              pdfWriter.writeTextBox();
+            } else {
+              currentPage.drawText(value?.text || '', {
+                x: placeHolder.formField.coordinates.x,
+                y:
+                  placeHolder.formField.coordinates.y -
+                  fontSize * scalingFactor,
+                font: customFont,
+                size: fontSize,
+              });
+            }
           }
         });
       }

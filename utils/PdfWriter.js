@@ -8,7 +8,7 @@ class PdfWriter {
 
   writeTextBox() {
     const pdfFont = this.currentPage.doc?.fonts?.[0] || [];
-    const fontSize = this.placeholder.fontSize;
+    const fontSize = this.placeholder.fontSize || 12;
 
     const marginY = 8 * 0.75;
     const marginX = 8 * 0.75;
