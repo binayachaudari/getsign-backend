@@ -37,6 +37,7 @@ const { formulaeParser } = require('../utils/mondayFormulaConverter');
 const { HyperFormula } = require('hyperformula');
 const { toFixed } = require('../utils/number');
 const { createTable } = require('../utils/table');
+const PdfWriter = require('../utils/PdfWriter');
 
 const scalingFactor = 0.75;
 
@@ -155,19 +156,22 @@ const generatePDF = async (id, fields, items_subItem) => {
             size: fontSize,
           });
         } else if (placeHolder?.itemId === 'text-box') {
-          const fontSize = placeHolder.fontSize || 11;
-          const height = placeHolder.height || 18.33;
+          let pdfWriter = new PdfWriter(currentPage, placeHolder);
 
-          currentPage.drawText(placeHolder?.content || '', {
-            x: placeHolder.formField.coordinates.x + 8,
-            y:
-              placeHolder.formField.coordinates.y -
-              height +
-              (height - fontSize * 1.375) / 2 -
-              (fontSize * 1.375 - fontSize) / 2,
-            font: customFont,
-            size: fontSize,
-          });
+          pdfWriter.writeTextBox();
+          // const fontSize = placeHolder.fontSize || 11;
+          // const height = placeHolder.height || 18.33;
+
+          // currentPage.drawText(placeHolder?.content || '', {
+          //   x: placeHolder.formField.coordinates.x + 8,
+          //   y:
+          //     placeHolder.formField.coordinates.y -
+          //     height +
+          //     (height - fontSize * 1.375) / 2 -
+          //     (fontSize * 1.375 - fontSize) / 2,
+          //   font: customFont,
+          //   size: fontSize,
+          // });
         } else if (placeHolder?.itemId === 'line-item') {
           for (const [subItemIndex, subItem] of items_subItem?.entries()) {
             const formulaColumnValues = await getFormulaValueOfItem({
@@ -583,19 +587,20 @@ const generatePDFWithGivenPlaceholders = async (
             size: fontSize,
           });
         } else if (placeHolder?.itemId === 'text-box') {
-          const fontSize = placeHolder.fontSize || 11;
-          const height = placeHolder.height || 18.33;
+          let pdfWriter = new PdfWriter(currentPage, placeHolder);
 
-          currentPage.drawText(placeHolder?.content || '', {
-            x: placeHolder.formField.coordinates.x + 8,
-            y:
-              placeHolder.formField.coordinates.y -
-              height +
-              (height - fontSize * 1.375) / 2 -
-              (fontSize * 1.375 - fontSize) / 2,
-            font: customFont,
-            size: fontSize,
-          });
+          pdfWriter.writeTextBox();
+
+          // currentPage.drawText(placeHolder?.content, {
+          //   x: placeHolder.formField.coordinates.x + 8,
+          //   y:
+          //     placeHolder.formField.coordinates.y -
+          //     height +
+          //     (height - fontSize * 1.375) / 2 -
+          //     (fontSize * 1.375 - fontSize) / 2,
+          //   font: customFont,
+          //   size: fontSize,
+          // });
         } else if (placeHolder?.itemId === 'line-item') {
           const tableData = await getSubItems(
             placeHolder?.subItemSettings,
@@ -1010,10 +1015,10 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
                 ...(placeHolder?.subItemSettings || {}),
               },
             });
-          } else if (
-            placeHolder?.itemId === STANDARD_FIELDS.textBox ||
-            placeHolder?.itemId === STANDARD_FIELDS.status
-          ) {
+          } else if (placeHolder?.itemId === STANDARD_FIELDS.textBox) {
+            let pdfWriter = new PdfWriter(currentPage, placeHolder);
+            pdfWriter.writeTextBox();
+          } else if (placeHolder?.itemId === STANDARD_FIELDS.status) {
             const fontSize = placeHolder.fontSize || 11;
             const height = placeHolder.height || 18.33;
 
