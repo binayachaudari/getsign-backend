@@ -28,6 +28,19 @@ class PdfWriter {
     const words = content?.split(/(\s+)/);
     let currentLine = 0;
 
+    // const drawRectangleOption = {
+    //   x: initialTextX,
+    //   y: initialTextY - placeHolderHeight,
+    //   width: placeHolderWidth,
+    //   height: placeHolderHeight,
+    //   borderColor: rgb(0, 0, 0),
+    //   borderWidth: 1,
+    //   borderOpacity: 1,
+    // };
+    // this.currentPage.drawRectangle({
+    //   ...drawRectangleOption,
+    // });
+
     for (const word of words) {
       const currentLineText = lines[currentLine] ?? '';
       const testLine =
@@ -45,8 +58,10 @@ class PdfWriter {
     let textPosY = initialTextY - fontHeightAtSize + cellPaddingY; // This is because pdf-lib takes initial y coordinate and draws a font upward from that point. To offset this we need to sub
     let textPosX = initialTextX + cellPaddingX;
 
+    const lineHeight = fontHeightAtSize;
+
     for (let line of lines) {
-      if (placeHolderHeight > 0) {
+      if (placeHolderHeight >= lineHeight) {
         this.currentPage.drawText(line, {
           x: textPosX,
           y: textPosY,
@@ -54,7 +69,9 @@ class PdfWriter {
           color: rgb(0, 0, 0),
         });
         textPosY -= fontSize + lineGap;
-        placeHolderHeight -= fontHeightAtSize - lineGap;
+        placeHolderHeight -= fontHeightAtSize + lineGap;
+      } else {
+        break;
       }
     }
   }
