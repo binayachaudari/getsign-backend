@@ -2,9 +2,28 @@ const {
   getItemDetails,
   getColumnValues,
   runMondayQuery,
+  getColumnValuesByIds,
+  handleFormatEmailAndPersons,
 } = require('../services/monday.service');
 const { getFormulaValueOfItem } = require('../utils/formula');
 const { handleFormatNumericColumn } = require('../utils/monday');
+
+const getEmailAndPersons = async (req, res, next) => {
+  const columns = req.body.columns || ['email', 'person'];
+
+  const itemId = req.params.itemId || '';
+
+  try {
+    const result = await getColumnValuesByIds(itemId, columns);
+
+    let column_values = result?.data?.items?.[0]?.column_values || [];
+
+    const formatColumnValues = await handleFormatEmailAndPersons(column_values);
+    return res.json({ emailsAndPersons: formatColumnValues }).status(200);
+  } catch (err) {
+    next(err);
+  }
+};
 
 const itemDetails = async (req, res, next) => {
   const { itemId } = req.params;
@@ -109,4 +128,5 @@ module.exports = {
   itemDetails,
   columnValues,
   createNewColumn,
+  getEmailAndPersons,
 };
