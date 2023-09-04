@@ -6,12 +6,19 @@ class PdfWriter {
     this.placeholder = placeholder || null;
   }
 
-  writeTextBox() {
+  writeTextBox(
+    { cellPaddingX = 0, cellPaddingY = 0, marginY = 0, marginX = 0 } = {
+      cellPaddingX: 0,
+      cellPaddingY: 0,
+      marginY: 0,
+      marginX: 0,
+    }
+  ) {
     const pdfFont = this.currentPage.doc?.fonts?.[0] || [];
     const fontSize = this.placeholder.fontSize || 12;
 
-    const marginY = 8 * 0.75;
-    const marginX = 8 * 0.75;
+    // const marginY = 8 * 0.75;
+    // const marginX = 8 * 0.75;
     const initialTextY = this.placeholder.formField.coordinates.y - marginY;
     const initialTextX = this.placeholder.formField.coordinates.x + marginX;
 
@@ -23,23 +30,9 @@ class PdfWriter {
     const lineGap = 3 * 0.75;
 
     let lines = [];
-    const cellPaddingX = 3 * 0.75;
-    const cellPaddingY = 3 * 0.75;
+
     const words = content?.split(/(\s+)/);
     let currentLine = 0;
-
-    // const drawRectangleOption = {
-    //   x: initialTextX,
-    //   y: initialTextY - placeHolderHeight,
-    //   width: placeHolderWidth,
-    //   height: placeHolderHeight,
-    //   borderColor: rgb(0, 0, 0),
-    //   borderWidth: 1,
-    //   borderOpacity: 1,
-    // };
-    // this.currentPage.drawRectangle({
-    //   ...drawRectangleOption,
-    // });
 
     for (const word of words) {
       const currentLineText = lines[currentLine] ?? '';
@@ -58,7 +51,7 @@ class PdfWriter {
     let textPosY = initialTextY - fontHeightAtSize + cellPaddingY; // This is because pdf-lib takes initial y coordinate and draws a font upward from that point. To offset this we need to sub
     let textPosX = initialTextX + cellPaddingX;
 
-    const lineHeight = fontHeightAtSize;
+    const lineHeight = Math.floor(fontHeightAtSize);
 
     for (let line of lines) {
       if (placeHolderHeight >= lineHeight) {
@@ -69,7 +62,7 @@ class PdfWriter {
           color: rgb(0, 0, 0),
         });
         textPosY -= fontSize + lineGap;
-        placeHolderHeight -= fontHeightAtSize + lineGap;
+        placeHolderHeight -= lineHeight;
       } else {
         break;
       }

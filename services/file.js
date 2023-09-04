@@ -158,7 +158,12 @@ const generatePDF = async (id, fields, items_subItem) => {
         } else if (placeHolder?.itemId === 'text-box') {
           let pdfWriter = new PdfWriter(currentPage, placeHolder);
 
-          pdfWriter.writeTextBox();
+          pdfWriter.writeTextBox({
+            marginX: 8 * 0.75,
+            marginY: 8 * 0.75,
+            cellPaddingX: 3 * 0.75,
+            cellPaddingY: 3 * 0.75,
+          });
           // const fontSize = placeHolder.fontSize || 11;
           // const height = placeHolder.height || 18.33;
 
@@ -594,7 +599,12 @@ const generatePDFWithGivenPlaceholders = async (
         } else if (placeHolder?.itemId === 'text-box') {
           let pdfWriter = new PdfWriter(currentPage, placeHolder);
 
-          pdfWriter.writeTextBox();
+          pdfWriter.writeTextBox({
+            marginX: 8 * 0.75,
+            marginY: 8 * 0.75,
+            cellPaddingX: 3 * 0.75,
+            cellPaddingY: 3 * 0.75,
+          });
 
           // currentPage.drawText(placeHolder?.content, {
           //   x: placeHolder.formField.coordinates.x + 8,
@@ -650,6 +660,8 @@ const generatePDFWithGivenPlaceholders = async (
             }
             if (value?.type === 'text' || value?.type === 'long-text') {
               placeHolder.content = value?.text || '';
+
+              console.log({ placeHolder });
 
               let pdfWriter = new PdfWriter(currentPage, placeHolder);
               pdfWriter.writeTextBox();
@@ -1026,7 +1038,12 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
             });
           } else if (placeHolder?.itemId === STANDARD_FIELDS.textBox) {
             let pdfWriter = new PdfWriter(currentPage, placeHolder);
-            pdfWriter.writeTextBox();
+            pdfWriter.writeTextBox({
+              marginX: 8 * 0.75,
+              marginY: 8 * 0.75,
+              cellPaddingX: 3 * 0.75,
+              cellPaddingY: 3 * 0.75,
+            });
           } else if (
             // placeHolder?.itemId === STANDARD_FIELDS.textBox ||
             placeHolder?.itemId === STANDARD_FIELDS.status
