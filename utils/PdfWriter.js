@@ -16,7 +16,6 @@ class PdfWriter {
   ) {
     const pdfFont = this.currentPage.doc?.fonts?.[0] || [];
     const fontSize = this.placeholder.fontSize || 12;
-
     // const marginY = 8 * 0.75;
     // const marginX = 8 * 0.75;
     const initialTextY = this.placeholder.formField.coordinates.y - marginY;
@@ -27,10 +26,8 @@ class PdfWriter {
 
     const fontHeightAtSize = pdfFont.heightAtSize(fontSize * 0.75);
     const content = this.placeholder?.content || '';
-    const lineGap = 3 * 0.75;
-
+    const lineGap = (fontHeightAtSize * 1.3 * 0.75) / 2;
     let lines = [];
-
     const words = content?.split(/(\s+)/);
     let currentLine = 0;
 
@@ -38,9 +35,7 @@ class PdfWriter {
       const currentLineText = lines[currentLine] ?? '';
       const testLine =
         currentLineText === '' ? word : `${currentLineText}${word}`;
-
       const width = pdfFont.widthOfTextAtSize(`${testLine}`, fontSize);
-
       if (width <= placeHolderWidth - cellPaddingX * 2) {
         lines[currentLine] = testLine;
       } else {
@@ -51,9 +46,9 @@ class PdfWriter {
     let textPosY = initialTextY - fontHeightAtSize + cellPaddingY; // This is because pdf-lib takes initial y coordinate and draws a font upward from that point. To offset this we need to sub
     let textPosX = initialTextX + cellPaddingX;
 
-    const lineHeight = Math.floor(fontHeightAtSize);
+    const lineHeight = Math.floor(fontHeightAtSize + lineGap);
 
-    for (let line of lines) {
+    for (let [index, line] of lines.entries()) {
       if (placeHolderHeight >= lineHeight) {
         this.currentPage.drawText(line, {
           x: textPosX,
@@ -61,8 +56,11 @@ class PdfWriter {
           size: fontSize,
           color: rgb(0, 0, 0),
         });
-        textPosY -= fontSize + lineGap;
-        placeHolderHeight -= lineHeight;
+        textPosY -= lineHeight - 2; // substracted 2 to fine tune what we see in PDF EDITOR and PDF Preview.
+        placeHolderHeight -=
+          index === lines.length - 2
+            ? Math.floor(fontHeightAtSize)
+            : lineHeight;
       } else {
         break;
       }

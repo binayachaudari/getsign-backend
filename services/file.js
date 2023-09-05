@@ -660,9 +660,6 @@ const generatePDFWithGivenPlaceholders = async (
             }
             if (value?.type === 'text' || value?.type === 'long-text') {
               placeHolder.content = value?.text || '';
-
-              console.log({ placeHolder });
-
               let pdfWriter = new PdfWriter(currentPage, placeHolder);
               pdfWriter.writeTextBox();
             } else if (value?.type === 'numeric') {
