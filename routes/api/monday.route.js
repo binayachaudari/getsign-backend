@@ -11,11 +11,11 @@ router.get(
   controller.itemDetails
 );
 
-router.get(
-  '/get-email-persons/:fileId/:itemId',
-  getMondayToken,
-  controller.getEmailAndPersons
-);
+// router.get(
+//   '/get-email-persons/:fileId/:itemId',
+//   getMondayToken,
+//   controller.getEmailAndPersons
+// );
 
 router.post(
   '/create-new-column/:boardId/:columnType/:columnName',
