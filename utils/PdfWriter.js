@@ -15,7 +15,7 @@ class PdfWriter {
     }
   ) {
     const pdfFont = this.currentPage.doc?.fonts?.[0] || [];
-    const fontSize = this.placeholder.fontSize || 12;
+    const fontSize = this.placeholder.fontSize || 11;
     // const marginY = 8 * 0.75;
     // const marginX = 8 * 0.75;
     const initialTextY = this.placeholder.formField.coordinates.y - marginY;
