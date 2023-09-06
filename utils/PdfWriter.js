@@ -15,14 +15,20 @@ class PdfWriter {
     }
   ) {
     const pdfFont = this.currentPage.doc?.fonts?.[0] || [];
-    const fontSize = this.placeholder.fontSize || 11;
+    const fontSize =
+      this.placeholder.fontSize && this.placeholder.fontSize > 11
+        ? this.placeholder.fontSize
+        : 11;
     // const marginY = 8 * 0.75;
     // const marginX = 8 * 0.75;
     const initialTextY = this.placeholder.formField.coordinates.y - marginY;
     const initialTextX = this.placeholder.formField.coordinates.x + marginX;
 
     const placeHolderWidth = this.placeholder.width || 50;
-    let placeHolderHeight = this.placeholder.height || 18.33;
+    let placeHolderHeight =
+      this.placeholder.height && this.placeholder.height >= 18.33
+        ? this.placeholder.height
+        : 18.33;
 
     const fontHeightAtSize = pdfFont.heightAtSize(fontSize * 0.75);
     const content = this.placeholder?.content || '';
