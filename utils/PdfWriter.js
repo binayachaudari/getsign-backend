@@ -43,6 +43,7 @@ class PdfWriter {
         lines[currentLine] = word;
       }
     }
+
     let textPosY = initialTextY - fontHeightAtSize + cellPaddingY; // This is because pdf-lib takes initial y coordinate and draws a font upward from that point. To offset this we need to sub
     let textPosX = initialTextX + cellPaddingX;
 
@@ -50,17 +51,14 @@ class PdfWriter {
 
     for (let [index, line] of lines.entries()) {
       if (placeHolderHeight >= lineHeight) {
-        this.currentPage.drawText(line, {
+        this.currentPage.drawText(line?.trim(), {
           x: textPosX,
           y: textPosY,
           size: fontSize,
           color: rgb(0, 0, 0),
         });
         textPosY -= lineHeight - 2; // substracted 2 to fine tune what we see in PDF EDITOR and PDF Preview.
-        placeHolderHeight -=
-          index === lines.length - 2
-            ? Math.floor(fontHeightAtSize)
-            : lineHeight;
+        placeHolderHeight -= fontHeightAtSize * 1.3 * 0.75;
       } else {
         break;
       }
