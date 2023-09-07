@@ -37,6 +37,7 @@ const { formulaeParser } = require('../utils/mondayFormulaConverter');
 const { HyperFormula } = require('hyperformula');
 const { toFixed } = require('../utils/number');
 const { createTable } = require('../utils/table');
+const PdfWriter = require('../utils/PdfWriter');
 
 const scalingFactor = 0.75;
 
@@ -155,19 +156,27 @@ const generatePDF = async (id, fields, items_subItem) => {
             size: fontSize,
           });
         } else if (placeHolder?.itemId === 'text-box') {
-          const fontSize = placeHolder.fontSize || 11;
-          const height = placeHolder.height || 18.33;
+          let pdfWriter = new PdfWriter(currentPage, placeHolder);
 
-          currentPage.drawText(placeHolder?.content || '', {
-            x: placeHolder.formField.coordinates.x + 8,
-            y:
-              placeHolder.formField.coordinates.y -
-              height +
-              (height - fontSize * 1.375) / 2 -
-              (fontSize * 1.375 - fontSize) / 2,
-            font: customFont,
-            size: fontSize,
+          pdfWriter.writeTextBox({
+            marginX: 8 * 0.75,
+            marginY: 8 * 0.75,
+            cellPaddingX: 3 * 0.75,
+            cellPaddingY: 3 * 0.75,
           });
+          // const fontSize = placeHolder.fontSize || 11;
+          // const height = placeHolder.height || 18.33;
+
+          // currentPage.drawText(placeHolder?.content || '', {
+          //   x: placeHolder.formField.coordinates.x + 8,
+          //   y:
+          //     placeHolder.formField.coordinates.y -
+          //     height +
+          //     (height - fontSize * 1.375) / 2 -
+          //     (fontSize * 1.375 - fontSize) / 2,
+          //   font: customFont,
+          //   size: fontSize,
+          // });
         } else if (placeHolder?.itemId === 'line-item') {
           for (const [subItemIndex, subItem] of items_subItem?.entries()) {
             const formulaColumnValues = await getFormulaValueOfItem({
@@ -238,7 +247,12 @@ const generatePDF = async (id, fields, items_subItem) => {
                 size: fontSize,
               });
             }
-            if (value?.type === 'numeric') {
+            if (value?.type === 'text' || value?.type === 'long-text') {
+              placeHolder.content = value?.text || '';
+
+              let pdfWriter = new PdfWriter(currentPage, placeHolder);
+              pdfWriter.writeTextBox();
+            } else if (value?.type === 'numeric') {
               currentPage.drawText(value?.formattedValue || value?.text || '', {
                 x: placeHolder.formField.coordinates.x,
                 y:
@@ -583,19 +597,25 @@ const generatePDFWithGivenPlaceholders = async (
             size: fontSize,
           });
         } else if (placeHolder?.itemId === 'text-box') {
-          const fontSize = placeHolder.fontSize || 11;
-          const height = placeHolder.height || 18.33;
+          let pdfWriter = new PdfWriter(currentPage, placeHolder);
 
-          currentPage.drawText(placeHolder?.content || '', {
-            x: placeHolder.formField.coordinates.x + 8,
-            y:
-              placeHolder.formField.coordinates.y -
-              height +
-              (height - fontSize * 1.375) / 2 -
-              (fontSize * 1.375 - fontSize) / 2,
-            font: customFont,
-            size: fontSize,
+          pdfWriter.writeTextBox({
+            marginX: 8 * 0.75,
+            marginY: 8 * 0.75,
+            cellPaddingX: 3 * 0.75,
+            cellPaddingY: 3 * 0.75,
           });
+
+          // currentPage.drawText(placeHolder?.content, {
+          //   x: placeHolder.formField.coordinates.x + 8,
+          //   y:
+          //     placeHolder.formField.coordinates.y -
+          //     height +
+          //     (height - fontSize * 1.375) / 2 -
+          //     (fontSize * 1.375 - fontSize) / 2,
+          //   font: customFont,
+          //   size: fontSize,
+          // });
         } else if (placeHolder?.itemId === 'line-item') {
           const tableData = await getSubItems(
             placeHolder?.subItemSettings,
@@ -638,8 +658,11 @@ const generatePDFWithGivenPlaceholders = async (
                 size: fontSize,
               });
             }
-
-            if (value?.type === 'numeric') {
+            if (value?.type === 'text' || value?.type === 'long-text') {
+              placeHolder.content = value?.text || '';
+              let pdfWriter = new PdfWriter(currentPage, placeHolder);
+              pdfWriter.writeTextBox();
+            } else if (value?.type === 'numeric') {
               currentPage.drawText(value?.formattedValue || '', {
                 x: placeHolder.formField.coordinates.x,
                 y:
@@ -1010,8 +1033,16 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
                 ...(placeHolder?.subItemSettings || {}),
               },
             });
+          } else if (placeHolder?.itemId === STANDARD_FIELDS.textBox) {
+            let pdfWriter = new PdfWriter(currentPage, placeHolder);
+            pdfWriter.writeTextBox({
+              marginX: 8 * 0.75,
+              marginY: 8 * 0.75,
+              cellPaddingX: 3 * 0.75,
+              cellPaddingY: 3 * 0.75,
+            });
           } else if (
-            placeHolder?.itemId === STANDARD_FIELDS.textBox ||
+            // placeHolder?.itemId === STANDARD_FIELDS.textBox ||
             placeHolder?.itemId === STANDARD_FIELDS.status
           ) {
             const fontSize = placeHolder.fontSize || 11;
@@ -1074,13 +1105,21 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
                 size: fontSize,
               });
             }
+            if (value?.type === 'text' || value?.type === 'long-text') {
+              placeHolder.content = value?.text || '';
 
-            currentPage.drawText(value?.text || '', {
-              x: placeHolder.formField.coordinates.x,
-              y: placeHolder.formField.coordinates.y - fontSize * scalingFactor,
-              font: customFont,
-              size: fontSize,
-            });
+              let pdfWriter = new PdfWriter(currentPage, placeHolder);
+              pdfWriter.writeTextBox();
+            } else {
+              currentPage.drawText(value?.text || '', {
+                x: placeHolder.formField.coordinates.x,
+                y:
+                  placeHolder.formField.coordinates.y -
+                  fontSize * scalingFactor,
+                font: customFont,
+                size: fontSize,
+              });
+            }
           }
         });
       }

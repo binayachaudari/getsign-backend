@@ -166,6 +166,34 @@ const uploadContract = async ({
   }
 };
 
+const getUsersByIds = async (userIds = []) => {
+  return await monday.api(
+    `
+    query getUserByIds($userIds:[Int]){
+            users(ids:$userIds){
+              name
+              email
+            }
+          }
+        `,
+    { variables: { userIds: [...userIds] } }
+  );
+};
+
+const getUsersOfTeams = async (teamIds = []) => {
+  return await monday.api(
+    `query getUsersOfTeams($teamsIds:[Int]){
+            teams(ids:$teamsIds){
+              users{
+                name
+              email
+            }
+            }
+          }
+        `,
+    { variables: { teamsIds: [...teamIds] } }
+  );
+};
 const getColumnValues = async itemId => {
   return await monday.api(
     `
@@ -230,6 +258,25 @@ const getColumnDetails = async (itemId, columnIds) => {
             settings_str
           }
         }
+      }
+    }
+    `,
+    { variables: { ids: [Number(itemId)], columnIds } }
+  );
+};
+
+const getColumnValuesByIds = async (itemId, columnIds = []) => {
+  return await monday.api(
+    `
+    query getColumnValuesByIds($ids: [Int], $columnIds: [String]) {
+      items(ids: $ids) {
+        id
+        column_values(ids:$columnIds){
+          id
+          type
+          value
+          additional_info
+          }
       }
     }
     `,
@@ -931,6 +978,77 @@ const clearFileColumn = async ({
   }
 };
 
+async function handleFormatEmailAndPersons(column_values = []) {
+  let formatted_columns = [];
+
+  const unformatted_column_values = [...column_values];
+
+  async function handleFormatColumns(inputArr = []) {
+    if (inputArr.length === 0) return;
+
+    const column = inputArr[0];
+
+    if (column.type === 'email') {
+      let val = JSON.parse(column.value || '{}');
+
+      formatted_columns.push({
+        name: val?.text || '',
+        email: val.email || '',
+      });
+      await handleFormatColumns(inputArr.slice(1));
+    }
+
+    if (column.type === 'multiple-person') {
+      let personsAndTeams =
+        JSON.parse(column.value || '{}')?.personsAndTeams || [];
+
+      let persons = personsAndTeams
+        .map(pt => {
+          if (pt.kind === 'person') {
+            return pt.id;
+          }
+        })
+        ?.filter(dat => !!dat);
+
+      let teams = personsAndTeams
+        .map(pt => {
+          if (pt.kind === 'team') {
+            return pt.id;
+          }
+        })
+        ?.filter(dat => !!dat);
+
+      if (persons.length) {
+        const users = await getUsersByIds(persons);
+
+        users?.data?.users?.map(usr => {
+          formatted_columns.push({ name: usr?.name || '', email: usr?.email });
+        });
+      }
+
+      if (teams.length) {
+        const teamsRes = await getUsersOfTeams(teams);
+        teamsRes?.data?.teams?.map(team => {
+          team.users?.map(usr => {
+            formatted_columns.push({
+              name: usr?.name || '',
+              email: usr?.email || '',
+            });
+          });
+        });
+      }
+      await handleFormatColumns(inputArr.slice(1));
+    }
+  }
+
+  await handleFormatColumns(unformatted_column_values);
+
+  const uniqueUsers = new Map();
+
+  formatted_columns.forEach(obj => uniqueUsers.set(obj.email || '', obj));
+
+  return Array.from(uniqueUsers.values());
+}
 module.exports = {
   me,
   getItemDetails,
@@ -946,4 +1064,8 @@ module.exports = {
   getFieldValue,
   getSpecificSubItemColumnValue,
   clearFileColumn,
+  getColumnValuesByIds,
+  getUsersByIds,
+  getUsersOfTeams,
+  handleFormatEmailAndPersons,
 };
