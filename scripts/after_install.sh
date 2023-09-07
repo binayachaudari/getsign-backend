@@ -7,19 +7,13 @@ sudo node -v
 
 if [ "$DEPLOYMENT_GROUP_NAME" == "GetSignBackEndCICDDev" ]; then
   cd /var/www/GetSign-Dev/jetsign-backend
-  sudo yarn --frozen-lockfile
-fi
-
-if [ "$DEPLOYMENT_GROUP_NAME" == "GetSignBackEndCICDQA" ]; then
+elif [ "$DEPLOYMENT_GROUP_NAME" == "GetSignBackEndCICDQA" ]; then
   cd /var/www/GetSign-QA/jetsign-backend
-  sudo yarn --frozen-lockfile
-fi
-
-if [ "$DEPLOYMENT_GROUP_NAME" == "GetSignBackEndCICDProd" ]; then
+elif [ "$DEPLOYMENT_GROUP_NAME" == "GetSignBackEndCICDProd" ]; then
   cd /home/ubuntu/GetSign/jetsign-backend
-  sudo yarn --frozen-lockfile
 fi
 
+  sudo yarn --frozen-lockfile
 
 
 
