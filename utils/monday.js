@@ -1,5 +1,6 @@
 const mondaySdk = require('monday-sdk-js');
 const UserModel = require('../models/User.model');
+
 const monday = mondaySdk();
 
 const me = async () => {
@@ -32,7 +33,6 @@ const setMondayToken = async (userId, accountId) => {
 
   monday.setToken(user.accessToken);
   const res = await me();
-  console.log(res);
   const mondayAPIError =
     res.hasOwnProperty('error_message') ||
     res.hasOwnProperty('error_code') ||
