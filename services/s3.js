@@ -110,8 +110,13 @@ const getFile = async (id, accountId) => {
         fileDetails?.item_id,
         fileDetails?.presigned_file_column_id
       );
-      if (urls.length) {
+      if (urls?.length) {
         url = urls?.[0];
+      } else {
+        throw {
+          statusCode: 404,
+          message: 'No file in the presigned column',
+        };
       }
     } else {
       url = s3.getSignedUrl('getObject', {
