@@ -110,7 +110,7 @@ const getFile = async (id, accountId) => {
         fileDetails?.item_id,
         fileDetails?.presigned_file_column_id
       );
-      if (urls?.length) {
+      if (urls !== '[]' && urls?.length) {
         url = urls?.[0];
       } else {
         throw {
