@@ -18,8 +18,12 @@ class PdfWriter {
     const fontSize = this.placeholder.fontSize ? this.placeholder.fontSize : 11;
     const initialTextY = this.placeholder.formField.coordinates.y - marginY;
     const initialTextX = this.placeholder.formField.coordinates.x + marginX;
+    const content = this.placeholder?.content || '';
 
-    const placeHolderWidth = this.placeholder.width || 50;
+    const placeHolderWidth =
+      this.placeholder.width ||
+      pdfFont.widthOfTextAtSize(`${content}`, fontSize);
+
     const fontHeightAtSize = pdfFont.heightAtSize(fontSize * 0.75);
     const lineGap = (fontHeightAtSize * 1.3 * 0.75) / 2;
 
@@ -29,8 +33,6 @@ class PdfWriter {
       this.placeholder.height && this.placeholder.height >= lineHeight
         ? this.placeholder.height
         : lineHeight;
-
-    const content = this.placeholder?.content || '';
 
     let lines = [];
     const words = content?.split(/(\s+)/);
