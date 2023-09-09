@@ -6,7 +6,7 @@ const ordersBoardId = process.env.BACK_OFFICE_ORDERS_BOARD_ID;
 
 const getItemDetails = async ({ itemId, columnIds }) => {
   monday.setToken(backOfficeMondayToken);
-  return await monday.api(
+  const res = await monday.api(
     `
   query getItemDetails($ids: [Int], $columnIds: [String]) {
     items(ids: $ids) {
@@ -26,6 +26,7 @@ const getItemDetails = async ({ itemId, columnIds }) => {
       },
     }
   );
+  return res;
 };
 
 const updateColumnValues = async (itemId, values) => {

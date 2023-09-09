@@ -393,6 +393,9 @@ const getTeams = async teamsIds => {
 async function getFieldValue(column, itemId, searchMode = true) {
   let value = '';
   let jsonObj = '';
+  if (!column) {
+    return;
+  }
   const { type } = column;
 
   try {
