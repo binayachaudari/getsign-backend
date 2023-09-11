@@ -9,19 +9,15 @@ sudo node -v
 
 if [ "$DEPLOYMENT_GROUP_NAME" == "GetSignBackEndCICDDev" ]; then
   DESTINATION_PATH="/var/www/GetSign-Dev/jetsign-backend/"
-  sudo \cp -R /var/www/GetSign-Temp/jetsign-backend/* $DESTINATION_PATH
-fi
-
-if [ "$DEPLOYMENT_GROUP_NAME" == "GetSignBackEndCICDQA" ]; then
+elif [ "$DEPLOYMENT_GROUP_NAME" == "GetSignBackEndCICDQA" ]; then
   DESTINATION_PATH="/var/www/GetSign-QA/jetsign-backend/"
-  sudo \cp -R /var/www/GetSign-Temp/jetsign-backend/* $DESTINATION_PATH
-fi
-
-
-if [ "$DEPLOYMENT_GROUP_NAME" == "GetSignBackEndCICDProd" ]; then
+elif [ "$DEPLOYMENT_GROUP_NAME" == "GetSignBackEndCICDProd" ]; then
   DESTINATION_PATH="/home/ubuntu/GetSign/jetsign-backend/"
-  sudo \cp -R /var/www/GetSign-Temp/jetsign-backend/* $DESTINATION_PATH
+else 
+  echo "Unsupported environment"
+  exit 1
 fi
 
+sudo \cp -R /var/www/GetSign-Temp/jetsign-backend/* $DESTINATION_PATH
 cd $DESTINATION_PATH
 sudo yarn --frozen-lockfile

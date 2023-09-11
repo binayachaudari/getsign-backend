@@ -597,7 +597,7 @@ const generatePDFWithGivenPlaceholders = async (
             size: fontSize,
           });
         } else if (placeHolder?.itemId === 'text-box') {
-          let pdfWriter = new PdfWriter(currentPage, placeHolder);
+          let pdfWriter = new PdfWriter(currentPage, placeHolder, customFont);
 
           pdfWriter.writeTextBox({
             marginX: 8 * 0.75,
@@ -660,7 +660,11 @@ const generatePDFWithGivenPlaceholders = async (
             }
             if (value?.type === 'text' || value?.type === 'long-text') {
               placeHolder.content = value?.text || '';
-              let pdfWriter = new PdfWriter(currentPage, placeHolder);
+              let pdfWriter = new PdfWriter(
+                currentPage,
+                placeHolder,
+                customFont
+              );
               pdfWriter.writeTextBox();
             } else if (value?.type === 'numeric') {
               currentPage.drawText(value?.formattedValue || '', {
@@ -1034,7 +1038,7 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
               },
             });
           } else if (placeHolder?.itemId === STANDARD_FIELDS.textBox) {
-            let pdfWriter = new PdfWriter(currentPage, placeHolder);
+            let pdfWriter = new PdfWriter(currentPage, placeHolder, customFont);
             pdfWriter.writeTextBox({
               marginX: 8 * 0.75,
               marginY: 8 * 0.75,
@@ -1108,7 +1112,11 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
             if (value?.type === 'text' || value?.type === 'long-text') {
               placeHolder.content = value?.text || '';
 
-              let pdfWriter = new PdfWriter(currentPage, placeHolder);
+              let pdfWriter = new PdfWriter(
+                currentPage,
+                placeHolder,
+                customFont
+              );
               pdfWriter.writeTextBox();
             } else {
               currentPage.drawText(value?.text || '', {

@@ -3,16 +3,21 @@ os: linux
 files:
   - source: /
     destination: /var/www/GetSign-Temp/jetsign-backend
+permissions:
+  - object: /var/www/GetSign-Temp/jetsign-backend
+    pattern: '**'
+    owner: ubuntu # The user who should own the copied files
+    group: ubuntu # The group who should own the copied files
 hooks:
   BeforeInstall:
     - location: scripts/before_install.sh
-      timeout: 300
+      timeout: 1000
       runas: ubuntu
   AfterInstall:
     - location: scripts/after_install.sh
-      timeout: 300
+      timeout: 1000
       runas: ubuntu
   ApplicationStart:
     - location: scripts/start_app.sh
-      timeout: 300
+      timeout: 1000
       runas: ubuntu

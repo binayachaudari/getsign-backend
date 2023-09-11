@@ -1,9 +1,26 @@
 const { rgb } = require('pdf-lib');
 
 class PdfWriter {
-  constructor(currentPage, placeholder) {
+  constructor(currentPage, placeholder, customFont) {
     this.currentPage = currentPage || null;
     this.placeholder = placeholder || null;
+    this.customFont = customFont || this.currentPage.doc?.fonts?.[0] || null;
+  }
+
+  replaceUnsupportedChars(string) {
+    const pdfFont = this.customFont || [];
+    const squareSymbol = '□';
+
+    let newStr = string?.split('');
+    const charSet = pdfFont.getCharacterSet();
+
+    for (let i = 0; i < newStr.length; i++) {
+      if (!charSet.includes(newStr[i]?.charCodeAt())) {
+        newStr[i] = squareSymbol;
+      }
+    }
+
+    return newStr?.join('');
   }
 
   writeTextBox(
@@ -14,12 +31,18 @@ class PdfWriter {
       marginX: 0,
     }
   ) {
-    const pdfFont = this.currentPage.doc?.fonts?.[0] || [];
+    const pdfFont = this.customFont || [];
     const fontSize = this.placeholder.fontSize ? this.placeholder.fontSize : 11;
     const initialTextY = this.placeholder.formField.coordinates.y - marginY;
     const initialTextX = this.placeholder.formField.coordinates.x + marginX;
+    const content = this.placeholder?.content || '';
 
-    const placeHolderWidth = this.placeholder.width || 50;
+    const replaceUnsupportedChars = str => this.replaceUnsupportedChars(str);
+
+    const placeHolderWidth =
+      this.placeholder.width ||
+      pdfFont.widthOfTextAtSize(`${content}`, fontSize);
+
     const fontHeightAtSize = pdfFont.heightAtSize(fontSize * 0.75);
     const lineGap = (fontHeightAtSize * 1.3 * 0.75) / 2;
 
@@ -29,8 +52,6 @@ class PdfWriter {
       this.placeholder.height && this.placeholder.height >= lineHeight
         ? this.placeholder.height
         : lineHeight;
-
-    const content = this.placeholder?.content || '';
 
     let lines = [];
     const words = content?.split(/(\s+)/);
@@ -93,7 +114,10 @@ class PdfWriter {
         currentLine += split_words.length - 1;
         seperateLines(string.slice(1), currentLine);
       } else {
-        const testLine = currLine === '' ? char : `${currLine}${char}`;
+        const testLine =
+          currLine === ''
+            ? replaceUnsupportedChars(char)
+            : replaceUnsupportedChars(`${currLine}${char}`);
         const width = pdfFont.widthOfTextAtSize(`${testLine}`, fontSize);
         if (width <= placeHolderWidth - cellPaddingX * 2) {
           lines[currLineIndex] = testLine;
@@ -105,6 +129,7 @@ class PdfWriter {
         }
       }
     }
+
     seperateLines(words, currentLine);
 
     let textPosY = initialTextY - fontHeightAtSize + cellPaddingY; // This is because pdf-lib takes initial y coordinate and draws a font upward from that point. To offset this we need to sub
@@ -117,6 +142,7 @@ class PdfWriter {
           y: textPosY,
           size: fontSize,
           color: rgb(0, 0, 0),
+          font: pdfFont,
         });
         textPosY -= lineHeight - 2; // substracted 2 to fine tune what we see in PDF EDITOR and PDF Preview.
         // placeHolderHeight -= fontHeightAtSize * 1.3 * 0.75;
