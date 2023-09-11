@@ -37,6 +37,8 @@ class PdfWriter {
     const initialTextX = this.placeholder.formField.coordinates.x + marginX;
     const content = this.placeholder?.content || '';
 
+    const replaceUnsupportedChars = str => this.replaceUnsupportedChars(str);
+
     const placeHolderWidth =
       this.placeholder.width ||
       pdfFont.widthOfTextAtSize(`${content}`, fontSize);
@@ -52,9 +54,7 @@ class PdfWriter {
         : lineHeight;
 
     let lines = [];
-    const words = content
-      ?.split(/(\s+)/)
-      ?.map(str => this.replaceUnsupportedChars(str));
+    const words = content?.split(/(\s+)/);
     let currentLine = 0;
 
     // for (const word of words) {
@@ -114,7 +114,10 @@ class PdfWriter {
         currentLine += split_words.length - 1;
         seperateLines(string.slice(1), currentLine);
       } else {
-        const testLine = currLine === '' ? char : `${currLine}${char}`;
+        const testLine =
+          currLine === ''
+            ? replaceUnsupportedChars(char)
+            : replaceUnsupportedChars(`${currLine}${char}`);
         const width = pdfFont.widthOfTextAtSize(`${testLine}`, fontSize);
         if (width <= placeHolderWidth - cellPaddingX * 2) {
           lines[currLineIndex] = testLine;
