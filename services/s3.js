@@ -156,10 +156,9 @@ const loadFileDetails = async id => {
         fileDetails?.item_id,
         fileDetails.presigned_file_column_id
       );
-      if (urls.length) {
+      if (urls !== '[]' && urls?.length) {
         url = urls?.[0];
-      }
-      if (urls === '[]') {
+      } else {
         throw {
           statusCode: 404,
           message: 'No file in the presigned column',
