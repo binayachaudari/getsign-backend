@@ -1,9 +1,26 @@
 const { rgb } = require('pdf-lib');
 
 class PdfWriter {
-  constructor(currentPage, placeholder) {
+  constructor(currentPage, placeholder, customFont) {
     this.currentPage = currentPage || null;
     this.placeholder = placeholder || null;
+    this.customFont = customFont || this.currentPage.doc?.fonts?.[0] || null;
+  }
+
+  replaceUnsupportedChars(string) {
+    const pdfFont = this.customFont || [];
+    const squareSymbol = '□';
+
+    let newStr = string?.split('');
+    const charSet = pdfFont.getCharacterSet();
+
+    for (let i = 0; i < newStr.length; i++) {
+      if (!charSet.includes(newStr[i]?.charCodeAt())) {
+        newStr[i] = squareSymbol;
+      }
+    }
+
+    return newStr?.join('');
   }
 
   writeTextBox(
@@ -14,7 +31,7 @@ class PdfWriter {
       marginX: 0,
     }
   ) {
-    const pdfFont = this.currentPage.doc?.fonts?.[0] || [];
+    const pdfFont = this.customFont || [];
     const fontSize = this.placeholder.fontSize ? this.placeholder.fontSize : 11;
     const initialTextY = this.placeholder.formField.coordinates.y - marginY;
     const initialTextX = this.placeholder.formField.coordinates.x + marginX;
@@ -35,7 +52,9 @@ class PdfWriter {
         : lineHeight;
 
     let lines = [];
-    const words = content?.split(/(\s+)/);
+    const words = content
+      ?.split(/(\s+)/)
+      ?.map(str => this.replaceUnsupportedChars(str));
     let currentLine = 0;
 
     // for (const word of words) {
@@ -107,6 +126,7 @@ class PdfWriter {
         }
       }
     }
+
     seperateLines(words, currentLine);
 
     let textPosY = initialTextY - fontHeightAtSize + cellPaddingY; // This is because pdf-lib takes initial y coordinate and draws a font upward from that point. To offset this we need to sub
@@ -119,6 +139,7 @@ class PdfWriter {
           y: textPosY,
           size: fontSize,
           color: rgb(0, 0, 0),
+          font: pdfFont,
         });
         textPosY -= lineHeight - 2; // substracted 2 to fine tune what we see in PDF EDITOR and PDF Preview.
         // placeHolderHeight -= fontHeightAtSize * 1.3 * 0.75;
