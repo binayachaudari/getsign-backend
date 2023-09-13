@@ -1,5 +1,15 @@
 const { rgb } = require('pdf-lib');
 
+// function isRTL(s) {
+//   var ltrChars =
+//       'A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02B8\u0300-\u0590\u0800-\u1FFF' +
+//       '\u2C00-\uFB1C\uFDFE-\uFE6F\uFEFD-\uFFFF',
+//     rtlChars = '\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC',
+//     rtlDirCheck = new RegExp('^[^' + ltrChars + ']*[' + rtlChars + ']');
+
+//   return rtlDirCheck.test(s);
+// }
+
 class PdfWriter {
   constructor(currentPage, placeholder, customFont) {
     this.currentPage = currentPage || null;
@@ -55,59 +65,14 @@ class PdfWriter {
 
     let lines = [];
     const words = content?.split(/(\s+)/);
+
     let currentLine = 0;
-
-    // for (const word of words) {
-
-    //   if(!/\n/.exec(word)){
-    //     const currentLineText = lines[currentLine] ?? '';
-
-    //     const testLine =
-    //       currentLineText === '' ? word : `${currentLineText}${word}`;
-    //     const width = pdfFont.widthOfTextAtSize(`${testLine}`, fontSize);
-    //     if (width <= placeHolderWidth - cellPaddingX * 2) {
-    //       lines[currentLine] = testLine;
-    //     } else {
-    //       currentLine++;
-    //       lines[currentLine] = word;
-    //     }
-    //   }else{
-    //     let split_words = word.split("\n")
-
-    //   }
-
-    // }
-
-    // function seperateLines(string, currLineIndex) {
-    //   if (!string.length) return;
-    //   let currLine = lines[currLineIndex] || '';
-    //   let char = string[0];
-
-    //   if (char === '\n') {
-    //     lines.push('');
-    //     currentLine++;
-    //     seperateLines(string.slice(1), currentLine);
-    //   } else {
-    //     const testLine = currLine === '' ? char : `${currLine}${char}`;
-    //     const width = pdfFont.widthOfTextAtSize(`${testLine}`, fontSize);
-    //     if (width <= placeHolderWidth - cellPaddingX * 2) {
-    //       lines[currLineIndex] = testLine;
-    //       seperateLines(string.slice(1), currentLine);
-    //     } else {
-    //       currentLine++;
-    //       lines[currentLine] = char;
-    //       seperateLines(string.slice(1), currentLine);
-    //     }
-    //   }
-    // }
-
-    // seperateLines(content, currentLine);
 
     function seperateLines(string, currLineIndex) {
       if (!string.length) return;
       let currLine = lines[currLineIndex] || '';
-      let char = string[0];
 
+      let char = string[0];
       if (char.includes('\n')) {
         const split_words = char.split('\n');
         lines.push('');
@@ -118,6 +83,7 @@ class PdfWriter {
           currLine === ''
             ? replaceUnsupportedChars(char)
             : replaceUnsupportedChars(`${currLine}${char}`);
+
         const width = pdfFont.widthOfTextAtSize(`${testLine}`, fontSize);
         if (width <= placeHolderWidth - cellPaddingX * 2) {
           lines[currLineIndex] = testLine;
@@ -145,7 +111,6 @@ class PdfWriter {
           font: pdfFont,
         });
         textPosY -= lineHeight - 2; // substracted 2 to fine tune what we see in PDF EDITOR and PDF Preview.
-        // placeHolderHeight -= fontHeightAtSize * 1.3 * 0.75;
         placeHolderHeight -= lineHeight - 2;
       } else {
         break;
