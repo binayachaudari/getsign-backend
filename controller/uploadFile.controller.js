@@ -9,6 +9,12 @@ const {
   generatePDF,
   addSenderDetails,
 } = require('../services/file');
+
+const {
+  getSignerByFileId,
+  createSigner,
+} = require('../services/signers.service');
+
 const {
   addFileHistory,
   getFileHistory,
@@ -68,11 +74,26 @@ module.exports = {
   },
   updateFields: async (req, res, next) => {
     const id = req.params.id;
-    const { fields, order } = req.body;
+    const { fields, signers_settings } = req.body;
     console.log({ order });
-
     try {
       const result = await addFormFields(id, fields);
+      const signerOrder = await getSignerByFileId(id);
+
+      if (signerOrder) {
+        signerOrder.isSigningOrderRequired =
+          signers_settings.isSigningOrderRequired;
+        signerOrder.signers = signers_settings.signers;
+        await signerOrder.save();
+      } else {
+        await createSigner({
+          originalFileId: id,
+          isSigningOrderRequired:
+            signers_settings?.isSigningOrderRequired || false,
+          signers: signers_settings?.signers || [],
+        });
+      }
+
       return res.json({ data: result }).status(200);
     } catch (error) {
       next(error);
