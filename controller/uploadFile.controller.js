@@ -68,7 +68,9 @@ module.exports = {
   },
   updateFields: async (req, res, next) => {
     const id = req.params.id;
-    const { fields } = req.body;
+    const { fields, order } = req.body;
+    console.log({ order });
+
     try {
       const result = await addFormFields(id, fields);
       return res.json({ data: result }).status(200);
