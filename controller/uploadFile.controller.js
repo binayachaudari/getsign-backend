@@ -75,7 +75,6 @@ module.exports = {
   updateFields: async (req, res, next) => {
     const id = req.params.id;
     const { fields, signers_settings } = req.body;
-    console.log({ order });
     try {
       const result = await addFormFields(id, fields);
       const signerOrder = await getSignerByFileId(id);
