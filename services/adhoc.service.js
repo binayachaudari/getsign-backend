@@ -83,6 +83,17 @@ const addSenderDetails = async payload => {
           previous?.[0].email_verification_token,
           payload.email_address
         );
+      } else {
+        for (const item of previous) {
+          item.email_address = payload?.email_address;
+          item.email_column_id = payload?.email_column_id;
+          item.status_column_id = payload?.status_column_id;
+          item.file_column_id = payload?.file_column_id;
+          item.presigned_file_column_id = payload?.presigned_file_column_id;
+          item.sender_name = payload?.sender_name;
+          item.itemViewInstanceId = payload?.instanceId;
+          await item.save();
+        }
       }
     } else {
       const result = await FileDetails.create({
