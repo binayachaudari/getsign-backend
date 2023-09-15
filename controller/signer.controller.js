@@ -1,38 +1,43 @@
 const signerService = require('../services/signers.service');
 
-const createSigner = async signerDetails => {
+const createSigner = async (req, res, next) => {
   try {
+    const signerDetails = req.body;
     const signer = await signerService.createSigner(signerDetails);
-    return signer;
+    return res.json({ data: signer }).status(200);
   } catch (err) {
-    throw err;
+    return next(err);
   }
 };
 
-const getSigners = async signerId => {
+const getSigners = async (req, res, next) => {
   try {
+    const { signerId } = req.params;
     const signer = await signerService.getSigners(signerId);
-    return signer;
+    return res.json({ data: signer }).status(200);
   } catch (err) {
-    throw err;
+    return next(err);
   }
 };
 
-const getSignerByFileId = async fileId => {
+const getSignerByFileId = async (req, res, next) => {
   try {
+    const { fileId } = req.params;
     const signer = await signerService.getSignerByFileId(fileId);
-    return signer;
+    return res.json({ data: signer }).status(200);
   } catch (err) {
-    throw err;
+    return next(err);
   }
 };
 
-const updateSigner = async (signerId, signerDetails) => {
+const updateSigner = async (req, res, next) => {
   try {
+    const { signerId } = req.params;
+    const signerDetails = req.body;
     const signer = await signerService.updateSigner(signerId, signerDetails);
-    return signer;
+    return res.json({ data: signer }).status(200);
   } catch (err) {
-    throw err;
+    return next(err);
   }
 };
 

@@ -25,7 +25,6 @@ const schema = new mongoose.Schema(
     account_slug: String,
     account_max_users: {
       type: Number,
-      required: true,
     },
     account_id: {
       type: Number,
