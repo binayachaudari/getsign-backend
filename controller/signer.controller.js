@@ -41,9 +41,23 @@ const updateSigner = async (req, res, next) => {
   }
 };
 
+const sendMail = async (req, res, next) => {
+  try {
+    const { itemId, id } = req.params;
+    const sentFile = await signerService.sendFileForMultipleSigners({
+      fileId: id,
+      itemId,
+    });
+    return res.json({ data: sentFile }).status(200);
+  } catch (err) {
+    return next(err);
+  }
+};
+
 module.exports = {
   createSigner,
   getSigners,
   getSignerByFileId,
   updateSigner,
+  sendMail,
 };
