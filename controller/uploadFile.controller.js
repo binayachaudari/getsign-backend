@@ -4,6 +4,7 @@ const FileDetails = require('../models/FileDetails');
 const FileHistory = require('../models/FileHistory');
 const { backOfficeDocumentSigned } = require('../services/backoffice.service');
 const STANDARD_FIELDS = require('../config/standardFields');
+
 const {
   addFormFields,
   generatePDF,
@@ -78,10 +79,9 @@ module.exports = {
     try {
       const result = await addFormFields(id, fields);
       const signerOrder = await getSignerByFileId(id);
-
       if (signerOrder) {
         signerOrder.isSigningOrderRequired =
-          signers_settings.isSigningOrderRequired;
+          signers_settings.isSigningOrderRequired || false;
         signerOrder.signers = signers_settings.signers;
         await signerOrder.save();
       } else {

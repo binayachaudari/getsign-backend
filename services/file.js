@@ -964,13 +964,13 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
 
           if (placeHolder?.image?.src) {
             const pngImage = await pdfDoc.embedPng(placeHolder?.image?.src);
-            const heightOfSignPlaceholder = 33;
+            const heightOfSignPlaceholder = placeHolder.height || 33;
 
             currentPage.drawImage(pngImage, {
               x: placeHolder?.formField.coordinates.x,
               y: placeHolder?.formField.coordinates.y - heightOfSignPlaceholder,
-              width: placeHolder?.image.width,
-              height: placeHolder?.image.height,
+              width: placeHolder?.width,
+              height: placeHolder?.height,
             });
           } else if (placeHolder?.itemId === 'sign-date') {
             const fontSize = placeHolder.fontSize || 11;
