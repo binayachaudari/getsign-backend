@@ -13,6 +13,8 @@ const integrationValidateTrial = async (req, res, next) => {
 
     if (token) decoded = jwt.decode(token, process.env.CLIENT_SECRET);
 
+    console.log({ decoded, token });
+
     const payload = req?.body?.payload;
     const accountId = decoded?.accountId;
     const subscription = decoded?.subscription;
@@ -21,10 +23,15 @@ const integrationValidateTrial = async (req, res, next) => {
     const columnId = payload?.inputFields?.columnId;
 
     if (!subscription) {
-      return next({
-        message: 'You need to upgrade/re-install GetSign',
-        statusCode: 426,
-      });
+      console.log(
+        '********************************** NO SUBSCRIPTION **********************************',
+        JSON.stringify({ payload, subscription, decoded, token })
+      );
+      return next();
+      // return next({
+      //   message: 'You need to upgrade/re-install GetSign',
+      //   statusCode: 426,
+      // });
     }
 
     let trialPeriodExpired = true;
