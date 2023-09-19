@@ -14,6 +14,7 @@ const {
 const {
   getSignerByFileId,
   createSigner,
+  getOneSignersByFilter,
 } = require('../services/signers.service');
 
 const {
@@ -75,22 +76,28 @@ module.exports = {
   },
   updateFields: async (req, res, next) => {
     const id = req.params.id;
+    const item_id = req.params.item_id;
+
     const { fields, signers_settings } = req.body;
     try {
       const result = await addFormFields(id, fields);
-      const signerOrder = await getSignerByFileId(id);
+      const signerOrder = await getOneSignersByFilter({
+        originalFileId: id,
+        item_id,
+      });
+
+      const signerOrderPayload = {
+        signers: signers_settings.signers || [],
+        originalFileId: id,
+        item_id: item_id,
+        isSigningOrderRequired:
+          signers_settings.isSigningOrderRequired || false,
+      };
+
       if (signerOrder) {
-        signerOrder.isSigningOrderRequired =
-          signers_settings.isSigningOrderRequired || false;
-        signerOrder.signers = signers_settings.signers;
-        await signerOrder.save();
+        await signerOrder.updateOne(signerOrderPayload);
       } else {
-        await createSigner({
-          originalFileId: id,
-          isSigningOrderRequired:
-            signers_settings?.isSigningOrderRequired || false,
-          signers: signers_settings?.signers || [],
-        });
+        await createSigner(signerOrderPayload);
       }
 
       return res.json({ data: result }).status(200);

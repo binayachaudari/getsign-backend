@@ -41,6 +41,13 @@ const getSignerByFileId = async fileId => {
   }
 };
 
+const getOneSignersByFilter = async (filter = {}) => {
+  try {
+    const signer = await SignerModel.findOne({ ...filter });
+    return signer;
+  } catch (err) {}
+};
+
 const updateSigner = async (signerId, signerDetails) => {
   try {
     const signer = await SignerModel.findByIdAndUpdate(signerId, signerDetails);
@@ -304,4 +311,5 @@ module.exports = {
   getSignerByFileId,
   updateSigner,
   sendFileForMultipleSigners,
+  getOneSignersByFilter,
 };

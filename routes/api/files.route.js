@@ -45,7 +45,7 @@ router.get(
   controller.getFileHistory
 );
 router.post(
-  '/add-form-fields/:id',
+  '/add-form-fields/:id/:item_id',
   validateTemplateDetails(),
   validateRequest,
   controller.updateFields
