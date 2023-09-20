@@ -733,7 +733,15 @@ const loadFile = async url => {
   return `data:${contentType};base64,${base64String}`;
 };
 
-const signPDF = async ({ id, interactedFields, status, itemId }) => {
+const signPDF = async (
+  { id, interactedFields, status, itemId, s3fileKey = null } = {
+    id: '',
+    interactedFields: [],
+    status: '',
+    itemId: '',
+    s3fileKey: null,
+  }
+) => {
   try {
     let pdfDoc;
     const fileDetails = await loadFileDetails(id);
@@ -926,22 +934,28 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
       itemId,
     }).exec();
 
-    const signedByReceiver = await FileHistory.findOne({
-      fileId: id,
-      status: 'signed_by_receiver',
-      itemId,
-    }).exec();
+    if (!s3fileKey) {
+      const signedByReceiver = await FileHistory.findOne({
+        fileId: id,
+        status: 'signed_by_receiver',
+        itemId,
+      }).exec();
 
-    if (signedBySender) {
-      const url = await getSignedUrl(signedBySender?.file);
-      const file = await loadFile(url);
-      pdfDoc = await PDFDocument.load(file);
-    } else if (signedByReceiver) {
-      const url = await getSignedUrl(signedByReceiver?.file);
-      const file = await loadFile(url);
-      pdfDoc = await PDFDocument.load(file);
+      if (signedBySender) {
+        const url = await getSignedUrl(signedBySender?.file);
+        const file = await loadFile(url);
+        pdfDoc = await PDFDocument.load(file);
+      } else if (signedByReceiver) {
+        const url = await getSignedUrl(signedByReceiver?.file);
+        const file = await loadFile(url);
+        pdfDoc = await PDFDocument.load(file);
+      } else {
+        pdfDoc = await PDFDocument.load(fileDetails?.file);
+      }
     } else {
-      pdfDoc = await PDFDocument.load(fileDetails?.file);
+      const url = await getSignedUrl(s3fileKey);
+      const file = await loadFile(url);
+      pdfDoc = await PDFDocument.load(file);
     }
 
     const pages = pdfDoc.getPages();

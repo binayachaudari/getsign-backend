@@ -312,4 +312,6 @@ module.exports = {
   updateSigner,
   sendFileForMultipleSigners,
   getOneSignersByFilter,
+  deletePreviousStatusAndSend,
+  sendEmailAndUpdateBackOffice,
 };
