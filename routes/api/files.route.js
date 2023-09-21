@@ -110,6 +110,13 @@ router.get(
 );
 
 router.get(
+  '/file-for-signer/:itemId/:id',
+  validateItemIdAndIdParam(),
+  validateRequest,
+  controller.getFileForSigner
+);
+
+router.get(
   '/contract/:itemId/:fileId',
   verifySessionToken,
   validateItemIdAndFileId(),

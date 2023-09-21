@@ -32,6 +32,7 @@ const {
 const HyperFormula = require('../utils/hyperFormula');
 const { toFixed } = require('../utils/number');
 const { formulaeParser } = require('../utils/mondayFormulaConverter');
+const SignerModel = require('../models/Signer.model');
 
 const multipleSignerAddFileHistory = async ({
   id,
@@ -684,6 +685,40 @@ const getFileToSignReceiver = async (id, itemId) => {
   }
 };
 
+const getFileForSigner = async (id, itemId) => {
+  try {
+    let fileId;
+    const fileFromHistory = await FileHistory.findById(id).populate('fileId');
+
+    if (!fileFromHistory) {
+      return {
+        isDeleted: true,
+      };
+    }
+    const template = fileFromHistory.fileId;
+    fileId = fileFromHistory.fileId?._id;
+
+    const signersDoc = await SignerModel.findOne({
+      originalFileId: fileId,
+      itemId,
+    });
+
+    console.log({ signersDoc, template, fileId });
+
+    await setMondayToken(template?.user_id, template?.account_id);
+
+    return {
+      fileId,
+      // file: `data:${contentType};base64,${base64String}`,
+      // alreadySignedByOther: !!getFileToSignKey,
+      // alreadyViewed: !!(await isAlreadyViewed({ fileId, itemId })),
+      // sendDocumentTo: to,
+    };
+  } catch (error) {
+    throw error;
+  }
+};
+
 const downloadContract = async (itemId, fileId) => {
   const signed = await FileHistory.findOne({
     fileId: fileId,
@@ -1210,4 +1245,5 @@ module.exports = {
   generateFilePreview,
   generateFilePreviewWithPlaceholders,
   multipleSignerAddFileHistory,
+  getFileForSigner,
 };

@@ -27,6 +27,7 @@ const {
   downloadContract,
   generateFilePreview,
   generateFilePreviewWithPlaceholders,
+  getFileForSigner,
 } = require('../services/fileHistory');
 const { emailRequestToSign, sendFinalContract } = require('../services/mailer');
 const {
@@ -77,19 +78,18 @@ module.exports = {
   updateFields: async (req, res, next) => {
     const id = req.params.id;
     const item_id = req.params.item_id;
-
     const { fields, signers_settings } = req.body;
     try {
       const result = await addFormFields(id, fields);
       const signerOrder = await getOneSignersByFilter({
         originalFileId: id,
-        item_id,
+        itemId: item_id,
       });
 
       const signerOrderPayload = {
         signers: signers_settings.signers || [],
         originalFileId: id,
-        item_id: item_id,
+        itemId: item_id,
         isSigningOrderRequired:
           signers_settings.isSigningOrderRequired || false,
       };
@@ -359,6 +359,17 @@ module.exports = {
     const { itemId, id } = req.params;
     try {
       const result = await getFileToSignReceiver(id, itemId);
+      return res.json({ data: result }).status(200);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getFileForSigner: async (req, res, next) => {
+    // fileHistory id having status = 'sent' | 'resent'
+    const { itemId, id } = req.params;
+    try {
+      const result = await getFileForSigner(id, itemId);
       return res.json({ data: result }).status(200);
     } catch (error) {
       next(error);
