@@ -75,6 +75,17 @@ module.exports = {
       next(error);
     }
   },
+
+  getFileFields: async (req, res, next) => {
+    const id = req.params.id;
+    try {
+      const result = await loadFileDetails(id);
+      return res.json({ data: result }).status(200);
+    } catch (error) {
+      next(error);
+    }
+  },
+
   updateFields: async (req, res, next) => {
     const id = req.params.id;
     const item_id = req.params.item_id;

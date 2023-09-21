@@ -266,8 +266,9 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
     } else {
       // send file to all the signers
       const emailColumns = signerDetails?.signers?.map(
-        emailCol => emailCol.emailColumnId
+        emailCol => emailCol.emailColumnId || emailCol.id
       );
+
       if (emailColumns?.length) {
         const emailColumnValue = await getEmailColumnValue(
           itemId,
@@ -297,7 +298,7 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
           });
 
           const indexOfEmailColumn = signerDetails?.signers?.findIndex(
-            signer => signer?.emailColumnId === emailDetail?.id
+            signer => (signer?.emailColumnId || signer?.id) === emailDetail?.id
           );
 
           signerDetails.signers[indexOfEmailColumn].fileStatus =

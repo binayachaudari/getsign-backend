@@ -703,9 +703,55 @@ const getFileForSigner = async (id, itemId) => {
       itemId,
     });
 
-    console.log({ signersDoc, template, fileId });
-
     await setMondayToken(template?.user_id, template?.account_id);
+
+    // Finds the email column Id of signer where the filehistory is assigned
+    const signerEmailColumnId = signersDoc?.signers?.find(
+      signer => signer.fileStatus === id
+    )?.emailColumnId;
+
+    if (!signerEmailColumnId) {
+      // Need to refactore when we cannot find email column id
+      return { isDeleted: true };
+    }
+
+    const emailColumns = await getEmailColumnValue(
+      itemId,
+      signersDoc.signers
+        .filter(signer => !!signer.emailColumnId)
+        .map(signer => signer.emailColumnId)
+    );
+    const to = emailColumns?.data?.items?.[0]?.column_values?.filter(
+      emlCol => emlCol.id === signerEmailColumnId
+    )?.[0]?.text;
+
+    if (!to) {
+      // Need to refactore when we cannot find email column id
+      return { isDeleted: true };
+    }
+
+    const isAlreadySigned = await FileHistory.findOne({
+      fileId,
+      itemId,
+      status: 'signed_by_receiver',
+      sentToEmail: to,
+    }).exec();
+
+    if (isAlreadySigned) {
+      return {
+        fileId,
+        isAlreadySigned: true,
+        sendDocumentTo: to,
+      };
+    }
+
+    const getFileToSignKey = signersDoc.file; //gets the latest signed document
+
+    try {
+      let url;
+    } catch (error) {
+      throw error;
+    }
 
     return {
       fileId,

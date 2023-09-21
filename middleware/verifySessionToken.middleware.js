@@ -14,7 +14,6 @@ const verifySessionToken = async (req, res, next) => {
     const subscription = decoded?.dat?.subscription;
     const slug = decoded?.dat?.slug;
     const user = await isUserAuthenticated(userId, accountId);
-
     await setMondayToken(userId, accountId);
 
     if (!user || !user?.accessToken) {
