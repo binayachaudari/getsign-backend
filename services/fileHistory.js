@@ -33,6 +33,52 @@ const HyperFormula = require('../utils/hyperFormula');
 const { toFixed } = require('../utils/number');
 const { formulaeParser } = require('../utils/mondayFormulaConverter');
 
+const multipleSignerAddFileHistory = async ({
+  id,
+  status,
+  itemId,
+  interactedFields,
+  ipAddress,
+  s3fileKey,
+  fileHistory,
+}) => {
+  try {
+    if (interactedFields?.length) {
+      const signedFile = await signPDF({
+        id,
+        interactedFields,
+        status,
+        itemId,
+        s3fileKey,
+      });
+
+      return await FileHistory.findByIdAndUpdate(
+        fileHistory._id,
+        {
+          file: signedFile.Key,
+          ...(status === 'signed_by_receiver' && {
+            receiverSignedIpAddress: ipAddress,
+          }),
+        },
+        {
+          new: true,
+        }
+      );
+    }
+
+    if (status === 'viewed')
+      return await FileHistory.findByIdAndUpdate(
+        fileHistory._id,
+        {
+          status: 'viewed',
+        },
+        { new: true }
+      );
+  } catch (err) {
+    throw err;
+  }
+};
+
 const addFileHistory = async ({
   id,
   status,
@@ -1163,4 +1209,5 @@ module.exports = {
   downloadContract,
   generateFilePreview,
   generateFilePreviewWithPlaceholders,
+  multipleSignerAddFileHistory,
 };

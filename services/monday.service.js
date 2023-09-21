@@ -301,7 +301,12 @@ const getEmailColumnValue = async (itemId, emailColId) => {
       }
     }
     `,
-    { variables: { ids: [Number(itemId)], emailColId: [emailColId] } }
+    {
+      variables: {
+        ids: [Number(itemId)],
+        emailColId: Array.isArray(emailColId) ? [...emailColId] : [emailColId],
+      },
+    }
   );
 };
 
