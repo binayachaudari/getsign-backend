@@ -13,6 +13,7 @@ const { getEmailColumnValue, updateStatusColumn } = require('./monday.service');
 const FileDetails = require('../models/FileDetails');
 const { setMondayToken } = require('../utils/monday');
 const { sendRequestToSign } = require('../services/mailer');
+const { Types } = require('mongoose');
 
 const createSigner = async signerDetails => {
   try {
@@ -223,7 +224,8 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
 
     await setMondayToken(template.user_id, template.account_id);
     const signerDetails = await SignerModel.findOne({
-      originalFileId: fileId,
+      originalFileId: Types.ObjectId(fileId),
+      itemId: Number(itemId),
     });
 
     if (signerDetails?.isSigningOrderRequired) {
@@ -266,36 +268,43 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
       const emailColumns = signerDetails?.signers?.map(
         emailCol => emailCol.emailColumnId
       );
-      const emailColumnValue = await getEmailColumnValue(itemId, emailColumns);
-      const emailList = emailColumnValue?.data?.items?.[0]?.column_values?.map(
-        value => ({ email: value?.text, id: value?.id })
-      );
-
-      for (const emailDetail of emailList) {
-        if (!emailDetail?.email) continue;
-        const newHistory = await deletePreviousStatusAndSend({
-          fileId,
-          email: emailDetail.email,
-          session,
+      if (emailColumns?.length) {
+        const emailColumnValue = await getEmailColumnValue(
           itemId,
-        });
-
-        await sendEmailAndUpdateBackOffice({
-          itemId,
-          newSentHistory: newHistory,
-          session,
-          template,
-          to: emailDetail.email,
-        });
-
-        const indexOfEmailColumn = signerDetails?.signers?.findIndex(
-          signer => signer?.emailColumnId === emailDetail?.id
+          emailColumns
         );
+        const emailList =
+          emailColumnValue?.data?.items?.[0]?.column_values?.map(value => ({
+            email: value?.text,
+            id: value?.id,
+          }));
 
-        signerDetails.signers[indexOfEmailColumn].fileStatus =
-          newHistory[0]._id;
-        await signerDetails.save();
-        return signerDetails;
+        for (const emailDetail of emailList) {
+          if (!emailDetail?.email) continue;
+          const newHistory = await deletePreviousStatusAndSend({
+            fileId,
+            email: emailDetail.email,
+            session,
+            itemId,
+          });
+
+          await sendEmailAndUpdateBackOffice({
+            itemId,
+            newSentHistory: newHistory,
+            session,
+            template,
+            to: emailDetail.email,
+          });
+
+          const indexOfEmailColumn = signerDetails?.signers?.findIndex(
+            signer => signer?.emailColumnId === emailDetail?.id
+          );
+
+          signerDetails.signers[indexOfEmailColumn].fileStatus =
+            newHistory[0]._id;
+          await signerDetails.save();
+          return signerDetails;
+        }
       }
     }
   } catch (err) {
