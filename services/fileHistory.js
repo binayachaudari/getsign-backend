@@ -20,6 +20,7 @@ const {
   getEmailColumnValue,
   getColumnDetails,
   getSpecificColumnValue,
+  getUsersByIds,
 } = require('./monday.service');
 const { s3, getSignedUrl } = require('./s3');
 const {
@@ -28,6 +29,7 @@ const {
   renameFunctions,
   hasNestedIF,
   convertToNestedIFS,
+  getFormulaValueOfItem,
 } = require('../utils/formula');
 const HyperFormula = require('../utils/hyperFormula');
 const { toFixed } = require('../utils/number');
@@ -705,27 +707,37 @@ const getFileForSigner = async (id, itemId) => {
 
     await setMondayToken(template?.user_id, template?.account_id);
 
-    // Finds the email column Id of signer where the filehistory is assigned
-    const signerEmailColumnId = signersDoc?.signers?.find(
+    const currentSigner = signersDoc?.signers?.find(
       signer => signer.fileStatus === id
-    )?.emailColumnId;
+    );
 
-    if (!signerEmailColumnId) {
-      // Need to refactore when we cannot find email column id
-      return { isDeleted: true };
+    let currentSignerEmail;
+    let assignedFields = [];
+
+    // set the email of current signer
+    if (currentSigner.userId) {
+      const userResp = await getUsersByIds(currentSigner.userId);
+      currentSignerEmail = userResp?.data?.users?.[0]?.email;
+      assignedFields = template?.fields?.filter(
+        field => field.signer.userId === currentSigner.userId
+      );
+    } else if (currentSigner.emailColumnId) {
+      const emailResp = await await getEmailColumnValue(
+        itemId,
+        currentSigner.emailColumnId
+      );
+      currentSignerEmail = emailResp.data?.items?.[0]?.column_values?.filter(
+        emlCol => emlCol.id === currentSigner.emailColumnId
+      )?.[0]?.text;
+
+      assignedFields = template?.fields?.filter(
+        field => field.signer.value === currentSigner.emailColumnId
+      );
     }
 
-    const emailColumns = await getEmailColumnValue(
-      itemId,
-      signersDoc.signers
-        .filter(signer => !!signer.emailColumnId)
-        .map(signer => signer.emailColumnId)
-    );
-    const to = emailColumns?.data?.items?.[0]?.column_values?.filter(
-      emlCol => emlCol.id === signerEmailColumnId
-    )?.[0]?.text;
+    console.log({ assignedFields });
 
-    if (!to) {
+    if (!currentSignerEmail) {
       // Need to refactore when we cannot find email column id
       return { isDeleted: true };
     }
@@ -734,7 +746,7 @@ const getFileForSigner = async (id, itemId) => {
       fileId,
       itemId,
       status: 'signed_by_receiver',
-      sentToEmail: to,
+      sentToEmail: currentSignerEmail,
     }).exec();
 
     if (isAlreadySigned) {
@@ -745,21 +757,86 @@ const getFileForSigner = async (id, itemId) => {
       };
     }
 
-    const getFileToSignKey = signersDoc.file; //gets the latest signed document
+    let getFileToSignKey = signersDoc.file;
 
     try {
       let url;
+      if (!getFileToSignKey) {
+        const columnValues = await getColumnValues(itemId);
+
+        let item = columnValues?.data?.items?.[0];
+
+        item = handleFormatNumericColumn(item);
+
+        const items_subItem = columnValues?.data?.items?.[0]?.subitems || [];
+
+        const formValues = [
+          ...(columnValues?.data?.items?.[0]?.column_values || []),
+          {
+            id: 'item-name',
+            text: columnValues?.data?.items?.[0]?.name || '',
+            title: 'Item Name',
+            type: 'text',
+          },
+        ];
+
+        const formulaColumnWithValues = await getFormulaValueOfItem({
+          boardColumns: item.board.columns,
+          boardColumnValues: item.column_values,
+          itemId: item.id,
+        });
+
+        for (const formulaCol of formulaColumnWithValues) {
+          const alreadyExistsIdx = formValues.findIndex(
+            formValue => formValue.id === formulaCol?.id
+          );
+
+          if (alreadyExistsIdx > -1) {
+            formValues[alreadyExistsIdx].text = formulaCol.text;
+          } else {
+            formValues.push({
+              ...formulaCol,
+            });
+          }
+        }
+        const generatedPDF = await generatePDF(template?._id, formValues, [
+          ...items_subItem,
+        ]);
+        console.log({ generatedPDF });
+
+        return {
+          fileId: template.id,
+          ...generatedPDF,
+          assignedFields,
+          alreadySignedByOther: !!getFileToSignKey,
+          alreadyViewed: !!(await isAlreadyViewed({ fileId, itemId })),
+          sendDocumentTo: currentSignerEmail,
+        };
+      }
+
+      url = s3.getSignedUrl('getObject', {
+        Bucket: process.env.BUCKET_NAME,
+        Key: getFileToSignKey,
+      });
+
+      fileId = signersDoc.originalFileId;
+      const body = await fetch(url);
+      const contentType = body.headers.get('content-type');
+      const arrBuffer = await body.arrayBuffer();
+      const buffer = Buffer.from(arrBuffer);
+      var base64String = buffer.toString('base64');
+
+      return {
+        fileId,
+        file: `data:${contentType};base64,${base64String}`,
+        assignedFields,
+        alreadySignedByOther: !!getFileToSignKey,
+        alreadyViewed: !!(await isAlreadyViewed({ fileId, itemId })),
+        sendDocumentTo: to,
+      };
     } catch (error) {
       throw error;
     }
-
-    return {
-      fileId,
-      // file: `data:${contentType};base64,${base64String}`,
-      // alreadySignedByOther: !!getFileToSignKey,
-      // alreadyViewed: !!(await isAlreadyViewed({ fileId, itemId })),
-      // sendDocumentTo: to,
-    };
   } catch (error) {
     throw error;
   }

@@ -29,8 +29,9 @@ const getSigners = async (req, res, next) => {
     const { fileId, item_id } = req.params;
     const signer = await signerService.getOneSignersByFilter({
       originalFileId: fileId,
-      item_id,
+      itemId: item_id,
     });
+
     return res.json({ data: signer }).status(200);
   } catch (err) {
     return next(err);
