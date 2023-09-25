@@ -715,13 +715,15 @@ const getFileForSigner = async (id, itemId) => {
     let assignedFields = [];
 
     // set the email of current signer
-    if (currentSigner.userId) {
+    if (currentSigner?.userId) {
       const userResp = await getUsersByIds(currentSigner.userId);
       currentSignerEmail = userResp?.data?.users?.[0]?.email;
       assignedFields = template?.fields?.filter(
         field => field.signer.userId === currentSigner.userId
       );
-    } else if (currentSigner.emailColumnId) {
+    }
+
+    if (!currentSigner?.userId && currentSigner?.emailColumnId) {
       const emailResp = await await getEmailColumnValue(
         itemId,
         currentSigner.emailColumnId
