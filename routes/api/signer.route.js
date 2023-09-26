@@ -17,7 +17,7 @@ router.get('/get-signer-by-file-id/:fil2eId', controller.getSignerByFileId);
 router.put('/update-signer/:signerId', controller.updateSigner);
 router.get('/send-mail/:itemId/:id', verifySessionToken, controller.sendMail);
 router.post(
-  '/sign/:fileHistoryId',
+  '/sign/:id',
   validateSignatures(),
   validateRequest,
   controller.signPDF

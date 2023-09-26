@@ -745,6 +745,7 @@ const signPDF = async (
   try {
     let pdfDoc;
     const fileDetails = await loadFileDetails(id);
+
     await setMondayToken(fileDetails.user_id, fileDetails.account_id);
     const valuesToFill = await getColumnValues(itemId);
 
@@ -954,7 +955,9 @@ const signPDF = async (
       }
     } else {
       const url = await getSignedUrl(s3fileKey);
+
       const file = await loadFile(url);
+
       pdfDoc = await PDFDocument.load(file);
     }
 

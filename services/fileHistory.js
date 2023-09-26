@@ -737,8 +737,6 @@ const getFileForSigner = async (id, itemId) => {
       );
     }
 
-    console.log({ assignedFields });
-
     if (!currentSignerEmail) {
       // Need to refactore when we cannot find email column id
       return { isDeleted: true };
@@ -755,7 +753,7 @@ const getFileForSigner = async (id, itemId) => {
       return {
         fileId,
         isAlreadySigned: true,
-        sendDocumentTo: to,
+        sendDocumentTo: currentSignerEmail,
       };
     }
 
@@ -804,7 +802,6 @@ const getFileForSigner = async (id, itemId) => {
         const generatedPDF = await generatePDF(template?._id, formValues, [
           ...items_subItem,
         ]);
-        console.log({ generatedPDF });
 
         return {
           fileId: template.id,
@@ -834,7 +831,7 @@ const getFileForSigner = async (id, itemId) => {
         assignedFields,
         alreadySignedByOther: !!getFileToSignKey,
         alreadyViewed: !!(await isAlreadyViewed({ fileId, itemId })),
-        sendDocumentTo: to,
+        sendDocumentTo: currentSignerEmail,
       };
     } catch (error) {
       throw error;

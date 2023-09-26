@@ -7,12 +7,14 @@ const {
   updateMultipleTextColumnValues,
   uploadContract,
   getEmailColumnValue,
+  getUsersByIds,
 } = require('../services/monday.service');
 const STANDARD_FIELDS = require('../config/standardFields');
 const ApplicationModel = require('../models/Application.model');
 const { backOfficeDocumentSigned } = require('../services/backoffice.service');
 const { setMondayToken } = require('../utils/monday');
 const { default: mongoose } = require('mongoose');
+const SignerModel = require('../models/Signer.model');
 
 const createSigner = async (req, res, next) => {
   try {
@@ -73,7 +75,7 @@ const sendMail = async (req, res, next) => {
 };
 
 const signPDF = async (req, res, next) => {
-  const fileHistoryId = req.params.fileHistoryId;
+  const fileHistoryId = req.params.id;
   let ips = (
     req.headers['cf-connecting-ip'] ||
     req.headers['x-real-ip'] ||
@@ -88,17 +90,18 @@ const signPDF = async (req, res, next) => {
     const fileHistory = await FileHistory.findById(fileHistoryId).populate(
       'fileId'
     );
+
     if (!fileHistory) throw new Error('File History not found !');
 
     const template = fileHistory.fileId; // assigns linked FileDetail doc to template variable.
 
-    const signers = await signerService.getOneSignersByFilter({
+    let signers = await signerService.getOneSignersByFilter({
       originalFileId: template._id,
       itemId,
     });
 
-    const pdfSigners = signers.signers || [];
-    const indexOfCurrentSigner = pdfSigners.indexOf(
+    let pdfSigners = signers.signers || [];
+    const indexOfCurrentSigner = pdfSigners.findIndex(
       signer => signer.fileStatus === fileHistoryId
     );
 
@@ -106,6 +109,8 @@ const signPDF = async (req, res, next) => {
     // takes the latest signed file if already signed else takes original file
     if (signers.file) {
       file = signers.file;
+    } else {
+      file = template.file;
     }
 
     if (standardFields?.length) {
@@ -137,6 +142,7 @@ const signPDF = async (req, res, next) => {
       interactedFields: [...signatures, ...standardFields, ...lineItemFields],
       ipAddress: ip,
       s3fileKey: file,
+      fileHistory,
     });
 
     pdfSigners = pdfSigners.map(signer => {
@@ -190,6 +196,15 @@ const signPDF = async (req, res, next) => {
         userId: template?.user_id,
         accountId: template?.account_id,
       });
+
+      await updateStatusColumn({
+        itemId: itemId,
+        boardId: template.board_id,
+        columnId: template?.status_column_id,
+        columnValue: 'Completed',
+        userId: template?.user_id,
+        accountId: template?.account_id,
+      });
     }
 
     if (
@@ -199,41 +214,54 @@ const signPDF = async (req, res, next) => {
     ) {
       const indexOfNextSigner = indexOfCurrentSigner + 1;
       const nextSigner = pdfSigners[indexOfNextSigner];
-      if (nextSigner.emailColumnId && !nextSigner.isSigned) {
-        await setMondayToken(template.user_id, template.account_id);
+
+      let email;
+      await setMondayToken(template.user_id, template.account_id);
+
+      if (nextSigner.emailColumnId && !nextSigner?.isSigned) {
         const nextSignerEmailRes = await getEmailColumnValue(
           itemId,
           nextSigner.emailColumnId
         );
+        email = nextSignerEmailRes?.data?.items?.[0]?.column_values?.[0]?.text;
+      }
 
-        const email =
-          nextSignerEmailRes?.data?.items?.[0]?.column_values?.[0]?.text;
+      if (nextSigner.userId && !nextSigner?.isSigned) {
+        const userResp = await getUsersByIds(nextSigner.userId);
+        email = userResp?.data?.users?.[0]?.email;
+      }
 
-        if (email) {
-          const session = await mongoose.startSession();
-          session.startTransaction();
+      if (email) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
 
-          const newHistory = await signerService.deletePreviousStatusAndSend({
-            fileId: template._id,
-            email,
-            session,
-            itemId,
-          });
+        const newHistory = await signerService.deletePreviousStatusAndSend({
+          fileId: template._id,
+          email,
+          session,
+          itemId,
+        });
 
-          await signerService.sendEmailAndUpdateBackOffice({
-            itemId,
-            newSentHistory: newHistory,
-            session,
-            template,
-            to: email,
-          });
+        await signerService.sendEmailAndUpdateBackOffice({
+          itemId,
+          newSentHistory: newHistory,
+          session,
+          template,
+          to: email,
+        });
 
-          pdfSigners.signers[indexOfNextSigner].fileStatus = newHistory[0]._id;
-          signers.signers = pdfSigners;
-          await signers.save();
-        }
+        pdfSigners[indexOfNextSigner].fileStatus =
+          newHistory[0]._id?.toString();
+
+        await SignerModel.findOneAndUpdate(
+          { _id: signers._id },
+          { signers: pdfSigners },
+          { new: 1 }
+        );
       }
     }
+
+    return res.status(200).json({ data: 'All good' });
   } catch (err) {
     next(err);
   }
