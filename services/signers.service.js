@@ -9,7 +9,11 @@ const {
   backOfficeUpdateTotalSent,
   backOfficeUpadateLastDocSentDate,
 } = require('./backoffice.service');
-const { getEmailColumnValue, updateStatusColumn } = require('./monday.service');
+const {
+  getEmailColumnValue,
+  updateStatusColumn,
+  getUsersByIds,
+} = require('./monday.service');
 const FileDetails = require('../models/FileDetails');
 const { setMondayToken } = require('../utils/monday');
 const { sendRequestToSign } = require('../services/mailer');
@@ -204,8 +208,6 @@ const sendEmailAndUpdateBackOffice = async ({
 };
 
 const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
   try {
     const template = await FileDetails.findById(fileId);
     if (message) {
@@ -221,7 +223,6 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
         message: 'Email is not verified',
       };
     }
-
     await setMondayToken(template.user_id, template.account_id);
     const signerDetails = await SignerModel.findOne({
       originalFileId: Types.ObjectId(fileId),
@@ -229,59 +230,115 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
     });
 
     if (signerDetails?.isSigningOrderRequired) {
-      // send file to only first signer
-      const emailColumn = signerDetails?.signers?.filter(
-        signer => !signer?.isSigned
-      )?.[0]?.emailColumnId;
+      let session = await mongoose.startSession();
+      session.startTransaction();
+      try {
+        const firstSignerDetail = signerDetails?.signers?.filter(
+          signer => !signer?.isSigned
+        )?.[0];
 
-      const emailColumnValue = await getEmailColumnValue(itemId, emailColumn);
-      const email =
-        emailColumnValue?.data?.items?.[0]?.column_values?.[0]?.text;
+        let email;
+        let indexOfEmailColumn;
 
-      if (email) {
-        const newHistory = await deletePreviousStatusAndSend({
-          fileId,
-          email,
-          session,
-          itemId,
-        });
+        if (firstSignerDetail?.userId) {
+          const userResp = await getUsersByIds(firstSignerDetail.userId);
+          email = userResp?.data?.users?.[0]?.email;
+          indexOfEmailColumn = signerDetails?.signers?.findIndex(
+            signer => signer?.userId === firstSignerDetail.userId
+          );
+        }
 
-        await sendEmailAndUpdateBackOffice({
-          itemId,
-          newSentHistory: newHistory,
-          session,
-          template,
-          to: email,
-        });
+        if (!firstSignerDetail?.userId && firstSignerDetail?.emailColumnId) {
+          // send file to only first signer
+          const emailColumn = firstSignerDetail.emailColumnId;
+          const emailColumnValue = await getEmailColumnValue(
+            itemId,
+            emailColumn
+          );
+          email = emailColumnValue?.data?.items?.[0]?.column_values?.[0]?.text;
+          indexOfEmailColumn = signerDetails?.signers?.findIndex(
+            signer => signer?.emailColumnId === emailColumn
+          );
+        }
 
-        const indexOfEmailColumn = signerDetails?.signers?.findIndex(
-          signer => signer?.emailColumnId === emailColumn
-        );
+        if (email) {
+          const newHistory = await deletePreviousStatusAndSend({
+            fileId,
+            email,
+            session,
+            itemId,
+          });
 
-        signerDetails.signers[indexOfEmailColumn].fileStatus =
-          newHistory[0]._id;
-        await signerDetails.save();
-        return signerDetails;
+          await sendEmailAndUpdateBackOffice({
+            itemId,
+            newSentHistory: newHistory,
+            session,
+            template,
+            to: email,
+          });
+
+          signerDetails.signers[indexOfEmailColumn].fileStatus =
+            newHistory[0]._id.toString();
+          await signerDetails.save();
+          return signerDetails;
+        }
+      } catch (err) {
+        await session.abortTransaction();
+        session.endSession();
+        throw err;
       }
     } else {
       // send file to all the signers
-      const emailColumns = signerDetails?.signers?.map(
-        emailCol => emailCol.emailColumnId || emailCol.id // added emailCol.id temporarily
-      );
+      const emailColumns = signerDetails?.signers
+        ?.filter(
+          emailCol =>
+            emailCol.emailColumnId && !emailCol.userId && !emailCol.isSigned
+        )
+        ?.map(
+          emailCol => emailCol.emailColumnId // added emailCol.id temporarily
+        );
+
+      const userColumns = signerDetails?.signers
+        ?.filter(emailCol => emailCol.userId && !emailCol.isSigned)
+        ?.map(
+          emailCol => emailCol.userId // added emailCol.id temporarily
+        );
+
+      let emailList = [];
 
       if (emailColumns?.length) {
         const emailColumnValue = await getEmailColumnValue(
           itemId,
           emailColumns
         );
-        const emailList =
+        const emailColRes =
           emailColumnValue?.data?.items?.[0]?.column_values?.map(value => ({
             email: value?.text,
             id: value?.id,
           }));
+        if (emailColRes?.length > 0)
+          emailList = emailList.concat([...emailColRes]);
+      }
 
-        for (const emailDetail of emailList) {
-          if (!emailDetail?.email) continue;
+      if (userColumns?.length) {
+        const userColumnValue = await getUsersByIds(userColumns);
+
+        const userColRes = userColumnValue?.data?.users?.map(user => ({
+          id: user.id,
+          email: user.email,
+        }));
+
+        if (userColRes?.length > 0)
+          emailList = emailList.concat([...userColRes]);
+      }
+
+      for (const emailDetail of emailList) {
+        if (!emailDetail?.email) continue;
+
+        try {
+          let session = await mongoose.startSession();
+          session.startTransaction();
+
           const newHistory = await deletePreviousStatusAndSend({
             fileId,
             email: emailDetail.email,
@@ -298,19 +355,30 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
           });
 
           const indexOfEmailColumn = signerDetails?.signers?.findIndex(
-            signer => (signer?.emailColumnId || signer?.id) === emailDetail?.id // added emailCol.id temporarily
+            signer =>
+              (Number(signer?.userId) || signer?.emailColumnId) ===
+              emailDetail?.id // added emailCol.id temporarily
           );
 
-          signerDetails.signers[indexOfEmailColumn].fileStatus =
-            newHistory[0]._id;
-          await signerDetails.save();
-          return signerDetails;
+          if (indexOfEmailColumn > -1) {
+            signerDetails.signers[indexOfEmailColumn].fileStatus =
+              newHistory[0]._id.toString();
+
+            const updatedSigner = await SignerModel.findOneAndUpdate(
+              { _id: signerDetails._id },
+              { signers: signerDetails.signers }
+            );
+          }
+        } catch (err) {
+          await session.abortTransaction();
+          session.endSession();
+          throw err;
         }
       }
+
+      return SignerModel.findById(signerDetails._id);
     }
   } catch (err) {
-    await session.abortTransaction();
-    session.endSession();
     throw err;
   }
 };
