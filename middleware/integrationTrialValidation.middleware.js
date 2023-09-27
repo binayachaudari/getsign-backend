@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const FileDetails = require('../models/FileDetails');
 const ApplicationModel = require('../models/Application.model');
 const { updateStatusColumn } = require('../services/monday.service');
+const { sendLimitAboutToReach } = require('../services/mailer');
 
 const integrationValidateTrial = async (req, res, next) => {
   try {
@@ -140,12 +141,12 @@ const integrationValidateTrial = async (req, res, next) => {
         if (slug) {
           await sendLimitAboutToReach(
             `https://${slug}.monday.com/apps/installed_apps/10050849?billing`,
-            [file.email_address, adminDetails?.user_email]
+            [file?.email_address, adminDetails?.user_email]
           );
         } else {
           await sendLimitAboutToReach(
             `https://monday.com/apps/installed_apps/10050849?billing`,
-            [file.email_address, adminDetails?.user_email]
+            [file?.email_address, adminDetails?.user_email]
           );
         }
       }
@@ -154,12 +155,12 @@ const integrationValidateTrial = async (req, res, next) => {
         if (slug) {
           await sendLimitReached(
             `https://${slug}.monday.com/apps/installed_apps/10050849?billing`,
-            [file.email_address, adminDetails?.user_email]
+            [file?.email_address, adminDetails?.user_email]
           );
         } else {
           await sendLimitReached(
             `https://monday.com/apps/installed_apps/10050849?billing`,
-            [file.email_address, adminDetails?.user_email]
+            [file?.email_address, adminDetails?.user_email]
           );
         }
       }
