@@ -171,12 +171,13 @@ const getUsersByIds = async (userIds = []) => {
     `
     query getUserByIds($userIds:[Int]){
             users(ids:$userIds){
+              id
               name
               email
             }
           }
         `,
-    { variables: { userIds: [...userIds] } }
+    { variables: { userIds: [...userIds].map(id => Number(id)) } }
   );
 };
 
