@@ -4,11 +4,19 @@ const FileDetails = require('../models/FileDetails');
 const FileHistory = require('../models/FileHistory');
 const { backOfficeDocumentSigned } = require('../services/backoffice.service');
 const STANDARD_FIELDS = require('../config/standardFields');
+
 const {
   addFormFields,
   generatePDF,
   addSenderDetails,
 } = require('../services/file');
+
+const {
+  getSignerByFileId,
+  createSigner,
+  getOneSignersByFilter,
+} = require('../services/signers.service');
+
 const {
   addFileHistory,
   getFileHistory,
@@ -19,6 +27,7 @@ const {
   downloadContract,
   generateFilePreview,
   generateFilePreviewWithPlaceholders,
+  getFileForSigner,
 } = require('../services/fileHistory');
 const { emailRequestToSign, sendFinalContract } = require('../services/mailer');
 const {
@@ -66,11 +75,42 @@ module.exports = {
       next(error);
     }
   },
+
+  getFileFields: async (req, res, next) => {
+    const id = req.params.id;
+    try {
+      const result = await loadFileDetails(id);
+      return res.json({ data: result }).status(200);
+    } catch (error) {
+      next(error);
+    }
+  },
+
   updateFields: async (req, res, next) => {
     const id = req.params.id;
-    const { fields } = req.body;
+    const item_id = req.params.item_id;
+    const { fields, signers_settings } = req.body;
     try {
       const result = await addFormFields(id, fields);
+      const signerOrder = await getOneSignersByFilter({
+        originalFileId: id,
+        itemId: item_id,
+      });
+
+      const signerOrderPayload = {
+        signers: signers_settings.signers || [],
+        originalFileId: id,
+        itemId: item_id,
+        isSigningOrderRequired:
+          signers_settings.isSigningOrderRequired || false,
+      };
+
+      if (signerOrder) {
+        await signerOrder.updateOne(signerOrderPayload);
+      } else {
+        await createSigner(signerOrderPayload);
+      }
+
       return res.json({ data: result }).status(200);
     } catch (error) {
       next(error);
@@ -330,6 +370,17 @@ module.exports = {
     const { itemId, id } = req.params;
     try {
       const result = await getFileToSignReceiver(id, itemId);
+      return res.json({ data: result }).status(200);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getFileForSigner: async (req, res, next) => {
+    // fileHistory id having status = 'sent' | 'resent'
+    const { itemId, id } = req.params;
+    try {
+      const result = await getFileForSigner(id, itemId);
       return res.json({ data: result }).status(200);
     } catch (error) {
       next(error);

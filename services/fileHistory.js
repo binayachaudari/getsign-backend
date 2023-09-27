@@ -20,6 +20,7 @@ const {
   getEmailColumnValue,
   getColumnDetails,
   getSpecificColumnValue,
+  getUsersByIds,
 } = require('./monday.service');
 const { s3, getSignedUrl } = require('./s3');
 const {
@@ -28,10 +29,58 @@ const {
   renameFunctions,
   hasNestedIF,
   convertToNestedIFS,
+  getFormulaValueOfItem,
 } = require('../utils/formula');
 const HyperFormula = require('../utils/hyperFormula');
 const { toFixed } = require('../utils/number');
 const { formulaeParser } = require('../utils/mondayFormulaConverter');
+const SignerModel = require('../models/Signer.model');
+
+const multipleSignerAddFileHistory = async ({
+  id,
+  status,
+  itemId,
+  interactedFields,
+  ipAddress,
+  s3fileKey,
+  fileHistory,
+}) => {
+  try {
+    if (interactedFields?.length) {
+      const signedFile = await signPDF({
+        id,
+        interactedFields,
+        status,
+        itemId,
+        s3fileKey,
+      });
+
+      return await FileHistory.findByIdAndUpdate(
+        fileHistory._id,
+        {
+          file: signedFile.Key,
+          ...(status === 'signed_by_receiver' && {
+            receiverSignedIpAddress: ipAddress,
+          }),
+        },
+        {
+          new: true,
+        }
+      );
+    }
+
+    if (status === 'viewed')
+      return await FileHistory.findByIdAndUpdate(
+        fileHistory._id,
+        {
+          status: 'viewed',
+        },
+        { new: true }
+      );
+  } catch (err) {
+    throw err;
+  }
+};
 
 const addFileHistory = async ({
   id,
@@ -638,6 +687,160 @@ const getFileToSignReceiver = async (id, itemId) => {
   }
 };
 
+const getFileForSigner = async (id, itemId) => {
+  try {
+    let fileId;
+    const fileFromHistory = await FileHistory.findById(id).populate('fileId');
+
+    if (!fileFromHistory) {
+      return {
+        isDeleted: true,
+      };
+    }
+    const template = fileFromHistory.fileId;
+    fileId = fileFromHistory.fileId?._id;
+
+    const signersDoc = await SignerModel.findOne({
+      originalFileId: fileId,
+      itemId,
+    });
+
+    await setMondayToken(template?.user_id, template?.account_id);
+
+    const currentSigner = signersDoc?.signers?.find(
+      signer => signer.fileStatus === id
+    );
+
+    let currentSignerEmail;
+    let assignedFields = [];
+
+    // set the email of current signer
+    if (currentSigner?.userId) {
+      const userResp = await getUsersByIds(currentSigner.userId);
+      currentSignerEmail = userResp?.data?.users?.[0]?.email;
+      assignedFields = template?.fields?.filter(
+        field => field.signer.userId === currentSigner.userId
+      );
+    }
+
+    if (!currentSigner?.userId && currentSigner?.emailColumnId) {
+      const emailResp = await await getEmailColumnValue(
+        itemId,
+        currentSigner.emailColumnId
+      );
+      currentSignerEmail = emailResp.data?.items?.[0]?.column_values?.filter(
+        emlCol => emlCol.id === currentSigner.emailColumnId
+      )?.[0]?.text;
+
+      assignedFields = template?.fields?.filter(
+        field => field.signer.value === currentSigner.emailColumnId
+      );
+    }
+
+    if (!currentSignerEmail) {
+      // Need to refactore when we cannot find email column id
+      return { isDeleted: true };
+    }
+
+    const isAlreadySigned = await FileHistory.findOne({
+      fileId,
+      itemId,
+      status: 'signed_by_receiver',
+      sentToEmail: currentSignerEmail,
+    }).exec();
+
+    if (isAlreadySigned) {
+      return {
+        fileId,
+        isAlreadySigned: true,
+        sendDocumentTo: currentSignerEmail,
+      };
+    }
+
+    let getFileToSignKey = signersDoc.file;
+
+    try {
+      let url;
+      if (!getFileToSignKey) {
+        const columnValues = await getColumnValues(itemId);
+
+        let item = columnValues?.data?.items?.[0];
+
+        item = handleFormatNumericColumn(item);
+
+        const items_subItem = columnValues?.data?.items?.[0]?.subitems || [];
+
+        const formValues = [
+          ...(columnValues?.data?.items?.[0]?.column_values || []),
+          {
+            id: 'item-name',
+            text: columnValues?.data?.items?.[0]?.name || '',
+            title: 'Item Name',
+            type: 'text',
+          },
+        ];
+
+        const formulaColumnWithValues = await getFormulaValueOfItem({
+          boardColumns: item.board.columns,
+          boardColumnValues: item.column_values,
+          itemId: item.id,
+        });
+
+        for (const formulaCol of formulaColumnWithValues) {
+          const alreadyExistsIdx = formValues.findIndex(
+            formValue => formValue.id === formulaCol?.id
+          );
+
+          if (alreadyExistsIdx > -1) {
+            formValues[alreadyExistsIdx].text = formulaCol.text;
+          } else {
+            formValues.push({
+              ...formulaCol,
+            });
+          }
+        }
+        const generatedPDF = await generatePDF(template?._id, formValues, [
+          ...items_subItem,
+        ]);
+
+        return {
+          fileId: template.id,
+          ...generatedPDF,
+          assignedFields,
+          alreadySignedByOther: !!getFileToSignKey,
+          alreadyViewed: !!(await isAlreadyViewed({ fileId, itemId })),
+          sendDocumentTo: currentSignerEmail,
+        };
+      }
+
+      url = s3.getSignedUrl('getObject', {
+        Bucket: process.env.BUCKET_NAME,
+        Key: getFileToSignKey,
+      });
+
+      fileId = signersDoc.originalFileId;
+      const body = await fetch(url);
+      const contentType = body.headers.get('content-type');
+      const arrBuffer = await body.arrayBuffer();
+      const buffer = Buffer.from(arrBuffer);
+      var base64String = buffer.toString('base64');
+
+      return {
+        fileId,
+        file: `data:${contentType};base64,${base64String}`,
+        assignedFields,
+        alreadySignedByOther: !!getFileToSignKey,
+        alreadyViewed: !!(await isAlreadyViewed({ fileId, itemId })),
+        sendDocumentTo: currentSignerEmail,
+      };
+    } catch (error) {
+      throw error;
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
 const downloadContract = async (itemId, fileId) => {
   const signed = await FileHistory.findOne({
     fileId: fileId,
@@ -1163,4 +1366,6 @@ module.exports = {
   downloadContract,
   generateFilePreview,
   generateFilePreviewWithPlaceholders,
+  multipleSignerAddFileHistory,
+  getFileForSigner,
 };

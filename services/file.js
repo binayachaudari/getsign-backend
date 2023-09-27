@@ -733,10 +733,19 @@ const loadFile = async url => {
   return `data:${contentType};base64,${base64String}`;
 };
 
-const signPDF = async ({ id, interactedFields, status, itemId }) => {
+const signPDF = async (
+  { id, interactedFields, status, itemId, s3fileKey = null } = {
+    id: '',
+    interactedFields: [],
+    status: '',
+    itemId: '',
+    s3fileKey: null,
+  }
+) => {
   try {
     let pdfDoc;
     const fileDetails = await loadFileDetails(id);
+
     await setMondayToken(fileDetails.user_id, fileDetails.account_id);
     const valuesToFill = await getColumnValues(itemId);
 
@@ -926,22 +935,30 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
       itemId,
     }).exec();
 
-    const signedByReceiver = await FileHistory.findOne({
-      fileId: id,
-      status: 'signed_by_receiver',
-      itemId,
-    }).exec();
+    if (!s3fileKey) {
+      const signedByReceiver = await FileHistory.findOne({
+        fileId: id,
+        status: 'signed_by_receiver',
+        itemId,
+      }).exec();
 
-    if (signedBySender) {
-      const url = await getSignedUrl(signedBySender?.file);
-      const file = await loadFile(url);
-      pdfDoc = await PDFDocument.load(file);
-    } else if (signedByReceiver) {
-      const url = await getSignedUrl(signedByReceiver?.file);
-      const file = await loadFile(url);
-      pdfDoc = await PDFDocument.load(file);
+      if (signedBySender) {
+        const url = await getSignedUrl(signedBySender?.file);
+        const file = await loadFile(url);
+        pdfDoc = await PDFDocument.load(file);
+      } else if (signedByReceiver) {
+        const url = await getSignedUrl(signedByReceiver?.file);
+        const file = await loadFile(url);
+        pdfDoc = await PDFDocument.load(file);
+      } else {
+        pdfDoc = await PDFDocument.load(fileDetails?.file);
+      }
     } else {
-      pdfDoc = await PDFDocument.load(fileDetails?.file);
+      const url = await getSignedUrl(s3fileKey);
+
+      const file = await loadFile(url);
+
+      pdfDoc = await PDFDocument.load(file);
     }
 
     const pages = pdfDoc.getPages();
@@ -964,13 +981,13 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
 
           if (placeHolder?.image?.src) {
             const pngImage = await pdfDoc.embedPng(placeHolder?.image?.src);
-            const heightOfSignPlaceholder = 33;
+            const heightOfSignPlaceholder = placeHolder.height || 33;
 
             currentPage.drawImage(pngImage, {
               x: placeHolder?.formField.coordinates.x,
               y: placeHolder?.formField.coordinates.y - heightOfSignPlaceholder,
-              width: placeHolder?.image.width,
-              height: placeHolder?.image.height,
+              width: placeHolder?.width,
+              height: placeHolder?.height,
             });
           } else if (placeHolder?.itemId === 'sign-date') {
             const fontSize = placeHolder.fontSize || 11;

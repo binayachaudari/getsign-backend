@@ -7,6 +7,10 @@ const schema = new mongoose.Schema(
       type: Schema.Types.ObjectId,
       required: true,
     },
+    itemId: {
+      type: Number,
+      required: true,
+    },
     isSigningOrderRequired: Boolean,
     file: String,
     signers: [{}],

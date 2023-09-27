@@ -37,6 +37,13 @@ router.get(
   validateRequest,
   controller.getFileDetails
 );
+
+router.get(
+  '/load-file-fields/:id',
+  validateIdParam(),
+  validateRequest,
+  controller.getFileFields
+);
 router.get(
   '/history/:itemId/:id',
   verifySessionToken,
@@ -45,7 +52,7 @@ router.get(
   controller.getFileHistory
 );
 router.post(
-  '/add-form-fields/:id',
+  '/add-form-fields/:id/:item_id',
   validateTemplateDetails(),
   validateRequest,
   controller.updateFields
@@ -107,6 +114,13 @@ router.get(
   validateItemIdAndIdParam(),
   validateRequest,
   controller.getFileForReceiver
+);
+
+router.get(
+  '/file-for-signer/:itemId/:id',
+  validateItemIdAndIdParam(),
+  validateRequest,
+  controller.getFileForSigner
 );
 
 router.get(

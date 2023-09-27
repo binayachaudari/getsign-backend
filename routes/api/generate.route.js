@@ -10,7 +10,11 @@ router.post(
   generateController.uploadDocument
 );
 
-router.post('/templates', verifySessionToken, generateController.getTemplates);
+router.post(
+  '/templates/:boardId',
+  verifySessionToken,
+  generateController.getTemplates
+);
 
 router.delete(
   '/delete-file/:fileId',
