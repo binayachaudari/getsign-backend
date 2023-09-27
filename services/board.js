@@ -51,7 +51,12 @@ const getStoredBoardFile = async (boardId, itemId, instanceId) => {
       item_id: itemId,
       itemViewInstanceId: instanceId,
       is_deleted: false,
-      type: 'adhoc',
+      $or: [
+        {
+          type: 'adhoc',
+        },
+        { type: 'generate' },
+      ],
     });
 
     if (template) {
