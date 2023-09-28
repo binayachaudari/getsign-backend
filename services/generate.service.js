@@ -5,7 +5,7 @@ const { s3, getSignedUrl, loadFileDetails } = require('./s3');
 
 const uploadDocumentToGeneratePDF = async req => {
   const body = req.body;
-  const file = req.files.files;
+  const file = req.files.file;
 
   // const fileDetails = await FileDetails.findOne({
   //   account_id: body.account_id,
