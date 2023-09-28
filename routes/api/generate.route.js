@@ -17,9 +17,9 @@ router.get(
 );
 
 router.delete(
-  '/delete-file/:fileId',
-  verifySessionToken
-  // adhocController.deleteFile
+  '/templates/:fileId',
+  verifySessionToken,
+  generateController.removeTemplate
 );
 
 module.exports = router;

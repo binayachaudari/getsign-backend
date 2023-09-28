@@ -57,7 +57,12 @@ const templates = async boardId => {
   });
 };
 
+const removeTemplate = async fileId => {
+  return FileDetails.findByIdAndUpdate(fileId, { is_deleted: true });
+};
+
 module.exports = {
   uploadDocumentToGeneratePDF,
   templates,
+  removeTemplate,
 };
