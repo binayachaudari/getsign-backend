@@ -10,7 +10,7 @@ const {
   boardGetBoardFileValidator,
 } = require('../../validators/board.validator');
 
-router.get('/installed', verifySessionToken, controller.installedItemView);
+router.get('/installed', controller.installedItemView);
 
 router.put(
   '/update-instance/:fileId',
