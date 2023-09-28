@@ -8,6 +8,7 @@ const {
   uploadContract,
   getEmailColumnValue,
   getUsersByIds,
+  updateStatusColumn,
 } = require('../services/monday.service');
 const STANDARD_FIELDS = require('../config/standardFields');
 const ApplicationModel = require('../models/Application.model');
@@ -85,7 +86,7 @@ const signPDF = async (req, res, next) => {
   ).split(',');
   const ip = ips[0].trim();
   const { status, signatures, itemId, standardFields } = req.body;
-
+  console.log({ status });
   try {
     const fileHistory = await FileHistory.findById(fileHistoryId).populate(
       'fileId'
@@ -104,6 +105,29 @@ const signPDF = async (req, res, next) => {
     const indexOfCurrentSigner = pdfSigners.findIndex(
       signer => signer.fileStatus === fileHistoryId
     );
+
+    let signerEmail;
+    let currentSigner;
+
+    if (indexOfCurrentSigner > -1) {
+      currentSigner = pdfSigners[indexOfCurrentSigner];
+
+      await setMondayToken(template.user_id, template.account_id);
+
+      if (currentSigner.emailColumnId && !currentSigner.userId) {
+        const currentSignerEmailRes = await getEmailColumnValue(
+          itemId,
+          currentSigner.emailColumnId
+        );
+        signerEmail =
+          currentSignerEmailRes?.data?.items?.[0]?.column_values?.[0]?.text;
+      }
+
+      if (currentSigner.userId) {
+        const userResp = await getUsersByIds(currentSigner.userId);
+        signerEmail = userResp?.data?.users?.[0]?.email;
+      }
+    }
 
     let file;
     // takes the latest signed file if already signed else takes original file
@@ -135,7 +159,7 @@ const signPDF = async (req, res, next) => {
       template?.fields?.filter(field => field.itemId === 'line-item') || [];
 
     // Modify the PDF to put the standard fields data and signatures.
-    const signedPDF = await fileHistoryService.multipleSignerAddFileHistory({
+    let signedPDF = await fileHistoryService.multipleSignerAddFileHistory({
       id: template._id,
       itemId,
       status,
@@ -144,6 +168,11 @@ const signPDF = async (req, res, next) => {
       s3fileKey: file,
       fileHistory,
     });
+
+    signedPDF = await fileHistoryService.updateOne(
+      { _id: signedPDF._id },
+      { sentToEmail: signerEmail }
+    );
 
     pdfSigners = pdfSigners.map(signer => {
       if (signer.fileStatus === fileHistoryId) {

@@ -55,14 +55,17 @@ const multipleSignerAddFileHistory = async ({
         s3fileKey,
       });
 
+      const updatePayload = {
+        file: signedFile.Key,
+        status,
+        ...(status === 'signed_by_receiver' && {
+          receiverSignedIpAddress: ipAddress,
+        }),
+      };
+
       return await FileHistory.findByIdAndUpdate(
         fileHistory._id,
-        {
-          file: signedFile.Key,
-          ...(status === 'signed_by_receiver' && {
-            receiverSignedIpAddress: ipAddress,
-          }),
-        },
+        updatePayload,
         {
           new: true,
         }
@@ -736,6 +739,14 @@ const getFileForSigner = async (id, itemId) => {
       );
     }
 
+    // if (currentSigner?.isSigned) {
+    //   return {
+    //     fileId,
+    //     isAlreadySigned: true,
+    //     sendDocumentTo: currentSignerEmail,
+    //   };
+    // }
+
     if (!currentSignerEmail) {
       // Need to refactore when we cannot find email column id
       return { isDeleted: true };
@@ -747,6 +758,8 @@ const getFileForSigner = async (id, itemId) => {
       status: 'signed_by_receiver',
       sentToEmail: currentSignerEmail,
     }).exec();
+
+    console.log({ isAlreadySigned, currentSignerEmail, fileId, itemId });
 
     if (isAlreadySigned) {
       return {
@@ -1355,6 +1368,9 @@ const generateFilePreviewWithPlaceholders = async (
   }
 };
 
+const updateOne = async (filter, update) => {
+  return FileHistory.findOneAndUpdate(filter, update, { new: true });
+};
 module.exports = {
   addFileHistory,
   getFileHistory,
@@ -1367,4 +1383,5 @@ module.exports = {
   generateFilePreviewWithPlaceholders,
   multipleSignerAddFileHistory,
   getFileForSigner,
+  updateOne,
 };
