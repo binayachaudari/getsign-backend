@@ -1,6 +1,7 @@
 const ApplicationModel = require('../models/Application.model');
 const FileDetails = require('../models/FileDetails');
 const { backOfficeUploadedDocument } = require('./backoffice.service');
+const { s3, getSignedUrl, loadFileDetails } = require('./s3');
 
 const uploadDocumentToGeneratePDF = async req => {
   const body = req.body;

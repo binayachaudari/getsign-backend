@@ -10,7 +10,7 @@ router.post(
   generateController.uploadDocument
 );
 
-router.post(
+router.get(
   '/templates/:boardId',
   verifySessionToken,
   generateController.getTemplates
