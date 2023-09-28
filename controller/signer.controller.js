@@ -210,7 +210,8 @@ const signPDF = async (req, res, next) => {
     if (
       signers.isSigningOrderRequired &&
       indexOfCurrentSigner > -1 &&
-      indexOfCurrentSigner < pdfSigners.length - 1
+      indexOfCurrentSigner < pdfSigners.length - 1 &&
+      !hasAllSigned
     ) {
       const indexOfNextSigner = indexOfCurrentSigner + 1;
       const nextSigner = pdfSigners[indexOfNextSigner];
