@@ -1,6 +1,9 @@
 const router = require('express').Router();
 const controller = require('../../controller/board.controller');
 const {
+  decodeSessionToken,
+} = require('../../middleware/decodeSessionToken.middleware');
+const {
   validateRequest,
 } = require('../../middleware/validateRequest.middleware');
 const {
@@ -10,7 +13,7 @@ const {
   boardGetBoardFileValidator,
 } = require('../../validators/board.validator');
 
-router.get('/installed', controller.installedItemView);
+router.get('/installed', decodeSessionToken, controller.installedItemView);
 
 router.put(
   '/update-instance/:fileId',

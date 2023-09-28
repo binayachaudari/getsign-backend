@@ -1,5 +1,8 @@
 const ApplicationModel = require('../models/Application.model');
-const { updateColumnValues } = require('../services/backoffice.service');
+const {
+  updateColumnValues,
+  backOfficeItemViewInstalled,
+} = require('../services/backoffice.service');
 const {
   getStoredBoardFile,
   updateBackOfficeInstalledItemView,
@@ -22,14 +25,16 @@ module.exports = {
             applicationHistory.back_office_item_id,
             JSON.stringify({ text2: version })
           );
+          await backOfficeItemViewInstalled(
+            Number(applicationHistory?.back_office_item_id)
+          );
         }
       }
 
-      await updateBackOfficeInstalledItemView(Number(req?.user?.account_id));
       res
         .json({
           data: {
-            message: 'Status updated for accountId: ' + req?.user?.account_id,
+            message: 'Status updated for accountId: ' + req?.accountId,
           },
         })
         .status(200);
