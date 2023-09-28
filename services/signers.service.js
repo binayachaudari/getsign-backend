@@ -279,8 +279,12 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
 
           signerDetails.signers[indexOfEmailColumn].fileStatus =
             newHistory[0]._id.toString();
-          await signerDetails.save();
-          return signerDetails;
+          const updatedSiger = await SignerModel.findOneAndUpdate(
+            { _id: signerDetails._id },
+            { signers: signerDetails.signers },
+            { new: 1 }
+          );
+          return updatedSiger;
         }
       } catch (err) {
         await session.abortTransaction();
