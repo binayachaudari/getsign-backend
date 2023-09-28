@@ -691,7 +691,6 @@ const getFileForSigner = async (id, itemId) => {
   try {
     let fileId;
     const fileFromHistory = await FileHistory.findById(id).populate('fileId');
-
     if (!fileFromHistory) {
       return {
         isDeleted: true,
