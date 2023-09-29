@@ -14,6 +14,7 @@ const CURRENCY_TYPE = {
   usd: { label: 'USD', symbol: '$' },
   aud: { label: 'AUD', symbol: 'AUD' },
   cad: { label: 'CAD', symbol: 'CAD' },
+  gbp: { label: 'GBP', symbol: '£' },
 };
 
 const calculateRowHeight = ({

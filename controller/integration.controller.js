@@ -2,7 +2,7 @@ const { getFileToAutoSend } = require('../services/integrations.service');
 
 async function autoSend(req, res, next) {
   try {
-    console.log('AutoSend Payload', req?.body);
+    console.log('AutoSend Payload', JSON.stringify(req?.body, null, 2));
     const payload = req?.body?.payload;
     const itemId = payload?.inputFields?.itemId;
     const boardId = payload?.inputFields?.boardId;

@@ -45,7 +45,10 @@ module.exports = {
             context?.updateTokenUserId,
             result.access_token
           );
-          return;
+          const params = new URLSearchParams();
+          params.append('result', JSON.stringify(result));
+          params.append('user', JSON.stringify(user));
+          return res.redirect('/authorize?' + params);
         }
 
         user = await storeOrUpdateUser(context, result.access_token);

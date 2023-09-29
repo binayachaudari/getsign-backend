@@ -15,23 +15,23 @@ const { validateRequest } = require('./middleware/validateRequest.middleware');
 const app = express();
 const PORT = config.PORT;
 
-// Sentry
-Sentry.init({
-  dsn: 'https://722fbb53322249b590acf3f85e021260@o509278.ingest.sentry.io/4504966949109760',
-  integrations: [
-    // enable HTTP calls tracing
-    new Sentry.Integrations.Http({ tracing: true }),
-    // enable Express.js middleware tracing
-    new Sentry.Integrations.Express({ app }),
-    // Automatically instrument Node.js libraries and frameworks
-    ...Sentry.autoDiscoverNodePerformanceMonitoringIntegrations(),
-  ],
+// // Sentry
+// Sentry.init({
+//   dsn: 'https://722fbb53322249b590acf3f85e021260@o509278.ingest.sentry.io/4504966949109760',
+//   integrations: [
+//     // enable HTTP calls tracing
+//     new Sentry.Integrations.Http({ tracing: true }),
+//     // enable Express.js middleware tracing
+//     new Sentry.Integrations.Express({ app }),
+//     // Automatically instrument Node.js libraries and frameworks
+//     ...Sentry.autoDiscoverNodePerformanceMonitoringIntegrations(),
+//   ],
 
-  // Set tracesSampleRate to 1.0 to capture 100%
-  // of transactions for performance monitoring.
-  // We recommend adjusting this value in production
-  tracesSampleRate: 1.0,
-});
+//   // Set tracesSampleRate to 1.0 to capture 100%
+//   // of transactions for performance monitoring.
+//   // We recommend adjusting this value in production
+//   tracesSampleRate: 1.0,
+// });
 
 // RequestHandler creates a separate execution context using domains, so that every
 // transaction/span/breadcrumb is attached to its own Hub instance

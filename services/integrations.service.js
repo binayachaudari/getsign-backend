@@ -8,6 +8,10 @@ async function getFileToAutoSend(itemId, boardId, columnId) {
       status_column_id: columnId,
       is_deleted: false,
     });
+
+    if (file?.type === 'adhoc') {
+      return;
+    }
     const result = await emailRequestToSign(itemId, file?._id);
     return result;
   } catch (error) {
