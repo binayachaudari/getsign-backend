@@ -49,11 +49,11 @@ const getSignersOrDuplicate = async (req, res, next) => {
           originalFileId: Types.ObjectId(fileId),
           itemId: item_id,
           signers:
-            signer.signers?.map(sgn => {
-              const { fileStatus, isSigned, ...rest } = sgn;
+            signer?.signers?.map(sgn => {
+              const { fileStatus = '', isSigned = false, ...rest } = sgn;
               return rest;
             }) || [],
-          isSigningOrderRequired: signer.isSigningOrderRequired,
+          isSigningOrderRequired: signer?.isSigningOrderRequired || false,
         });
       }
     }

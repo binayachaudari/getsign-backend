@@ -241,11 +241,12 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
           originalFileId: Types.ObjectId(fileId),
           itemId: Number(itemId),
           signers:
-            signerDetails.signers?.map(sgn => {
-              const { fileStatus, isSigned, ...rest } = sgn;
+            signerDetails?.signers?.map(sgn => {
+              const { fileStatus = '', isSigned = false, ...rest } = sgn;
               return rest;
             }) || [],
-          isSigningOrderRequired: signerDetails.isSigningOrderRequired,
+          isSigningOrderRequired:
+            signerDetails?.isSigningOrderRequired || false,
         });
       }
     }
