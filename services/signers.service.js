@@ -226,10 +226,29 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
       };
     }
     await setMondayToken(template.user_id, template.account_id);
-    const signerDetails = await SignerModel.findOne({
+    let signerDetails = await SignerModel.findOne({
       originalFileId: Types.ObjectId(fileId),
       itemId: Number(itemId),
     });
+
+    if (!signerDetails && template?.type !== 'adhoc') {
+      signerDetails = await getOneSignersByFilter({
+        originalFileId: Types.ObjectId(fileId),
+      });
+
+      if (signerDetails) {
+        signerDetails = await createSigner({
+          originalFileId: Types.ObjectId(fileId),
+          itemId: Number(itemId),
+          signers:
+            signerDetails.signers?.map(sgn => {
+              const { fileStatus, isSigned, ...rest } = sgn;
+              return rest;
+            }) || [],
+          isSigningOrderRequired: signerDetails.isSigningOrderRequired,
+        });
+      }
+    }
 
     if (signerDetails?.isSigningOrderRequired) {
       let session = await mongoose.startSession();

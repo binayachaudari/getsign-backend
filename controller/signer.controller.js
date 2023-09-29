@@ -2,6 +2,7 @@ const signerService = require('../services/signers.service');
 const FileHistory = require('../models/FileHistory');
 const { loadFileDetails } = require('../services/s3');
 const fileHistoryService = require('../services/fileHistory');
+const { Types } = require('mongoose');
 
 const {
   updateMultipleTextColumnValues,
@@ -32,7 +33,7 @@ const getSignersOrDuplicate = async (req, res, next) => {
   try {
     const { fileId, item_id } = req.params;
     let signer = await signerService.getOneSignersByFilter({
-      originalFileId: fileId,
+      originalFileId: Types.ObjectId(fileId),
       itemId: item_id,
     });
 
@@ -40,14 +41,18 @@ const getSignersOrDuplicate = async (req, res, next) => {
 
     if (!signer && originlFileDetails?.type !== 'adhoc') {
       signer = await signerService.getOneSignersByFilter({
-        originalFileId: fileId,
+        originalFileId: Types.ObjectId(fileId),
       });
 
       if (signer) {
         signer = await signerService.createSigner({
-          originalFileId: fileId,
+          originalFileId: Types.ObjectId(fileId),
           itemId: item_id,
-          signers: signer.signers || [],
+          signers:
+            signer.signers?.map(sgn => {
+              const { fileStatus, isSigned, ...rest } = sgn;
+              return rest;
+            }) || [],
           isSigningOrderRequired: signer.isSigningOrderRequired,
         });
       }
