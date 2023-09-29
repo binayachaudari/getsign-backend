@@ -16,6 +16,7 @@ const { backOfficeDocumentSigned } = require('../services/backoffice.service');
 const { setMondayToken } = require('../utils/monday');
 const { default: mongoose } = require('mongoose');
 const SignerModel = require('../models/Signer.model');
+const FileDetails = require('../models/FileDetails');
 
 const createSigner = async (req, res, next) => {
   try {
@@ -34,7 +35,10 @@ const getSignersOrDuplicate = async (req, res, next) => {
       originalFileId: fileId,
       itemId: item_id,
     });
-    if (!signer) {
+
+    let originlFileDetails = await FileDetails.findOne({ _id: fileId });
+
+    if (!signer && originlFileDetails?.type !== 'adhoc') {
       signer = await signerService.getOneSignersByFilter({
         originalFileId: fileId,
       });
