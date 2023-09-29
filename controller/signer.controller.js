@@ -27,14 +27,27 @@ const createSigner = async (req, res, next) => {
   }
 };
 
-const getSigners = async (req, res, next) => {
+const getSignersOrDuplicate = async (req, res, next) => {
   try {
     const { fileId, item_id } = req.params;
-    const signer = await signerService.getOneSignersByFilter({
+    let signer = await signerService.getOneSignersByFilter({
       originalFileId: fileId,
       itemId: item_id,
     });
+    if (!signer) {
+      signer = await signerService.getOneSignersByFilter({
+        originalFileId: fileId,
+      });
 
+      if (signer) {
+        signer = await signerService.createSigner({
+          originalFileId: fileId,
+          itemId: item_id,
+          signers: signer.signers || [],
+          isSigningOrderRequired: signer.isSigningOrderRequired,
+        });
+      }
+    }
     return res.json({ data: signer }).status(200);
   } catch (err) {
     return next(err);
@@ -299,7 +312,7 @@ const signPDF = async (req, res, next) => {
 
 module.exports = {
   createSigner,
-  getSigners,
+  getSignersOrDuplicate,
   getSignerByFileId,
   updateSigner,
   sendMail,

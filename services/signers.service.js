@@ -48,7 +48,9 @@ const getSignerByFileId = async fileId => {
 
 const getOneSignersByFilter = async (filter = {}) => {
   try {
-    const signer = await SignerModel.findOne({ ...filter });
+    const signer = await SignerModel.findOne({ ...filter }).sort({
+      updatedAt: -1, //gets the latest updated document for the filter
+    });
     return signer;
   } catch (err) {}
 };
