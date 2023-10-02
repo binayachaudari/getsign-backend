@@ -11,7 +11,7 @@ const { validateSignatures } = require('../../validators/files.validator');
 router.post('/add-signer', controller.createSigner);
 // router.get('/get-signers/:signerId', controller.getSigners);
 
-router.get('/get-signers/:fileId/:item_id', controller.getSignersOrDuplicate);
+router.post('/get-signers/:fileId/:item_id', controller.getSignersOrDuplicate);
 
 router.post(
   '/get-signer-by-file-id/:fil2eId',
