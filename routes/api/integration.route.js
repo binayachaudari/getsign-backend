@@ -13,7 +13,7 @@ router.post(
 );
 
 router.post(
-  'generate-pdf-button',
+  '/generate-pdf-button',
   // integrationValidateTrial,
   controller.generatePDFWithButton
 );
