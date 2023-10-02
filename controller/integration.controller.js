@@ -23,6 +23,35 @@ async function autoSend(req, res, next) {
   }
 }
 
+async function getTemplatesForPDF(req, res, next) {
+  try {
+    console.log('getTemplatesForPDF Payload', req?.body);
+    return res.status(200).send({
+      options: [
+        {
+          title: 'Test Template',
+          value: 'test-template',
+        },
+      ],
+    });
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+}
+
+async function generatePDFWithButton(req, res, next) {
+  try {
+    console.log('generatePDFWithButton', req?.body);
+    res.status(200).send({});
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+}
+
 module.exports = {
   autoSend,
+  getTemplatesForPDF,
+  generatePDFWithButton,
 };

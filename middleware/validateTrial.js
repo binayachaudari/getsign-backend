@@ -13,6 +13,7 @@ const validateTrial = async (req, res, next) => {
     }
     const subscription = req?.subscription;
     if (!subscription) {
+      console.log('********* NO SUBSCRiPTION *********', JSON.stringify(req));
       return next({
         message: 'You need to upgrade/re-install GetSign',
         statusCode: 426,
