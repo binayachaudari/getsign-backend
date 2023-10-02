@@ -216,17 +216,6 @@ const signPDF = async (req, res, next) => {
       true
     );
 
-    // Commenting update Status Column for now.
-
-    // await updateStatusColumn({
-    //   itemId: itemId,
-    //   boardId: template.board_id,
-    //   columnId: template?.status_column_id,
-    //   columnValue: 'Completed',
-    //   userId: template?.user_id,
-    //   accountId: template?.account_id,
-    // });
-
     const appInstallDetails = await ApplicationModel.findOne({
       type: 'install',
       account_id: template.account_id,
@@ -255,7 +244,14 @@ const signPDF = async (req, res, next) => {
         userId: template?.user_id,
         accountId: template?.account_id,
       });
-    } else {
+    }
+
+    // When Signing order is required then change the status of the item to {index of signer}+Signed
+    if (
+      !hasAllSigned &&
+      signers.isSigningOrderRequired &&
+      indexOfCurrentSigner > -1
+    ) {
       await updateStatusColumn({
         itemId: itemId,
         boardId: template.board_id,
