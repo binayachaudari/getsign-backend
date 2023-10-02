@@ -48,7 +48,9 @@ const getSignerByFileId = async fileId => {
 
 const getOneSignersByFilter = async (filter = {}) => {
   try {
-    const signer = await SignerModel.findOne({ ...filter });
+    const signer = await SignerModel.findOne({ ...filter }).sort({
+      updatedAt: -1, //gets the latest updated document for the filter
+    });
     return signer;
   } catch (err) {}
 };
@@ -224,10 +226,30 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
       };
     }
     await setMondayToken(template.user_id, template.account_id);
-    const signerDetails = await SignerModel.findOne({
+    let signerDetails = await SignerModel.findOne({
       originalFileId: Types.ObjectId(fileId),
       itemId: Number(itemId),
     });
+
+    if (!signerDetails && template?.type !== 'adhoc') {
+      signerDetails = await getOneSignersByFilter({
+        originalFileId: Types.ObjectId(fileId),
+      });
+
+      if (signerDetails) {
+        signerDetails = await createSigner({
+          originalFileId: Types.ObjectId(fileId),
+          itemId: Number(itemId),
+          signers:
+            signerDetails?.signers?.map(sgn => {
+              const { fileStatus = '', isSigned = false, ...rest } = sgn;
+              return rest;
+            }) || [],
+          isSigningOrderRequired:
+            signerDetails?.isSigningOrderRequired || false,
+        });
+      }
+    }
 
     if (signerDetails?.isSigningOrderRequired) {
       let session = await mongoose.startSession();

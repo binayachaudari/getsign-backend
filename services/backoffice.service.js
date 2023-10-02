@@ -81,6 +81,7 @@ const backOfficeAddItem = async ({
   subscribedDate,
   renewalDate,
   amount,
+  dateJoined,
 }) => {
   if (!backOfficeMondayToken) {
     throw 'Cannot find back office token';
@@ -132,7 +133,7 @@ const backOfficeAddItem = async ({
     },
     text2: version || null,
     date4: {
-      ...getDateAndTime(),
+      ...getDateAndTime(dateJoined),
     },
     date3: subscribedDate,
     status88: {

@@ -1,6 +1,6 @@
 const symbolMapper = new Map([['dollar', '$']]);
 
-const formulaeParser = formula => {
+const formulaeParser = (formula = '') => {
   const regex = /^=(\w+)\((.+)\)$/;
 
   const matches = formula.match(regex);

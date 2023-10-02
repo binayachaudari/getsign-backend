@@ -11,7 +11,6 @@ const appSubscriptionValidation = () => [
   body('data.account_tier').trim().escape(),
   body('data.account_name').trim().not().isEmpty().escape(),
   body('data.account_slug').trim().not().isEmpty().escape(),
-  body('data.account_max_users').trim().not().isEmpty().toInt(),
   body('data.version_data').isObject(),
   body('data.timestamp').trim().not().isEmpty().escape(),
   body('data.subscription').optional().isObject(),

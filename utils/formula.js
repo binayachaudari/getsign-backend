@@ -91,7 +91,7 @@ const getSubItems = async (subItemSettings = {}, items_subItem) => {
 
 const parseFormulaColumnIds = formulaStr => {
   const formulaObject = JSON.parse(formulaStr);
-  const finalFormula = formulaObject.formula;
+  const finalFormula = formulaObject.formula || '';
 
   const formulaColumns = finalFormula.match(/\{(.*?)\}/g);
 

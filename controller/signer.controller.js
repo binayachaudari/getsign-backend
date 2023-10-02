@@ -2,6 +2,7 @@ const signerService = require('../services/signers.service');
 const FileHistory = require('../models/FileHistory');
 const { loadFileDetails } = require('../services/s3');
 const fileHistoryService = require('../services/fileHistory');
+const { Types } = require('mongoose');
 
 const {
   updateMultipleTextColumnValues,
@@ -16,6 +17,7 @@ const { backOfficeDocumentSigned } = require('../services/backoffice.service');
 const { setMondayToken } = require('../utils/monday');
 const { default: mongoose } = require('mongoose');
 const SignerModel = require('../models/Signer.model');
+const FileDetails = require('../models/FileDetails');
 
 const createSigner = async (req, res, next) => {
   try {
@@ -27,14 +29,34 @@ const createSigner = async (req, res, next) => {
   }
 };
 
-const getSigners = async (req, res, next) => {
+const getSignersOrDuplicate = async (req, res, next) => {
   try {
     const { fileId, item_id } = req.params;
-    const signer = await signerService.getOneSignersByFilter({
-      originalFileId: fileId,
+    let signer = await signerService.getOneSignersByFilter({
+      originalFileId: Types.ObjectId(fileId),
       itemId: item_id,
     });
 
+    let originlFileDetails = await FileDetails.findOne({ _id: fileId });
+
+    if (!signer && originlFileDetails?.type !== 'adhoc') {
+      signer = await signerService.getOneSignersByFilter({
+        originalFileId: Types.ObjectId(fileId),
+      });
+
+      if (signer) {
+        signer = await signerService.createSigner({
+          originalFileId: Types.ObjectId(fileId),
+          itemId: item_id,
+          signers:
+            signer?.signers?.map(sgn => {
+              const { fileStatus = '', isSigned = false, ...rest } = sgn;
+              return rest;
+            }) || [],
+          isSigningOrderRequired: signer?.isSigningOrderRequired || false,
+        });
+      }
+    }
     return res.json({ data: signer }).status(200);
   } catch (err) {
     return next(err);
@@ -86,7 +108,6 @@ const signPDF = async (req, res, next) => {
   ).split(',');
   const ip = ips[0].trim();
   const { status, signatures, itemId, standardFields } = req.body;
-  console.log({ status });
   try {
     const fileHistory = await FileHistory.findById(fileHistoryId).populate(
       'fileId'
@@ -195,17 +216,6 @@ const signPDF = async (req, res, next) => {
       true
     );
 
-    // Commenting update Status Column for now.
-
-    // await updateStatusColumn({
-    //   itemId: itemId,
-    //   boardId: template.board_id,
-    //   columnId: template?.status_column_id,
-    //   columnValue: 'Completed',
-    //   userId: template?.user_id,
-    //   accountId: template?.account_id,
-    // });
-
     const appInstallDetails = await ApplicationModel.findOne({
       type: 'install',
       account_id: template.account_id,
@@ -231,6 +241,24 @@ const signPDF = async (req, res, next) => {
         boardId: template.board_id,
         columnId: template?.status_column_id,
         columnValue: 'Completed',
+        userId: template?.user_id,
+        accountId: template?.account_id,
+      });
+    }
+
+    // When Signing order is required then change the status of the item to {index of signer}+Signed
+    if (
+      !hasAllSigned &&
+      signers.isSigningOrderRequired &&
+      indexOfCurrentSigner > -1
+    ) {
+      await updateStatusColumn({
+        itemId: itemId,
+        boardId: template.board_id,
+        columnId: template?.status_column_id,
+        columnValue: currentSigner.userId
+          ? `Me Signed`
+          : `${indexOfCurrentSigner + 1} Signed`,
         userId: template?.user_id,
         accountId: template?.account_id,
       });
@@ -299,7 +327,7 @@ const signPDF = async (req, res, next) => {
 
 module.exports = {
   createSigner,
-  getSigners,
+  getSignersOrDuplicate,
   getSignerByFileId,
   updateSigner,
   sendMail,
