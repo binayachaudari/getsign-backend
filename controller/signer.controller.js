@@ -108,7 +108,6 @@ const signPDF = async (req, res, next) => {
   ).split(',');
   const ip = ips[0].trim();
   const { status, signatures, itemId, standardFields } = req.body;
-  console.log({ status });
   try {
     const fileHistory = await FileHistory.findById(fileHistoryId).populate(
       'fileId'
@@ -253,6 +252,17 @@ const signPDF = async (req, res, next) => {
         boardId: template.board_id,
         columnId: template?.status_column_id,
         columnValue: 'Completed',
+        userId: template?.user_id,
+        accountId: template?.account_id,
+      });
+    } else {
+      await updateStatusColumn({
+        itemId: itemId,
+        boardId: template.board_id,
+        columnId: template?.status_column_id,
+        columnValue: currentSigner.userId
+          ? `Me Signed`
+          : `${indexOfCurrentSigner + 1} Signed`,
         userId: template?.user_id,
         accountId: template?.account_id,
       });
