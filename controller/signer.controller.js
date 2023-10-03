@@ -382,11 +382,9 @@ const viewDocument = async (req, res, next) => {
 
   if (isViewedAlready?.find(doc => doc.sentToEmail === signerEmail)) {
     delete fileHistory.fileId;
-    return res
-      .status(200)
-      .json({
-        data: isViewedAlready?.find(doc => doc.sentToEmail === signerEmail),
-      });
+    return res.status(200).json({
+      data: isViewedAlready?.find(doc => doc.sentToEmail === signerEmail),
+    });
   }
 
   const viewedFileHistory = await FileHistory.create({
@@ -397,8 +395,6 @@ const viewDocument = async (req, res, next) => {
     viewedIpAddress: ip,
     sentToEmail: signerEmail,
   });
-
-  console.log({ viewedFileHistory });
 
   if (viewedFileHistory?.status) {
     await setMondayToken(template.user_id, template.account_id);
@@ -413,7 +409,7 @@ const viewDocument = async (req, res, next) => {
     });
   }
 
-  return res.json({ data: null }).status(200);
+  return res.json({ data: viewedFileHistory }).status(200);
 };
 
 module.exports = {
