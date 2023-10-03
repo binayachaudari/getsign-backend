@@ -230,6 +230,8 @@ const changeStatusWebhook = async (req, res, next) => {
   if (req?.body?.challenge) {
     return res.status(200).send(req.body);
   }
+
+  console.log(JSON.stringify(req?.body, null, 2));
 };
 
 module.exports = { applicationWebhook, changeStatusWebhook };

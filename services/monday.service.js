@@ -43,8 +43,14 @@ const registerWebhook = async ({
       }
     );
 
-    console.log(result);
-    return result;
+    if (
+      result &&
+      result.data &&
+      result.data.create_webhook &&
+      result.data.create_webhook
+    ) {
+      return result.data.create_webhook;
+    }
   } catch (err) {
     throw err;
   }
