@@ -177,7 +177,13 @@ const getUsersByIds = async (userIds = []) => {
             }
           }
         `,
-    { variables: { userIds: [...userIds].map(id => Number(id)) } }
+    {
+      variables: {
+        userIds: Array.isArray(userIds)
+          ? [...userIds].map(id => Number(id))
+          : [Number(userIds)],
+      },
+    }
   );
 };
 

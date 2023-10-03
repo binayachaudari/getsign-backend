@@ -16,7 +16,7 @@ module.exports = {
     });
     const docDetails = await FileDetails.findById(fileId);
 
-    const page = pdfDoc.addPage();
+    let page = pdfDoc.addPage();
     const { height } = page.getSize();
     const fontSize = 30;
     let currentIconPos = {
@@ -81,6 +81,19 @@ module.exports = {
     docHistory
       ?.filter(item => item.status !== 'resent')
       .forEach(history => {
+        if (currentDetailPos.y <= 0 || currentIconPos.y <= 0) {
+          page = pdfDoc.addPage();
+          currentIconPos = {
+            x: 50,
+            y: height - 250,
+          };
+
+          currentDetailPos = {
+            x: currentIconPos.x + signed.width + gap,
+            y: height - 220,
+          };
+        }
+
         switch (history.status) {
           case 'signed_by_sender':
           case 'signed_by_receiver':
@@ -111,11 +124,16 @@ module.exports = {
         };
 
         // Adding details with icons
-        page.drawText(STATUS_MAPPER[history.status], {
-          x: currentDetailPos.x,
-          y: currentDetailPos.y,
-          size: 18,
-        });
+        page.drawText(
+          `${
+            STATUS_MAPPER[history.status] + ' ' + (history.sentToEmail || '')
+          }`,
+          {
+            x: currentDetailPos.x,
+            y: currentDetailPos.y,
+            size: 18,
+          }
+        );
 
         const dateTime = `${new Date(
           history.created_at

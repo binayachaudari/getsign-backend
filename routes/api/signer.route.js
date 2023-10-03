@@ -27,4 +27,6 @@ router.post(
   controller.signPDF
 );
 
+router.post('/view-document/:id', controller.viewDocument);
+
 module.exports = router;

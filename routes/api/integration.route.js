@@ -24,7 +24,7 @@ router.post(
 router.post(
   '/generate-pdf-status',
   // integrationValidateTrial,
-  controller.generatePDFWithButton
+  controller.generatePDFWithStatus
 );
 
 module.exports = router;

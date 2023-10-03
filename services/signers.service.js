@@ -72,23 +72,31 @@ const deletePreviousStatusAndSend = async ({
 }) => {
   try {
     //clear viewed status if already sent
-    await FileHistory.deleteMany({
+    const fileHistories = await FileHistory.find({
       fileId: fileId,
       itemId,
       status: 'viewed',
-      sentToEmail: email,
     })
       .session(session)
       .exec();
 
-    const isAlreadySent = await FileHistory.findOne({
+    for (const history of fileHistories) {
+      if (history?.sentToEmail === email) {
+        await history.deleteOne();
+      }
+    }
+
+    const isAlreadySentDocs = await FileHistory.find({
       fileId: fileId,
       itemId,
       status: 'sent',
-      sentToEmail: email,
     })
       .session(session)
       .exec();
+
+    let isAlreadySent = isAlreadySentDocs?.find(
+      doc => doc.sentToEmail === email
+    );
 
     const newSentHistory = await FileHistory.create(
       [
