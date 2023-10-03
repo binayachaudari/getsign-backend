@@ -1,6 +1,8 @@
 const FileDetails = require('../models/FileDetails');
 const { getFileToAutoSend } = require('../services/integrations.service');
 const jwt = require('jsonwebtoken');
+const { registerWebhook } = require('../services/monday.service');
+const { config } = require('../config');
 
 async function autoSend(req, res, next) {
   try {
@@ -61,12 +63,25 @@ async function subscribeGenerateWithStatus(req, res, next) {
       'subscribeGenerateWithStatus',
       JSON.stringify(req?.body, null, 2)
     );
+
+    const { webhookUrl, subscriptionId, inputFields, recipeId, integrationId } =
+      req?.body?.payload;
+
     const requestToken = req?.header('authorization');
     console.log('**** requestToken: integration subscribe ****', requestToken);
 
     try {
       const reqTokenData = jwt.decode(requestToken, process.env.CLIENT_SECRET);
-      console.log({ reqTokenData });
+      accountId = reqTokenData?.accountId;
+      userId = reqTokenData?.userId;
+      shortLivedToken = reqTokenData?.shortLivedToken;
+
+      await registerWebhook({
+        boardId: inputFields?.boardId,
+        url: config.HOST + '/api/v1/webhooks/generate-pdf/status-change',
+        event: 'change_status_column_value',
+        token: shortLivedToken,
+      });
     } catch (err) {
       console.error(
         'Error while decoding request token (Integration subscribe)',
