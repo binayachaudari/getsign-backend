@@ -18,4 +18,4 @@ const schema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model('integration', schema);
+module.exports = mongoose.model('webhooks', schema);

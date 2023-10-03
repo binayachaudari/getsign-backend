@@ -2,6 +2,7 @@ const FileDetails = require('../models/FileDetails');
 const { getFileToAutoSend } = require('../services/integrations.service');
 const jwt = require('jsonwebtoken');
 const { registerWebhook } = require('../services/monday.service');
+const WebhookModel = require('../models/Webhook.model');
 const { config } = require('../config');
 
 async function autoSend(req, res, next) {
@@ -76,11 +77,20 @@ async function subscribeGenerateWithStatus(req, res, next) {
       userId = reqTokenData?.userId;
       shortLivedToken = reqTokenData?.shortLivedToken;
 
-      await registerWebhook({
+      const registeredWebhook = await registerWebhook({
         boardId: inputFields?.boardId,
         url: config.HOST + '/api/v1/webhooks/generate-pdf/status-change',
         event: 'change_status_column_value',
         token: shortLivedToken,
+      });
+
+      await WebhookModel.create({
+        accountId,
+        integrationId,
+        recipeId,
+        subscriptionId,
+        userId,
+        webhookId: registeredWebhook?.id,
       });
     } catch (err) {
       console.error(
