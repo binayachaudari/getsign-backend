@@ -44,10 +44,36 @@ async function getTemplatesForPDF(req, res, next) {
   }
 }
 
-async function generatePDFWithButton(req, res, next) {
+async function generatePDFWithStatus(req, res, next) {
   try {
-    console.log('generatePDFWithButton', JSON.stringify(req?.body, null, 2));
+    console.log('generatePDFWithStatus', JSON.stringify(req?.body, null, 2));
     res.status(200).send({});
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+}
+
+async function subscribeGenerateWithStatus(req, res, next) {
+  try {
+    console.log(
+      'subscribeGenerateWithStatus',
+      JSON.stringify(req?.body, null, 2)
+    );
+    res.status(200).send({ webhookId: '123' });
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+}
+
+async function unsubscribeGenerateWithStatus(req, res, next) {
+  try {
+    console.log(
+      'unsubscribeGenerateWithStatus',
+      JSON.stringify(req?.body, null, 2)
+    );
+    res.status(200).send({ webhookId: '123' });
   } catch (err) {
     console.log(err);
     next(err);
@@ -56,6 +82,8 @@ async function generatePDFWithButton(req, res, next) {
 
 module.exports = {
   autoSend,
+  subscribeGenerateWithStatus,
+  unsubscribeGenerateWithStatus,
   getTemplatesForPDF,
-  generatePDFWithButton,
+  generatePDFWithStatus,
 };

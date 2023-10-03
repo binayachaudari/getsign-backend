@@ -6,6 +6,14 @@ const schema = new mongoose.Schema({
     type: Schema.Types.ObjectId,
     ref: 'FileDetails',
   },
+  accountId: {
+    type: Number,
+    required: true,
+  },
+  userId: {
+    type: Number,
+    required: true,
+  },
   recipientId: Number,
   integrationId: Number,
   boardId: Number,
