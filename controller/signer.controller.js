@@ -323,93 +323,97 @@ const signPDF = async (req, res, next) => {
 };
 
 const viewDocument = async (req, res, next) => {
-  const fileHistoryId = req.params.id;
-  let ips = (
-    req.headers['cf-connecting-ip'] ||
-    req.headers['x-real-ip'] ||
-    req.headers['x-forwarded-for'] ||
-    req.connection.remoteAddress ||
-    ''
-  ).split(',');
-  const ip = ips[0].trim();
+  try {
+    const fileHistoryId = req.params.id;
+    let ips = (
+      req.headers['cf-connecting-ip'] ||
+      req.headers['x-real-ip'] ||
+      req.headers['x-forwarded-for'] ||
+      req.connection.remoteAddress ||
+      ''
+    ).split(',');
+    const ip = ips[0].trim();
 
-  const fileHistory = await FileHistory.findById(fileHistoryId).populate(
-    'fileId'
-  );
+    const fileHistory = await FileHistory.findById(fileHistoryId).populate(
+      'fileId'
+    );
 
-  if (!fileHistory) throw new Error('File History not found !');
+    if (!fileHistory) throw new Error('File History not found !');
 
-  const template = fileHistory.fileId;
-  let itemId = fileHistory.itemId;
-  let signers = await signerService.getOneSignersByFilter({
-    originalFileId: template._id,
-    itemId,
-  });
+    const template = fileHistory.fileId;
+    let itemId = fileHistory.itemId;
+    let signers = await signerService.getOneSignersByFilter({
+      originalFileId: template._id,
+      itemId,
+    });
 
-  let pdfSigners = signers.signers || [];
-  const indexOfCurrentSigner = pdfSigners.findIndex(
-    signer => signer.fileStatus === fileHistoryId
-  );
+    let pdfSigners = signers.signers || [];
+    const indexOfCurrentSigner = pdfSigners.findIndex(
+      signer => signer.fileStatus === fileHistoryId
+    );
 
-  let signerEmail;
-  let currentSigner;
+    let signerEmail;
+    let currentSigner;
 
-  if (indexOfCurrentSigner > -1) {
-    currentSigner = pdfSigners[indexOfCurrentSigner];
+    if (indexOfCurrentSigner > -1) {
+      currentSigner = pdfSigners[indexOfCurrentSigner];
 
-    await setMondayToken(template.user_id, template.account_id);
+      await setMondayToken(template.user_id, template.account_id);
 
-    if (currentSigner.emailColumnId && !currentSigner.userId) {
-      const currentSignerEmailRes = await getEmailColumnValue(
-        itemId,
-        currentSigner.emailColumnId
-      );
-      signerEmail =
-        currentSignerEmailRes?.data?.items?.[0]?.column_values?.[0]?.text;
+      if (currentSigner.emailColumnId && !currentSigner.userId) {
+        const currentSignerEmailRes = await getEmailColumnValue(
+          itemId,
+          currentSigner.emailColumnId
+        );
+        signerEmail =
+          currentSignerEmailRes?.data?.items?.[0]?.column_values?.[0]?.text;
+      }
+
+      if (currentSigner.userId) {
+        const userResp = await getUsersByIds(currentSigner.userId);
+        signerEmail = userResp?.data?.users?.[0]?.email;
+      }
     }
 
-    if (currentSigner.userId) {
-      const userResp = await getUsersByIds(currentSigner.userId);
-      signerEmail = userResp?.data?.users?.[0]?.email;
+    const isViewedAlready = await FileHistory.find({
+      fileId: Types.ObjectId(template._id),
+      status: 'viewed',
+      itemId,
+    });
+
+    if (isViewedAlready?.find(doc => doc.sentToEmail === signerEmail)) {
+      delete fileHistory.fileId;
+      return res.status(200).json({
+        data: isViewedAlready?.find(doc => doc.sentToEmail === signerEmail),
+      });
     }
-  }
 
-  const isViewedAlready = await FileHistory.find({
-    fileId: Types.ObjectId(template._id),
-    status: 'viewed',
-    itemId,
-  });
-
-  if (isViewedAlready?.find(doc => doc.sentToEmail === signerEmail)) {
-    delete fileHistory.fileId;
-    return res.status(200).json({
-      data: isViewedAlready?.find(doc => doc.sentToEmail === signerEmail),
+    const viewedFileHistory = await FileHistory.create({
+      fileId: template._id,
+      status: 'viewed',
+      itemId,
+      file: fileHistory.file,
+      viewedIpAddress: ip,
+      sentToEmail: signerEmail,
     });
+
+    if (viewedFileHistory?.status) {
+      await setMondayToken(template.user_id, template.account_id);
+
+      await updateStatusColumn({
+        itemId: itemId,
+        boardId: template.board_id,
+        columnId: template?.status_column_id,
+        columnValue: statusMapper[viewedFileHistory?.status],
+        userId: template?.user_id,
+        accountId: template?.account_id,
+      });
+    }
+
+    return res.json({ data: viewedFileHistory }).status(200);
+  } catch (err) {
+    next(err);
   }
-
-  const viewedFileHistory = await FileHistory.create({
-    fileId: template._id,
-    status: 'viewed',
-    itemId,
-    file: fileHistory.file,
-    viewedIpAddress: ip,
-    sentToEmail: signerEmail,
-  });
-
-  if (viewedFileHistory?.status) {
-    await setMondayToken(template.user_id, template.account_id);
-
-    await updateStatusColumn({
-      itemId: itemId,
-      boardId: template.board_id,
-      columnId: template?.status_column_id,
-      columnValue: statusMapper[viewedFileHistory?.status],
-      userId: template?.user_id,
-      accountId: template?.account_id,
-    });
-  }
-
-  return res.json({ data: viewedFileHistory }).status(200);
 };
 
 module.exports = {
