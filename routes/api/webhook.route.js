@@ -1,7 +1,7 @@
+const { changeStatusWebhook } = require('../../controller/webhook.controller');
+
 const router = require('express').Router();
 
-router.post('/generate-pdf/status-change', async (req, res, next) => {
-  console.log(JSON.stringify(req?.body, null, 2));
-});
+router.post('/generate-pdf/status-change', changeStatusWebhook);
 
 module.exports = router;

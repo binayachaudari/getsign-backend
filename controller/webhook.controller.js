@@ -226,4 +226,10 @@ const applicationWebhook = async (req, res, next) => {
   return res.status(200).send(req.body);
 };
 
-module.exports = applicationWebhook;
+const changeStatusWebhook = async (req, res, next) => {
+  if (req?.body?.challenge) {
+    return res.status(200).send(req.body);
+  }
+};
+
+module.exports = { applicationWebhook, changeStatusWebhook };
