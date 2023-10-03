@@ -35,6 +35,7 @@ const HyperFormula = require('../utils/hyperFormula');
 const { toFixed } = require('../utils/number');
 const { formulaeParser } = require('../utils/mondayFormulaConverter');
 const SignerModel = require('../models/Signer.model');
+const { Types } = require('mongoose');
 
 const multipleSignerAddFileHistory = async ({
   id,
@@ -46,16 +47,18 @@ const multipleSignerAddFileHistory = async ({
   fileHistory,
 }) => {
   try {
-    const addedHistory = await FileHistory.findOne({
-      fileId: id,
+    const addedHistory = await FileHistory.find({
+      fileId: Types.ObjectId(id),
       itemId,
       status,
-      sentToEmail: fileHistory?.sentToEmail,
     }).exec();
 
-    if (addedHistory) {
-      if (addedHistory?.status === 'viewed') return;
-      return addedHistory;
+    const historyWithEmail = addedHistory?.find(
+      doc => doc?.sentToEmail === fileHistory?.sentToEmail
+    );
+    if (historyWithEmail) {
+      if (historyWithEmail?.status === 'viewed') return;
+      return historyWithEmail;
     }
 
     if (interactedFields?.length) {
@@ -68,7 +71,7 @@ const multipleSignerAddFileHistory = async ({
       });
 
       return await FileHistory.create({
-        fileId: id,
+        fileId: Types.ObjectId(id),
         status,
         itemId,
         file: signedFile.Key,
@@ -81,7 +84,7 @@ const multipleSignerAddFileHistory = async ({
 
     if (status === 'viewed')
       return await FileHistory.create({
-        fileId: id,
+        fileId: Types.ObjectId(id),
         status,
         itemId,
         viewedIpAddress: ipAddress,
@@ -702,7 +705,6 @@ const getFileForSigner = async (id, itemId) => {
     let fileId;
     const fileFromHistory = await FileHistory.findById(id).populate('fileId');
 
-    console.log({ fileFromHistory });
     if (!fileFromHistory) {
       return {
         isDeleted: true,
@@ -715,8 +717,6 @@ const getFileForSigner = async (id, itemId) => {
       originalFileId: fileId,
       itemId,
     });
-
-    console.log({ signersDoc, signers: signersDoc?.signers });
 
     await setMondayToken(template?.user_id, template?.account_id);
 
@@ -735,8 +735,6 @@ const getFileForSigner = async (id, itemId) => {
       assignedFields = template?.fields?.filter(
         field => field.signer.userId === currentSigner.userId
       );
-
-      console.log({ currentSignerEmail, assignedFields, userResp });
     }
 
     if (!currentSigner?.userId && currentSigner?.emailColumnId) {
@@ -766,15 +764,15 @@ const getFileForSigner = async (id, itemId) => {
       return { isDeleted: true };
     }
 
-    const isAlreadySigned = await FileHistory.findOne({
+    const isAlreadySignedDocs = await FileHistory.find({
       fileId,
       itemId,
       status: 'signed_by_receiver',
-      sentToEmail: currentSignerEmail,
     }).exec();
 
-    console.log({ isAlreadySigned, currentSignerEmail, fileId, itemId });
-
+    let isAlreadySigned = isAlreadySignedDocs?.find(
+      doc => doc?.sentToEmail === currentSignerEmail
+    );
     if (isAlreadySigned) {
       return {
         fileId,
