@@ -111,11 +111,14 @@ module.exports = {
         };
 
         // Adding details with icons
-        page.drawText(STATUS_MAPPER[history.status], {
-          x: currentDetailPos.x,
-          y: currentDetailPos.y,
-          size: 18,
-        });
+        page.drawText(
+          `${STATUS_MAPPER[history.status] + history.sentToEmail || ''}`,
+          {
+            x: currentDetailPos.x,
+            y: currentDetailPos.y,
+            size: 18,
+          }
+        );
 
         const dateTime = `${new Date(
           history.created_at

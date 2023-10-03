@@ -190,15 +190,11 @@ const signPDF = async (req, res, next) => {
       fileHistory,
     });
 
-    signedPDF = await fileHistoryService.updateOne(
-      { _id: signedPDF._id },
-      { sentToEmail: signerEmail }
-    );
-
     pdfSigners = pdfSigners.map(signer => {
       if (signer.fileStatus === fileHistoryId) {
         return {
           ...signer,
+          fileStatus: signedPDF?._id?.toString(), //updates the allocated filehistory
           isSigned: true,
         };
       } else {
@@ -210,12 +206,6 @@ const signPDF = async (req, res, next) => {
     signers.file = signedPDF.file;
     await signers.save(); // Update Signers.
 
-    // upload the PDF to Board
-    const finalFile = await fileHistoryService.getFinalContract(
-      signedPDF._id,
-      true
-    );
-
     const appInstallDetails = await ApplicationModel.findOne({
       type: 'install',
       account_id: template.account_id,
@@ -226,7 +216,13 @@ const signPDF = async (req, res, next) => {
     }
 
     const hasAllSigned = pdfSigners.every(signer => signer.isSigned);
+
     if (hasAllSigned) {
+      // upload the PDF to Board
+      const finalFile = await fileHistoryService.getFinalContract(
+        signedPDF._id,
+        true
+      );
       await uploadContract({
         itemId,
         boardId: template.board_id,

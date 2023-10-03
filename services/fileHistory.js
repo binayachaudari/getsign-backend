@@ -46,6 +46,18 @@ const multipleSignerAddFileHistory = async ({
   fileHistory,
 }) => {
   try {
+    const addedHistory = await FileHistory.findOne({
+      fileId: id,
+      itemId,
+      status,
+      sentToEmail: fileHistory?.sentToEmail,
+    }).exec();
+
+    if (addedHistory) {
+      if (addedHistory?.status === 'viewed') return;
+      return addedHistory;
+    }
+
     if (interactedFields?.length) {
       const signedFile = await signPDF({
         id,
@@ -55,31 +67,26 @@ const multipleSignerAddFileHistory = async ({
         s3fileKey,
       });
 
-      const updatePayload = {
-        file: signedFile.Key,
+      return await FileHistory.create({
+        fileId: id,
         status,
+        itemId,
+        file: signedFile.Key,
         ...(status === 'signed_by_receiver' && {
           receiverSignedIpAddress: ipAddress,
         }),
-      };
-
-      return await FileHistory.findByIdAndUpdate(
-        fileHistory._id,
-        updatePayload,
-        {
-          new: true,
-        }
-      );
+        sentToEmail: fileHistory?.sentToEmail,
+      });
     }
 
     if (status === 'viewed')
-      return await FileHistory.findByIdAndUpdate(
-        fileHistory._id,
-        {
-          status: 'viewed',
-        },
-        { new: true }
-      );
+      return await FileHistory.create({
+        fileId: id,
+        status,
+        itemId,
+        viewedIpAddress: ipAddress,
+        sentToEmail: fileHistory?.sentToEmail,
+      });
   } catch (err) {
     throw err;
   }
@@ -694,6 +701,8 @@ const getFileForSigner = async (id, itemId) => {
   try {
     let fileId;
     const fileFromHistory = await FileHistory.findById(id).populate('fileId');
+
+    console.log({ fileFromHistory });
     if (!fileFromHistory) {
       return {
         isDeleted: true,
@@ -707,12 +716,15 @@ const getFileForSigner = async (id, itemId) => {
       itemId,
     });
 
+    console.log({ signersDoc, signers: signersDoc?.signers });
+
     await setMondayToken(template?.user_id, template?.account_id);
 
     const currentSigner = signersDoc?.signers?.find(
       signer => signer.fileStatus === id
     );
 
+    console.log({ currentSigner });
     let currentSignerEmail;
     let assignedFields = [];
 
@@ -723,6 +735,8 @@ const getFileForSigner = async (id, itemId) => {
       assignedFields = template?.fields?.filter(
         field => field.signer.userId === currentSigner.userId
       );
+
+      console.log({ currentSignerEmail, assignedFields, userResp });
     }
 
     if (!currentSigner?.userId && currentSigner?.emailColumnId) {
