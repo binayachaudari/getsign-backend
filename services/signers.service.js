@@ -217,6 +217,47 @@ const sendEmailAndUpdateBackOffice = async ({
   session.endSession();
 };
 
+const extractAllEmails = async ({ template, signerDetails, itemId }) => {
+  const emailColumns = signerDetails?.signers
+    ?.filter(emailCol => emailCol.emailColumnId && !emailCol.userId)
+    ?.map(
+      emailCol => emailCol.emailColumnId // added emailCol.id temporarily
+    );
+
+  const userColumns = signerDetails?.signers
+    ?.filter(emailCol => emailCol.userId)
+    ?.map(
+      emailCol => emailCol.userId // added emailCol.id temporarily
+    );
+  let emailList = [];
+
+  try {
+    await setMondayToken(template.user_id, template.account_id);
+
+    if (emailColumns?.length) {
+      const emailColumnValue = await getEmailColumnValue(itemId, emailColumns);
+      const emailColRes =
+        emailColumnValue?.data?.items?.[0]?.column_values?.map(
+          value => value?.text
+        );
+      if (emailColRes?.length > 0)
+        emailList = emailList.concat([...emailColRes]);
+    }
+
+    if (userColumns?.length) {
+      const userColumnValue = await getUsersByIds(userColumns);
+
+      const userColRes = userColumnValue?.data?.users?.map(user => user.email);
+
+      if (userColRes?.length > 0) emailList = emailList.concat([...userColRes]);
+    }
+
+    return emailList;
+  } catch (err) {
+    return emailList;
+  }
+};
+
 const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
   try {
     const template = await FileDetails.findById(fileId);
@@ -426,4 +467,5 @@ module.exports = {
   getOneSignersByFilter,
   deletePreviousStatusAndSend,
   sendEmailAndUpdateBackOffice,
+  extractAllEmails,
 };
