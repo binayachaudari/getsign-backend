@@ -19,6 +19,7 @@ const { default: mongoose } = require('mongoose');
 const SignerModel = require('../models/Signer.model');
 const FileDetails = require('../models/FileDetails');
 const statusMapper = require('../config/statusMapper');
+const { sendFinalContract } = require('../services/mailer');
 
 const createSigner = async (req, res, next) => {
   try {
@@ -219,6 +220,10 @@ const signPDF = async (req, res, next) => {
     const hasAllSigned = pdfSigners.every(signer => signer.isSigned);
 
     if (hasAllSigned) {
+      let receivers = await signerService.extractAllEmails({
+        template,
+        signerDetails: signers,
+      });
       // upload the PDF to Board
       const finalFile = await fileHistoryService.getFinalContract(
         signedPDF._id,
@@ -241,6 +246,19 @@ const signPDF = async (req, res, next) => {
         userId: template?.user_id,
         accountId: template?.account_id,
       });
+
+      await sendFinalContract(
+        {
+          file: finalFile.file,
+          name: template.file_name || 'signed-adhoc-contract.pdf',
+          size: finalFile?.size,
+          itemId,
+          fileId: signedPDF._id,
+          senderName: template.sender_name,
+          senderEmail: template.email_address,
+        },
+        receivers
+      );
     }
 
     // When Signing order is required then change the status of the item to {index of signer}+Signed

@@ -217,6 +217,53 @@ const sendEmailAndUpdateBackOffice = async ({
   session.endSession();
 };
 
+const extractAllEmails = async ({ template, signerDetails }) => {
+  const emailColumns = signerDetails?.signers
+    ?.filter(
+      emailCol =>
+        emailCol.emailColumnId && !emailCol.userId && !emailCol.isSigned
+    )
+    ?.map(
+      emailCol => emailCol.emailColumnId // added emailCol.id temporarily
+    );
+
+  const userColumns = signerDetails?.signers
+    ?.filter(emailCol => emailCol.userId && !emailCol.isSigned)
+    ?.map(
+      emailCol => emailCol.userId // added emailCol.id temporarily
+    );
+  let emailList = [];
+  try {
+    await setMondayToken(template.user_id, template.account_id);
+
+    if (emailColumns?.length) {
+      const emailColumnValue = await getEmailColumnValue(itemId, emailColumns);
+      const emailColRes =
+        emailColumnValue?.data?.items?.[0]?.column_values?.map(value => ({
+          email: value?.text,
+          id: value?.id,
+        }));
+      if (emailColRes?.length > 0)
+        emailList = emailList.concat([...emailColRes]);
+    }
+
+    if (userColumns?.length) {
+      const userColumnValue = await getUsersByIds(userColumns);
+
+      const userColRes = userColumnValue?.data?.users?.map(user => ({
+        id: user.id,
+        email: user.email,
+      }));
+
+      if (userColRes?.length > 0) emailList = emailList.concat([...userColRes]);
+    }
+
+    return Array.isArray(emailList) ? emailList.filter(email => !!email) : [];
+  } catch (err) {
+    return emailList;
+  }
+};
+
 const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
   try {
     const template = await FileDetails.findById(fileId);
@@ -426,4 +473,5 @@ module.exports = {
   getOneSignersByFilter,
   deletePreviousStatusAndSend,
   sendEmailAndUpdateBackOffice,
+  extractAllEmails,
 };
