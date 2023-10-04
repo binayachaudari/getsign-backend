@@ -82,6 +82,12 @@ async function subscribeGenerateWithStatus(req, res, next) {
         url: config.HOST + '/api/v1/webhooks/generate-pdf/status-change',
         event: 'change_status_column_value',
         token: shortLivedToken,
+        config: JSON.stringify({
+          columnId: inputFields?.columnId,
+          columnValue: {
+            index: inputFields?.statusColumnValue?.index,
+          },
+        }),
       });
 
       await WebhookModel.create({

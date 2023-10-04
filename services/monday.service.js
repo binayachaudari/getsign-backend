@@ -43,6 +43,8 @@ const registerWebhook = async ({
       }
     );
 
+    console.log('webhookID', result);
+
     if (
       result &&
       result.data &&
