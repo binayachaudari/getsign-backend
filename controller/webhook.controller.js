@@ -11,6 +11,7 @@ const FileDetailsModel = require('../models/FileDetails');
 const { pricingV1 } = require('../config/pricing.v1');
 const { orderTypes } = require('../config/orderTypes');
 const WebhookModel = require('../models/Webhook.model');
+const { default: axios } = require('axios');
 
 const subscriptionType = subscription => {
   if (!subscription) {
@@ -240,7 +241,27 @@ const changeStatusWebhook = async (req, res, next) => {
   const columnValue = event?.value?.label?.index;
   const subscriptionId = event?.subscriptionId;
 
-  const webhookDetails = await WebhookModel.findOne({});
+  const webhookDetails = await WebhookModel.find({
+    boardId,
+    'inputFields.columnId': columnId,
+    'inputFields.statusColumnValue.index': columnValue,
+  });
+
+  for (const webhook of webhookDetails) {
+    const res = await axios.post(
+      webhook.webhookUrl,
+      {
+        trigger: {},
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: process.env.CLIENT_SECRET,
+        },
+      }
+    );
+    console.log('webhook URL', { res });
+  }
 };
 
 module.exports = { applicationWebhook, changeStatusWebhook };
