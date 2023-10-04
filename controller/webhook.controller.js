@@ -239,6 +239,7 @@ const changeStatusWebhook = async (req, res, next) => {
   const boardId = event?.boardId;
   const columnId = event?.columnId;
   const columnValue = event?.value?.label?.index;
+  const itemId = event?.pulseId;
   const subscriptionId = event?.subscriptionId;
 
   const webhookDetails = await WebhookModel.find({
@@ -256,19 +257,21 @@ const changeStatusWebhook = async (req, res, next) => {
           'Content-Type': 'application/json',
           authorization: process.env.API_TOKEN,
         },
-        // data: {
-        //   trigger: {
-        //     outputFields: {},
-        //   },
-        // },
+        data: {
+          trigger: {
+            outputFields: {
+              fileId: webhook.fileId,
+              itemId,
+            },
+          },
+        },
       });
       console.log('webhook URL', { response });
-
-      return res.status(200).send({});
     } catch (error) {
       console.log(error);
     }
   }
+  return res.status(200).send(req.body);
 };
 
 module.exports = { applicationWebhook, changeStatusWebhook };

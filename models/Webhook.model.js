@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 
+const { Schema } = mongoose;
+
 const schema = new mongoose.Schema({
   accountId: {
     type: Number,
@@ -24,6 +26,10 @@ const schema = new mongoose.Schema({
   webhookUrl: {
     type: String,
     required: true,
+  },
+  fileId: {
+    type: Schema.Types.ObjectId,
+    ref: 'FileDetails',
   },
 });
 
