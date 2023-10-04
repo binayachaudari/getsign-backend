@@ -260,18 +260,18 @@ const changeStatusWebhook = async (req, res, next) => {
         data: {
           trigger: {
             outputFields: {
+              fileId: webhook.fileId,
               itemId,
             },
           },
         },
       });
       console.log('webhook URL', { response });
-
-      return res.status(200).send({});
     } catch (error) {
       console.log(error);
     }
   }
+  return res.status(200).send(req.body);
 };
 
 module.exports = { applicationWebhook, changeStatusWebhook };

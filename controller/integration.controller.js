@@ -54,9 +54,9 @@ async function generatePDFWithStatus(req, res, next) {
     console.log('generatePDFWithStatus', JSON.stringify(req?.body, null, 2));
     const { payload } = req?.body;
 
-    const fileId = payload?.inboundFieldValues?.fileId?.value;
+    // const fileId = payload?.inboundFieldValues?.fileId?.value;
 
-    const fileDetails = await generatePDFWithGivenPlaceholders();
+    // const fileDetails = await generatePDFWithGivenPlaceholders();
 
     res.status(200).send({});
   } catch (err) {
