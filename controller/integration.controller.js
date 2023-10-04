@@ -66,6 +66,7 @@ async function generatePDFWithStatus(req, res, next) {
     const fileId = payload?.inputFields?.fileId;
 
     const fileDetails = await FileDetails.findById(fileId);
+    const webhookDetails = await WebhookModel.findOne({ fileId });
     const placeholders = fileDetails.fields;
 
     const generatedPDF = await generateFilePreviewWithPlaceholders(
@@ -86,7 +87,7 @@ async function generatePDFWithStatus(req, res, next) {
     await updateStatusColumn({
       itemId,
       boardId,
-      columnId: fileDetails.status_column_id,
+      columnId: webhookDetails?.inputFields?.columnId,
       columnValue: 'PDF Generated',
       userId: fileDetails.user_id,
       accountId: fileDetails.account_id,
