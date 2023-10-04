@@ -1,5 +1,9 @@
 const FileDetails = require('../models/FileDetails');
 const { getFileToAutoSend } = require('../services/integrations.service');
+const jwt = require('jsonwebtoken');
+const { registerWebhook } = require('../services/monday.service');
+const WebhookModel = require('../models/Webhook.model');
+const { config } = require('../config');
 
 async function autoSend(req, res, next) {
   try {
@@ -44,10 +48,80 @@ async function getTemplatesForPDF(req, res, next) {
   }
 }
 
-async function generatePDFWithButton(req, res, next) {
+async function generatePDFWithStatus(req, res, next) {
   try {
-    console.log('generatePDFWithButton', JSON.stringify(req?.body, null, 2));
+    console.log('generatePDFWithStatus', JSON.stringify(req?.body, null, 2));
     res.status(200).send({});
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+}
+
+async function subscribeGenerateWithStatus(req, res, next) {
+  try {
+    console.log(
+      'subscribeGenerateWithStatus',
+      JSON.stringify(req?.body, null, 2)
+    );
+
+    const { webhookUrl, subscriptionId, inputFields, recipeId, integrationId } =
+      req?.body?.payload;
+
+    const requestToken = req?.header('authorization');
+    console.log('**** requestToken: integration subscribe ****', requestToken);
+
+    try {
+      const reqTokenData = jwt.decode(requestToken, process.env.CLIENT_SECRET);
+      accountId = reqTokenData?.accountId;
+      userId = reqTokenData?.userId;
+      shortLivedToken = reqTokenData?.shortLivedToken;
+
+      const registeredWebhook = await registerWebhook({
+        boardId: inputFields?.boardId,
+        url: config.HOST + '/api/v1/webhooks/generate-pdf/status-change',
+        event: 'change_status_column_value',
+        token: shortLivedToken,
+        config: JSON.stringify({
+          columnId: inputFields?.columnId,
+          columnValue: {
+            index: inputFields?.statusColumnValue?.index,
+          },
+        }),
+      });
+
+      const webhookDetails = await WebhookModel.create({
+        boardId: inputFields?.boardId,
+        webhookUrl,
+        accountId,
+        integrationId,
+        recipeId,
+        subscriptionId,
+        userId,
+        inputFields,
+        webhookId: registeredWebhook?.id,
+      });
+
+      return res.status(200).send({ webhookId: webhookDetails._id });
+    } catch (err) {
+      console.error(
+        'Error while decoding request token (Integration subscribe)',
+        err
+      );
+    }
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+}
+
+async function unsubscribeGenerateWithStatus(req, res, next) {
+  try {
+    console.log(
+      'unsubscribeGenerateWithStatus',
+      JSON.stringify(req?.body, null, 2)
+    );
+    res.status(200).send({ webhookId: '123' });
   } catch (err) {
     console.log(err);
     next(err);
@@ -56,6 +130,8 @@ async function generatePDFWithButton(req, res, next) {
 
 module.exports = {
   autoSend,
+  subscribeGenerateWithStatus,
+  unsubscribeGenerateWithStatus,
   getTemplatesForPDF,
-  generatePDFWithButton,
+  generatePDFWithStatus,
 };

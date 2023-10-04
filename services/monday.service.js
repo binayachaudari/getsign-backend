@@ -16,6 +16,50 @@ const me = async () => {
   }
 };
 
+const registerWebhook = async ({
+  boardId,
+  url,
+  event,
+  config = null,
+  token,
+}) => {
+  console.log({ boardId, url, event, config, token });
+  try {
+    const result = await monday.api(
+      `mutation registerWebhook($boardId: Int!, $url: String!, $event: WebhookEventType!, $config: JSON) {
+        create_webhook(board_id: $boardId, url: $url, event: $event, config: $config) {
+          id
+        }
+      }`,
+      {
+        variables: {
+          boardId: Number(boardId),
+          url,
+          event,
+          config,
+        },
+        token,
+        apiVersion: '2023-10',
+      }
+    );
+
+    console.log('webhookID', result);
+
+    if (
+      result &&
+      result.data &&
+      result.data.create_webhook &&
+      result.data.create_webhook
+    ) {
+      return result.data.create_webhook;
+    }
+  } catch (err) {
+    throw err;
+  }
+};
+
+const unregisterWebhook = () => {};
+
 const getItemDetails = async id => {
   try {
     return await monday.api(
@@ -1066,6 +1110,8 @@ async function handleFormatEmailAndPersons(column_values = []) {
 }
 module.exports = {
   me,
+  registerWebhook,
+  unregisterWebhook,
   getItemDetails,
   updateStatusColumn,
   getEmailColumnValue,
