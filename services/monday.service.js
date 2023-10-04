@@ -194,7 +194,7 @@ const uploadContract = async ({
       Buffer.from('\r\n--' + boundary + '--\r\n', 'utf8'),
     ]);
 
-    return await axios({
+    const response = await axios({
       url,
       method: 'post',
       headers: {
@@ -205,6 +205,7 @@ const uploadContract = async ({
       maxContentLength: Infinity,
       maxBodyLength: Infinity,
     });
+    return response;
   } catch (error) {
     throw error;
   }
