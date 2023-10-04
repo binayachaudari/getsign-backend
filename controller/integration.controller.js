@@ -5,6 +5,7 @@ const {
   registerWebhook,
   uploadContract,
   updateStatusColumn,
+  unregisterWebhook,
 } = require('../services/monday.service');
 const WebhookModel = require('../models/Webhook.model');
 const { config } = require('../config');
@@ -164,7 +165,27 @@ async function unsubscribeGenerateWithStatus(req, res, next) {
       'unsubscribeGenerateWithStatus',
       JSON.stringify(req?.body, null, 2)
     );
-    res.status(200).send({ webhookId: '123' });
+    const webhookId = req?.body?.payload?.webhookId;
+
+    const requestToken = req?.header('authorization');
+    console.log('**** requestToken: integration subscribe ****', requestToken);
+
+    try {
+      const reqTokenData = jwt.decode(requestToken, process.env.CLIENT_SECRET);
+      accountId = reqTokenData?.accountId;
+      userId = reqTokenData?.userId;
+      shortLivedToken = reqTokenData?.shortLivedToken;
+
+      await unregisterWebhook({ webhookId, token: shortLivedToken });
+      await WebhookModel.findByIdAndDelete(webhookId);
+
+      return res.status(200).send();
+    } catch (err) {
+      console.error(
+        'Error while decoding request token (Integration unsubscribe)',
+        err
+      );
+    }
   } catch (err) {
     console.log(err);
     next(err);

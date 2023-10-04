@@ -58,7 +58,26 @@ const registerWebhook = async ({
   }
 };
 
-const unregisterWebhook = () => {};
+const unregisterWebhook = async ({ webhookId, token }) => {
+  return await monday.api(
+    `
+  mutation deleteWebhook($id: Int!){
+    delete_webhook (id: $id) {
+      id
+      board_id
+    }
+  }
+  
+  `,
+    {
+      variables: {
+        id: Number(webhookId),
+      },
+      token,
+      apiVersion: '2023-10',
+    }
+  );
+};
 
 const getItemDetails = async id => {
   try {
