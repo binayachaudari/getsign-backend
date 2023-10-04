@@ -1146,8 +1146,6 @@ const generateFilePreview = async (fileId, itemId, accountId) => {
             'sender-signature',
             'text-box',
             'dropdown',
-            'signature-field',
-            'initials-field',
           ].includes(field?.itemId)
         ) || [],
     };
@@ -1167,7 +1165,8 @@ const generateFilePreview = async (fileId, itemId, accountId) => {
 const generateFilePreviewWithPlaceholders = async (
   fileId,
   itemId,
-  placeholders
+  placeholders,
+  withPdfBytes
 ) => {
   let user;
   try {
@@ -1363,7 +1362,8 @@ const generateFilePreviewWithPlaceholders = async (
       placeholders,
       formValues,
       [...items_subItem],
-      itemId
+      itemId,
+      withPdfBytes
     );
     return {
       fileId,

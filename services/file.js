@@ -314,7 +314,8 @@ const generatePDFWithGivenPlaceholders = async (
   placeholders,
   values,
   items_subItem = [],
-  itemId
+  itemId,
+  withPdfBytes = false
 ) => {
   try {
     const fileDetails = await loadFileDetails(id);
@@ -714,10 +715,20 @@ const generatePDFWithGivenPlaceholders = async (
     const arrayBuffer = await blob.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     const base64String = buffer.toString('base64');
-    return {
-      name: fileDetails.file_name,
-      file: `data:${type};base64,${base64String}`,
-    };
+    if (withPdfBytes) {
+      return {
+        size: blob?.size,
+        name: fileDetails.file_name,
+        file: `data:${type};base64,${base64String}`,
+        bytes: pdfBytes,
+        type: blob.type,
+      };
+    } else {
+      return {
+        name: fileDetails.file_name,
+        file: `data:${type};base64,${base64String}`,
+      };
+    }
   } catch (error) {
     throw error;
   }

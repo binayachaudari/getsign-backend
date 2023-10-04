@@ -71,13 +71,14 @@ async function generatePDFWithStatus(req, res, next) {
     const generatedPDF = await generateFilePreviewWithPlaceholders(
       fileId,
       itemId,
-      placeholders
+      placeholders,
+      true
     );
 
     await uploadContract({
       itemId,
       columnId,
-      file: generatedPDF.file,
+      file: generatedPDF,
       userId: fileDetails.user_id,
       accountId: fileDetails.account_id,
     });
