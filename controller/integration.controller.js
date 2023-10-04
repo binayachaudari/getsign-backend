@@ -1,7 +1,11 @@
 const FileDetails = require('../models/FileDetails');
 const { getFileToAutoSend } = require('../services/integrations.service');
 const jwt = require('jsonwebtoken');
-const { registerWebhook } = require('../services/monday.service');
+const {
+  registerWebhook,
+  uploadContract,
+  updateStatusColumn,
+} = require('../services/monday.service');
 const WebhookModel = require('../models/Webhook.model');
 const { config } = require('../config');
 const {
@@ -56,8 +60,8 @@ async function generatePDFWithStatus(req, res, next) {
     console.log('generatePDFWithStatus', JSON.stringify(req?.body, null, 2));
     const { payload } = req?.body;
 
-    const boardId = payload?.inputFields?.boardId;
-    const columnId = payload?.inputFields?.columnId;
+    const boardId = payload?.inputFields?.boardId; // this is a board Id column from the integration
+    const columnId = payload?.inputFields?.columnId; // this is a file column from the integration
     const itemId = payload?.inputFields?.itemId;
     const fileId = payload?.inputFields?.fileId;
 
@@ -70,7 +74,22 @@ async function generatePDFWithStatus(req, res, next) {
       placeholders
     );
 
-    console.log('GeneratedPDF', { generatedPDF });
+    await uploadContract({
+      itemId,
+      columnId,
+      file: generatedPDF.file,
+      userId: fileDetails.user_id,
+      accountId: fileDetails.account_id,
+    });
+
+    await updateStatusColumn({
+      itemId,
+      boardId,
+      columnId: fileDetails.status_column_id,
+      columnValue: 'PDF Generated',
+      userId: fileDetails.user_id,
+      accountId: fileDetails.account_id,
+    });
 
     res.status(200).send(generatedPDF);
   } catch (err) {
