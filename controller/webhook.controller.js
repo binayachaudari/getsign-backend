@@ -10,6 +10,7 @@ const SubscriptionModel = require('../models/Subscription.model');
 const FileDetailsModel = require('../models/FileDetails');
 const { pricingV1 } = require('../config/pricing.v1');
 const { orderTypes } = require('../config/orderTypes');
+const WebhookModel = require('../models/Webhook.model');
 
 const subscriptionType = subscription => {
   if (!subscription) {
@@ -232,6 +233,14 @@ const changeStatusWebhook = async (req, res, next) => {
   }
 
   console.log(JSON.stringify(req?.body, null, 2));
+
+  const event = req.body;
+  const boardId = event?.boardId;
+  const columnId = event?.columnId;
+  const columnValue = event?.value?.label?.index;
+  const subscriptionId = event?.subscriptionId;
+
+  const webhookDetails = await WebhookModel.findOne({});
 };
 
 module.exports = { applicationWebhook, changeStatusWebhook };

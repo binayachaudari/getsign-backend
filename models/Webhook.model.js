@@ -16,6 +16,7 @@ const schema = new mongoose.Schema({
   recipeId: Number,
   integrationId: Number,
   subscriptionId: Number,
+  inputFields: {},
   webhookId: {
     type: Number,
     required: true,

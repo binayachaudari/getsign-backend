@@ -98,6 +98,7 @@ async function subscribeGenerateWithStatus(req, res, next) {
         recipeId,
         subscriptionId,
         userId,
+        inputFields,
         webhookId: registeredWebhook?.id,
       });
 
