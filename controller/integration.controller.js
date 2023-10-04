@@ -4,7 +4,9 @@ const jwt = require('jsonwebtoken');
 const { registerWebhook } = require('../services/monday.service');
 const WebhookModel = require('../models/Webhook.model');
 const { config } = require('../config');
-const { generatePDFWithGivenPlaceholders } = require('../services/file');
+const {
+  generateFilePreviewWithPlaceholders,
+} = require('../services/fileHistory');
 
 async function autoSend(req, res, next) {
   try {
@@ -54,11 +56,23 @@ async function generatePDFWithStatus(req, res, next) {
     console.log('generatePDFWithStatus', JSON.stringify(req?.body, null, 2));
     const { payload } = req?.body;
 
-    // const fileId = payload?.inboundFieldValues?.fileId?.value;
+    const boardId = payload?.inputFields?.boardId;
+    const columnId = payload?.inputFields?.columnId;
+    const itemId = payload?.inputFields?.itemId;
+    const fileId = payload?.inputFields?.fileId;
 
-    // const fileDetails = await generatePDFWithGivenPlaceholders();
+    const fileDetails = await FileDetails.findById(fileId);
+    const placeholders = fileDetails.fields;
 
-    res.status(200).send({});
+    const generatedPDF = await generateFilePreviewWithPlaceholders(
+      fileId,
+      itemId,
+      placeholders
+    );
+
+    console.log(generatedPDF);
+
+    res.status(200).send(generatedPDF);
   } catch (err) {
     console.log(err);
     next(err);
