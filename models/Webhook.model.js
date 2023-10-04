@@ -9,11 +9,19 @@ const schema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  boardId: {
+    type: Number,
+    required: true,
+  },
   recipeId: Number,
   integrationId: Number,
   subscriptionId: Number,
   webhookId: {
     type: Number,
+    required: true,
+  },
+  webhookUrl: {
+    type: String,
     required: true,
   },
 });

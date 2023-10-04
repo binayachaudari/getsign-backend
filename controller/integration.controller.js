@@ -90,7 +90,9 @@ async function subscribeGenerateWithStatus(req, res, next) {
         }),
       });
 
-      await WebhookModel.create({
+      const webhookDetails = await WebhookModel.create({
+        boardId: inputFields?.boardId,
+        webhookUrl,
         accountId,
         integrationId,
         recipeId,
@@ -98,14 +100,14 @@ async function subscribeGenerateWithStatus(req, res, next) {
         userId,
         webhookId: registeredWebhook?.id,
       });
+
+      return res.status(200).send({ webhookId: webhookDetails._id });
     } catch (err) {
       console.error(
         'Error while decoding request token (Integration subscribe)',
         err
       );
     }
-
-    res.status(200).send({ webhookId: '123' });
   } catch (err) {
     console.log(err);
     next(err);
