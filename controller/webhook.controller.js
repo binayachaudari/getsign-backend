@@ -11,7 +11,7 @@ const FileDetailsModel = require('../models/FileDetails');
 const { pricingV1 } = require('../config/pricing.v1');
 const { orderTypes } = require('../config/orderTypes');
 const WebhookModel = require('../models/Webhook.model');
-const { default: axios } = require('axios');
+const axios = require('axios');
 
 const subscriptionType = subscription => {
   if (!subscription) {
@@ -235,7 +235,7 @@ const changeStatusWebhook = async (req, res, next) => {
 
   console.log(JSON.stringify(req?.body, null, 2));
 
-  const event = req.body;
+  const event = req.body.event;
   const boardId = event?.boardId;
   const columnId = event?.columnId;
   const columnValue = event?.value?.label?.index;
@@ -248,19 +248,26 @@ const changeStatusWebhook = async (req, res, next) => {
   });
 
   for (const webhook of webhookDetails) {
-    const res = await axios.post(
-      webhook.webhookUrl,
-      {
-        trigger: {},
-      },
-      {
+    try {
+      const response = await axios({
+        url: webhook.webhookUrl,
+        method: 'post',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: process.env.CLIENT_SECRET,
+          authorization: process.env.API_TOKEN,
         },
-      }
-    );
-    console.log('webhook URL', { res });
+        // data: {
+        //   trigger: {
+        //     outputFields: {},
+        //   },
+        // },
+      });
+      console.log('webhook URL', { response });
+
+      return res.status(200).send({});
+    } catch (error) {
+      console.log(error);
+    }
   }
 };
 
