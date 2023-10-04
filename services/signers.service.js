@@ -49,7 +49,7 @@ const getSignerByFileId = async fileId => {
 const getOneSignersByFilter = async (filter = {}) => {
   try {
     const signer = await SignerModel.findOne({ ...filter }).sort({
-      updatedAt: -1, //gets the latest updated document for the filter
+      updated_at: -1, //gets the latest updated document for the filter
     });
     return signer;
   } catch (err) {}
@@ -57,7 +57,11 @@ const getOneSignersByFilter = async (filter = {}) => {
 
 const updateSigner = async (signerId, signerDetails) => {
   try {
-    const signer = await SignerModel.findByIdAndUpdate(signerId, signerDetails);
+    const signer = await SignerModel.findByIdAndUpdate(
+      signerId,
+      signerDetails,
+      { new: true }
+    );
     return signer;
   } catch (err) {
     throw err;
@@ -258,6 +262,37 @@ const extractAllEmails = async ({ template, signerDetails, itemId }) => {
   }
 };
 
+const findOneOrCreate = async ({ originalFileId, itemId }) => {
+  let signerDetails = await getOneSignersByFilter({
+    originalFileId: Types.ObjectId(originalFileId),
+    itemId: Number(itemId),
+  });
+
+  if (signerDetails) return signerDetails;
+
+  if (!signerDetails) {
+    signerDetails = await getOneSignersByFilter({
+      originalFileId: Types.ObjectId(originalFileId),
+    });
+
+    signerDetails = await signerDetails.populate('originalFileId');
+    if (signerDetails) {
+      signerDetails = await createSigner({
+        originalFileId: Types.ObjectId(originalFileId),
+        itemId: Number(itemId),
+        signers:
+          signerDetails?.signers?.map(sgn => {
+            const { fileStatus = '', isSigned = false, ...rest } = sgn;
+            return rest;
+          }) || [],
+        isSigningOrderRequired: signerDetails?.isSigningOrderRequired || false,
+      });
+    }
+  }
+
+  return signerDetails;
+};
+
 const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
   try {
     const template = await FileDetails.findById(fileId);
@@ -409,11 +444,9 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
 
       for (const emailDetail of emailList) {
         if (!emailDetail?.email) continue;
-
+        let session = await mongoose.startSession();
+        session.startTransaction();
         try {
-          let session = await mongoose.startSession();
-          session.startTransaction();
-
           const newHistory = await deletePreviousStatusAndSend({
             fileId,
             email: emailDetail.email,
@@ -470,4 +503,5 @@ module.exports = {
   sendEmailAndUpdateBackOffice,
   extractAllEmails,
   resendMail,
+  findOneOrCreate,
 };
