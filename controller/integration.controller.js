@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const { registerWebhook } = require('../services/monday.service');
 const WebhookModel = require('../models/Webhook.model');
 const { config } = require('../config');
+const { generatePDFWithGivenPlaceholders } = require('../services/file');
 
 async function autoSend(req, res, next) {
   try {
@@ -51,6 +52,12 @@ async function getTemplatesForPDF(req, res, next) {
 async function generatePDFWithStatus(req, res, next) {
   try {
     console.log('generatePDFWithStatus', JSON.stringify(req?.body, null, 2));
+    const { payload } = req?.body;
+
+    const fileId = payload?.inboundFieldValues?.fileId?.value;
+
+    const fileDetails = await generatePDFWithGivenPlaceholders();
+
     res.status(200).send({});
   } catch (err) {
     console.log(err);
@@ -100,6 +107,7 @@ async function subscribeGenerateWithStatus(req, res, next) {
         userId,
         inputFields,
         webhookId: registeredWebhook?.id,
+        fileId: inputFields?.fileId?.value,
       });
 
       return res.status(200).send({ webhookId: webhookDetails._id });
