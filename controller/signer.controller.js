@@ -223,7 +223,9 @@ const signPDF = async (req, res, next) => {
       let receivers = await signerService.extractAllEmails({
         template,
         signerDetails: signers,
+        itemId,
       });
+
       // upload the PDF to Board
       const finalFile = await fileHistoryService.getFinalContract(
         signedPDF._id,

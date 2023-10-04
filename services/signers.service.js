@@ -217,32 +217,29 @@ const sendEmailAndUpdateBackOffice = async ({
   session.endSession();
 };
 
-const extractAllEmails = async ({ template, signerDetails }) => {
+const extractAllEmails = async ({ template, signerDetails, itemId }) => {
   const emailColumns = signerDetails?.signers
-    ?.filter(
-      emailCol =>
-        emailCol.emailColumnId && !emailCol.userId && !emailCol.isSigned
-    )
+    ?.filter(emailCol => emailCol.emailColumnId && !emailCol.userId)
     ?.map(
       emailCol => emailCol.emailColumnId // added emailCol.id temporarily
     );
 
   const userColumns = signerDetails?.signers
-    ?.filter(emailCol => emailCol.userId && !emailCol.isSigned)
+    ?.filter(emailCol => emailCol.userId)
     ?.map(
       emailCol => emailCol.userId // added emailCol.id temporarily
     );
   let emailList = [];
+
   try {
     await setMondayToken(template.user_id, template.account_id);
 
     if (emailColumns?.length) {
       const emailColumnValue = await getEmailColumnValue(itemId, emailColumns);
       const emailColRes =
-        emailColumnValue?.data?.items?.[0]?.column_values?.map(value => ({
-          email: value?.text,
-          id: value?.id,
-        }));
+        emailColumnValue?.data?.items?.[0]?.column_values?.map(
+          value => value?.text
+        );
       if (emailColRes?.length > 0)
         emailList = emailList.concat([...emailColRes]);
     }
@@ -250,15 +247,12 @@ const extractAllEmails = async ({ template, signerDetails }) => {
     if (userColumns?.length) {
       const userColumnValue = await getUsersByIds(userColumns);
 
-      const userColRes = userColumnValue?.data?.users?.map(user => ({
-        id: user.id,
-        email: user.email,
-      }));
+      const userColRes = userColumnValue?.data?.users?.map(user => user.email);
 
       if (userColRes?.length > 0) emailList = emailList.concat([...userColRes]);
     }
 
-    return Array.isArray(emailList) ? emailList.filter(email => !!email) : [];
+    return emailList;
   } catch (err) {
     return emailList;
   }
