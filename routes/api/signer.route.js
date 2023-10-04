@@ -20,6 +20,12 @@ router.post(
 );
 router.put('/update-signer/:signerId', controller.updateSigner);
 router.get('/send-mail/:itemId/:id', verifySessionToken, controller.sendMail);
+router.get(
+  '/resend-mail/:itemId/:id',
+  verifySessionToken,
+  controller.resendMail
+);
+
 router.post(
   '/sign/:id',
   validateSignatures(),

@@ -70,7 +70,7 @@ async function generatePDFWithStatus(req, res, next) {
       placeholders
     );
 
-    console.log(generatedPDF);
+    console.log('GeneratedPDF', { generatedPDF });
 
     res.status(200).send(generatedPDF);
   } catch (err) {

@@ -458,6 +458,7 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
   }
 };
 
+const resendMail = async ({ fileId, itemId }) => {};
 module.exports = {
   createSigner,
   getSigners,
@@ -468,4 +469,5 @@ module.exports = {
   deletePreviousStatusAndSend,
   sendEmailAndUpdateBackOffice,
   extractAllEmails,
+  resendMail,
 };

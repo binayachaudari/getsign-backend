@@ -99,6 +99,41 @@ const sendMail = async (req, res, next) => {
   }
 };
 
+const resendMail = async (req, res, next) => {
+  try {
+    const { itemId, id } = req.params;
+
+    /*
+    1. Get the Signer Doc.
+    2. |- Signing Order not required -> For Each signer in doc that have not signed delete the Filehistory of the signer that has viewed status and create a new Filehistory with resent status.-> Send mail to each signer that satisfies previous condition.
+       |- Signing Order required -> Get the first signer that has not signed document and delete the Filehistory of the signer that has viewed status and create a new Filehistory with resent status. -> Send mail to that signer.
+    */
+
+    let signerDetails = await signerService.getOneSignersByFilter({
+      originalFileId: Types.ObjectId(id),
+      itemId: Number(itemId),
+    });
+    if (!signerDetails) {
+      throw new Error('Could not find signers.');
+    }
+
+    signerDetails = signerDetails.populate('originalFileId');
+
+    console.log({ signerDetails });
+    if (signerDetails.isSigningOrderRequired) {
+    }
+    if (!signerDetails.isSigningOrderRequired) {
+    }
+    // const sentFile = await signerService.resendMail({
+    //   fileId: id,
+    //   itemId,
+    // });
+    return res.json({ data: null }).status(200);
+  } catch (error) {
+    return next(err);
+  }
+};
+
 const signPDF = async (req, res, next) => {
   const fileHistoryId = req.params.id;
   let ips = (
@@ -444,4 +479,5 @@ module.exports = {
   sendMail,
   signPDF,
   viewDocument,
+  resendMail,
 };
