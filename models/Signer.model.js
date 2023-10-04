@@ -6,6 +6,7 @@ const schema = new mongoose.Schema(
     originalFileId: {
       type: Schema.Types.ObjectId,
       required: true,
+      ref: 'FileDetails',
     },
     itemId: {
       type: Number,

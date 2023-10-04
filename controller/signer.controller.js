@@ -102,35 +102,174 @@ const sendMail = async (req, res, next) => {
 const resendMail = async (req, res, next) => {
   try {
     const { itemId, id } = req.params;
-
     /*
     1. Get the Signer Doc.
     2. |- Signing Order not required -> For Each signer in doc that have not signed delete the Filehistory of the signer that has viewed status and create a new Filehistory with resent status.-> Send mail to each signer that satisfies previous condition.
        |- Signing Order required -> Get the first signer that has not signed document and delete the Filehistory of the signer that has viewed status and create a new Filehistory with resent status. -> Send mail to that signer.
     */
-
     let signerDetails = await signerService.getOneSignersByFilter({
       originalFileId: Types.ObjectId(id),
       itemId: Number(itemId),
     });
+
     if (!signerDetails) {
-      throw new Error('Could not find signers.');
+      signerDetails = await signerService.findOneOrCreate({
+        originalFileId: Types.ObjectId(id),
+        itemId: Number(itemId),
+      });
     }
 
-    signerDetails = signerDetails.populate('originalFileId');
+    signerDetails = await signerDetails.populate('originalFileId');
+    const template = signerDetails.originalFileId;
 
-    console.log({ signerDetails });
+    delete signerDetails.originalFileId;
+
+    signerDetails.originalFileId = Types.ObjectId(id);
+
+    await setMondayToken(template.user_id, template.account_id);
+
     if (signerDetails.isSigningOrderRequired) {
+      let session = await mongoose.startSession();
+      session.startTransaction();
+      try {
+        const firstSignerDetail = signerDetails?.signers?.filter(
+          signer => !signer?.isSigned
+        )?.[0];
+        let email;
+        let indexOfEmailColumn;
+
+        if (firstSignerDetail?.userId) {
+          const userResp = await getUsersByIds(firstSignerDetail.userId);
+          email = userResp?.data?.users?.[0]?.email;
+          indexOfEmailColumn = signerDetails?.signers?.findIndex(
+            signer => signer?.userId === firstSignerDetail.userId
+          );
+        }
+
+        if (!firstSignerDetail?.userId && firstSignerDetail?.emailColumnId) {
+          const emailColumn = firstSignerDetail.emailColumnId;
+          const emailColumnValue = await getEmailColumnValue(
+            itemId,
+            emailColumn
+          );
+          email = emailColumnValue?.data?.items?.[0]?.column_values?.[0]?.text;
+          indexOfEmailColumn = signerDetails?.signers?.findIndex(
+            signer => signer?.emailColumnId === emailColumn
+          );
+        }
+
+        if (email) {
+          const newHistory = await signerService.deletePreviousStatusAndSend({
+            fileId: Types.ObjectId(id),
+            itemId: Number(itemId),
+            email,
+            session,
+          });
+
+          await signerService.sendEmailAndUpdateBackOffice({
+            itemId,
+            newSentHistory: newHistory,
+            session,
+            template,
+            to: email,
+          });
+
+          signerDetails.signers[indexOfEmailColumn].fileStatus =
+            newHistory[0]._id.toString();
+          signerDetails = await signerService.updateSigner(signerDetails._id, {
+            signers: signerDetails.signers,
+          });
+        }
+      } catch (err) {
+        await session.abortTransaction();
+        session.endSession();
+        throw err;
+      }
     }
     if (!signerDetails.isSigningOrderRequired) {
+      const emailColumns = signerDetails?.signers
+        ?.filter(
+          emailCol =>
+            emailCol.emailColumnId && !emailCol.userId && !emailCol.isSigned
+        )
+        ?.map(emailCol => emailCol.emailColumnId);
+
+      const userColumns = signerDetails?.signers
+        ?.filter(emailCol => emailCol.userId && !emailCol.isSigned)
+        ?.map(emailCol => emailCol.userId);
+
+      let emailList = [];
+
+      if (emailColumns?.length) {
+        const emailColumnValue = await getEmailColumnValue(
+          itemId,
+          emailColumns
+        );
+        const emailColRes =
+          emailColumnValue?.data?.items?.[0]?.column_values?.map(value => ({
+            email: value?.text,
+            id: value?.id,
+          }));
+        if (emailColRes?.length > 0)
+          emailList = emailList.concat([...emailColRes]);
+      }
+      if (userColumns?.length) {
+        const userColumnValue = await getUsersByIds(userColumns);
+        const userColRes = userColumnValue?.data?.users?.map(user => ({
+          id: user.id,
+          email: user.email,
+        }));
+        if (userColRes?.length > 0)
+          emailList = emailList.concat([...userColRes]);
+      }
+
+      for (const emailDetail of emailList) {
+        if (!emailDetail?.email) continue;
+        let session = await mongoose.startSession();
+        session.startTransaction();
+
+        try {
+          const newHistory = await signerService.deletePreviousStatusAndSend({
+            fileId: Types.ObjectId(id),
+            email: emailDetail.email,
+            session,
+            itemId,
+          });
+
+          await signerService.sendEmailAndUpdateBackOffice({
+            itemId,
+            newSentHistory: newHistory,
+            session,
+            template,
+            to: emailDetail.email,
+          });
+
+          const indexOfEmailColumn = signerDetails?.signers?.findIndex(
+            signer =>
+              (Number(signer?.userId) || signer?.emailColumnId) ===
+              emailDetail?.id // added emailCol.id temporarily
+          );
+
+          if (indexOfEmailColumn > -1) {
+            signerDetails.signers[indexOfEmailColumn].fileStatus =
+              newHistory[0]._id.toString();
+
+            signerDetails = await signerService.updateSigner(
+              signerDetails._id,
+              { signers: signerDetails.signers }
+            );
+          }
+        } catch (err) {
+          await session.abortTransaction();
+          session.endSession();
+          throw err;
+        }
+      }
     }
-    // const sentFile = await signerService.resendMail({
-    //   fileId: id,
-    //   itemId,
-    // });
-    return res.json({ data: null }).status(200);
+
+    return res.json({ data: signerDetails }).status(200);
   } catch (error) {
-    return next(err);
+    return next(error);
   }
 };
 
