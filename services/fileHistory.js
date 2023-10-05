@@ -724,7 +724,6 @@ const getFileForSigner = async (id, itemId) => {
       signer => signer.fileStatus === id
     );
 
-    console.log({ currentSigner });
     let currentSignerEmail;
     let assignedFields = [];
 
@@ -733,7 +732,7 @@ const getFileForSigner = async (id, itemId) => {
       const userResp = await getUsersByIds(currentSigner.userId);
       currentSignerEmail = userResp?.data?.users?.[0]?.email;
       assignedFields = template?.fields?.filter(
-        field => field.signer.userId === currentSigner.userId
+        field => field?.signer?.userId === currentSigner.userId
       );
     }
 
@@ -747,7 +746,7 @@ const getFileForSigner = async (id, itemId) => {
       )?.[0]?.text;
 
       assignedFields = template?.fields?.filter(
-        field => field.signer.value === currentSigner.emailColumnId
+        field => field?.signer?.value === currentSigner.emailColumnId
       );
     }
 

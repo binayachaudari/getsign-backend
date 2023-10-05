@@ -991,14 +991,27 @@ const signPDF = async (
           const currentPage = pages[placeHolder?.formField?.pageIndex];
 
           if (placeHolder?.image?.src) {
+            console.log('Placeholder Image', {
+              image: placeHolder.image,
+              placeHolder,
+            });
             const pngImage = await pdfDoc.embedPng(placeHolder?.image?.src);
-            const heightOfSignPlaceholder = placeHolder.height || 33;
+            const heightOfSignPlaceholder = placeHolder.height * 0.75 || 33;
+            let imgAspectRatio;
 
+            if (placeHolder.height && placeHolder.width) {
+              imgAspectRatio = placeHolder.width / placeHolder.height;
+            } else {
+              imgAspectRatio = 16 / 9;
+            }
             currentPage.drawImage(pngImage, {
-              x: placeHolder?.formField.coordinates.x,
-              y: placeHolder?.formField.coordinates.y - heightOfSignPlaceholder,
-              width: placeHolder?.width,
-              height: placeHolder?.height,
+              x: placeHolder?.formField.coordinates.x + 6,
+              y:
+                placeHolder?.formField.coordinates.y -
+                6 -
+                heightOfSignPlaceholder,
+              width: heightOfSignPlaceholder * imgAspectRatio,
+              height: heightOfSignPlaceholder,
             });
           } else if (placeHolder?.itemId === 'sign-date') {
             const fontSize = placeHolder.fontSize || 11;

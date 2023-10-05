@@ -44,6 +44,7 @@ const {
   loadFileDetails,
 } = require('../services/s3');
 const { setMondayToken } = require('../utils/monday');
+const { arraysAreEqual, areArraysOfObjEqual } = require('../utils/arrays');
 
 const TEXT_BOX_ITEM_ID = 'text-box';
 
@@ -90,13 +91,73 @@ module.exports = {
   updateFields: async (req, res, next) => {
     const id = req.params.id;
     const item_id = req.params.item_id;
+
     const { fields, signers_settings } = req.body;
     try {
       const result = await addFormFields(id, fields);
-      const signerOrder = await getOneSignersByFilter({
+      let signerOrder = await getOneSignersByFilter({
         originalFileId: Types.ObjectId(id),
         itemId: Number(item_id),
       });
+
+      signerOrder = await signerOrder.populate('originalFileId');
+      const template = signerOrder.originalFileId;
+
+      delete signerOrder.originalFileId;
+
+      const areSignersEqual = areArraysOfObjEqual(
+        signerOrder.signers || [],
+        signers_settings.signers || []
+      );
+
+      if (!areSignersEqual) {
+        const notSignedByBoth = await FileHistory.aggregate([
+          {
+            $group: {
+              _id: '$itemId',
+              status: {
+                $push: '$status',
+              },
+              fileId: {
+                $first: '$fileId',
+              },
+            },
+          },
+          {
+            $match: {
+              fileId: Types.ObjectId(id),
+              status: {
+                $not: {
+                  $all: ['signed_by_sender', 'signed_by_receiver'],
+                },
+              },
+            },
+          },
+        ]);
+
+        await setMondayToken(template.user_id, template.account_id);
+
+        if (notSignedByBoth?.length > 0) {
+          notSignedByBoth?.forEach(async item => {
+            // updating status column
+            await updateStatusColumn({
+              itemId: item?._id,
+              boardId: updatedFields.board_id,
+              columnId: updatedFields?.status_column_id,
+              columnValue: undefined,
+              userId: updatedFields?.user_id,
+              accountId: updatedFields?.account_id,
+            });
+          });
+
+          const notSignedByBothItemIds = notSignedByBoth.map(item => item?._id);
+
+          // delete history
+          await FileHistory.deleteMany({
+            itemId: { $in: notSignedByBothItemIds },
+          });
+        }
+      }
 
       const signerOrderPayload = {
         signers:
@@ -104,13 +165,14 @@ module.exports = {
             const { fileStatus = '', isSigned = false, ...rest } = sgn;
             return rest;
           }) || [],
-        originalFileId: id,
-        itemId: item_id,
+        originalFileId: Types.ObjectId(id),
+        itemId: Number(item_id),
         isSigningOrderRequired:
           signers_settings.isSigningOrderRequired || false,
+        file: null,
       };
 
-      if (signerOrder) {
+      if (signerOrder && !areSignersEqual) {
         await signerOrder.updateOne(signerOrderPayload);
       } else {
         await createSigner(signerOrderPayload);
