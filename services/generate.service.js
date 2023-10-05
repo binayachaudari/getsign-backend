@@ -53,7 +53,7 @@ const templates = async boardId => {
   return await FileDetails.aggregate([
     {
       $match: {
-        board_id: payload?.boardId,
+        board_id: Number(boardId),
         is_deleted: false,
         type: 'generate',
       },
