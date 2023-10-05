@@ -50,11 +50,48 @@ const uploadDocumentToGeneratePDF = async req => {
 };
 
 const templates = async boardId => {
-  return FileDetails.find({
-    board_id: boardId,
-    is_deleted: false,
-    type: 'generate',
-  });
+  return await FileDetails.aggregate([
+    {
+      $match: {
+        board_id: payload?.boardId,
+        is_deleted: false,
+        type: 'generate',
+      },
+    },
+    {
+      $lookup: {
+        from: 'webhooks',
+        localField: '_id',
+        foreignField: 'fileId',
+        as: 'integration',
+      },
+    },
+    {
+      $addFields: {
+        hasInstalledIntegration: {
+          $cond: {
+            if: {
+              $gt: [
+                {
+                  $size: '$integration',
+                },
+                0,
+              ],
+            },
+            then: true,
+            else: false,
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        file_name: '$file_name',
+        hasInstalledIntegration: 1,
+      },
+    },
+  ]);
 };
 
 const removeTemplate = async fileId => {
