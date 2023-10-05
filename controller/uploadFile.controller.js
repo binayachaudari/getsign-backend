@@ -4,6 +4,7 @@ const FileDetails = require('../models/FileDetails');
 const FileHistory = require('../models/FileHistory');
 const { backOfficeDocumentSigned } = require('../services/backoffice.service');
 const STANDARD_FIELDS = require('../config/standardFields');
+const { Types } = require('mongoose');
 
 const {
   addFormFields,
@@ -93,12 +94,16 @@ module.exports = {
     try {
       const result = await addFormFields(id, fields);
       const signerOrder = await getOneSignersByFilter({
-        originalFileId: id,
-        itemId: item_id,
+        originalFileId: Types.ObjectId(id),
+        itemId: Number(item_id),
       });
 
       const signerOrderPayload = {
-        signers: signers_settings.signers || [],
+        signers:
+          signers_settings.signers?.map(sgn => {
+            const { fileStatus = '', isSigned = false, ...rest } = sgn;
+            return rest;
+          }) || [],
         originalFileId: id,
         itemId: item_id,
         isSigningOrderRequired:
