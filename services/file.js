@@ -991,10 +991,6 @@ const signPDF = async (
           const currentPage = pages[placeHolder?.formField?.pageIndex];
 
           if (placeHolder?.image?.src) {
-            console.log('Placeholder Image', {
-              image: placeHolder.image,
-              placeHolder,
-            });
             const pngImage = await pdfDoc.embedPng(placeHolder?.image?.src);
             const heightOfSignPlaceholder = placeHolder.height * 0.75 || 33;
             let imgAspectRatio;
