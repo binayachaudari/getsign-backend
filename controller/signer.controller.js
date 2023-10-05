@@ -39,7 +39,12 @@ const getSignersOrDuplicate = async (req, res, next) => {
       itemId: item_id,
     });
 
+    if (signer) return res.json({ data: signer }).status(200);
+
     let originlFileDetails = await FileDetails.findOne({ _id: fileId });
+
+    if (originlFileDetails?.type === 'adhoc')
+      return res.json({ data: null }).status(200);
 
     if (!signer && originlFileDetails?.type !== 'adhoc') {
       signer = await signerService.getOneSignersByFilter({
