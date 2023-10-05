@@ -16,6 +16,7 @@ const {
   getSignerByFileId,
   createSigner,
   getOneSignersByFilter,
+  updateSigner,
 } = require('../services/signers.service');
 
 const {
@@ -126,9 +127,10 @@ module.exports = {
           {
             $match: {
               fileId: Types.ObjectId(id),
+              itemId: Number(item_id),
               status: {
                 $not: {
-                  $all: ['signed_by_sender', 'signed_by_receiver'],
+                  $all: ['signed_by_receiver'],
                 },
               },
             },
@@ -142,11 +144,11 @@ module.exports = {
             // updating status column
             await updateStatusColumn({
               itemId: item?._id,
-              boardId: updatedFields.board_id,
-              columnId: updatedFields?.status_column_id,
+              boardId: template.board_id,
+              columnId: template?.status_column_id,
               columnValue: undefined,
-              userId: updatedFields?.user_id,
-              accountId: updatedFields?.account_id,
+              userId: template?.user_id,
+              accountId: template?.account_id,
             });
           });
 
@@ -162,8 +164,8 @@ module.exports = {
       const signerOrderPayload = {
         signers:
           signers_settings.signers?.map(sgn => {
-            const { fileStatus = '', isSigned = false, ...rest } = sgn;
-            return rest;
+            const { fileStatus = '', ...rest } = sgn;
+            return { ...rest, isSigned: false };
           }) || [],
         originalFileId: Types.ObjectId(id),
         itemId: Number(item_id),
@@ -173,8 +175,9 @@ module.exports = {
       };
 
       if (signerOrder && !areSignersEqual) {
-        await signerOrder.updateOne(signerOrderPayload);
-      } else {
+        signerOrder = await updateSigner(signerOrder._id, signerOrderPayload);
+      }
+      if (!signerOrder) {
         await createSigner(signerOrderPayload);
       }
 

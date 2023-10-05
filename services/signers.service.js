@@ -310,7 +310,7 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
       };
     }
     await setMondayToken(template.user_id, template.account_id);
-    let signerDetails = await SignerModel.findOne({
+    let signerDetails = await getOneSignersByFilter({
       originalFileId: Types.ObjectId(fileId),
       itemId: Number(itemId),
     });
