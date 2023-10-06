@@ -79,8 +79,93 @@ const unregisterWebhook = async ({ webhookId, token }) => {
   );
 };
 
-const getItemDetails = async id => {
+const getItemDetails = async (id, token) => {
   try {
+    if (token) {
+      const query = `{
+        items(ids: ${[Number(id)]}) {
+          id
+          board{
+            id
+            name
+            columns{
+              id
+              type
+              settings_str
+              title
+            }
+          }
+          column_values {
+            id
+            text
+            column{
+              title
+            }
+            type
+            value
+            ... on EmailValue {
+              email
+              updated_at
+            }
+            ... on MirrorValue {
+              mirrored_items{
+                mirrored_value{
+                  __typename
+                }
+              }
+              display_value
+              id
+            }
+          }
+          name
+          parent_item {
+            id
+          }
+          state
+    
+          subitems{
+            id
+            name
+            board{
+              columns{
+                id
+                type
+                settings_str
+                title
+              }
+            }
+            column_values {
+              id
+              text
+              column{
+                title
+              }
+              type
+              value
+            }
+          }
+        }
+       }`;
+
+      const option = {
+        method: 'post',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token,
+          'API-Version': '2023-10',
+        },
+        body: JSON.stringify({
+          query,
+        }),
+      };
+
+      const request = new Request('https://api.monday.com/v2', option);
+
+      const res = await fetch(request);
+
+      return res.json();
+    }
+
     return await monday.api(
       `
   query getItemDetails($ids: [Int]) {
