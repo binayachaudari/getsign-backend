@@ -101,63 +101,67 @@ module.exports = {
         itemId: Number(item_id),
       });
 
-      signerOrder = await signerOrder.populate('originalFileId');
-      const template = signerOrder.originalFileId;
+      if (signerOrder) {
+        signerOrder = await signerOrder.populate('originalFileId');
+        const template = signerOrder.originalFileId;
 
-      delete signerOrder.originalFileId;
+        delete signerOrder.originalFileId;
 
-      const areSignersEqual = areArraysOfObjEqual(
-        signerOrder.signers || [],
-        signers_settings.signers || []
-      );
+        const areSignersEqual = areArraysOfObjEqual(
+          signerOrder.signers || [],
+          signers_settings.signers || []
+        );
 
-      if (!areSignersEqual) {
-        const notSignedByBoth = await FileHistory.aggregate([
-          {
-            $group: {
-              _id: '$itemId',
-              status: {
-                $push: '$status',
-              },
-              fileId: {
-                $first: '$fileId',
-              },
-            },
-          },
-          {
-            $match: {
-              fileId: Types.ObjectId(id),
-              itemId: Number(item_id),
-              status: {
-                $not: {
-                  $all: ['signed_by_receiver'],
+        if (!areSignersEqual) {
+          const notSignedByBoth = await FileHistory.aggregate([
+            {
+              $group: {
+                _id: '$itemId',
+                status: {
+                  $push: '$status',
+                },
+                fileId: {
+                  $first: '$fileId',
                 },
               },
             },
-          },
-        ]);
+            {
+              $match: {
+                fileId: Types.ObjectId(id),
+                itemId: Number(item_id),
+                status: {
+                  $not: {
+                    $all: ['signed_by_receiver'],
+                  },
+                },
+              },
+            },
+          ]);
 
-        await setMondayToken(template.user_id, template.account_id);
+          await setMondayToken(template.user_id, template.account_id);
 
-        if (notSignedByBoth?.length > 0) {
-          notSignedByBoth?.forEach(async item => {
-            // updating status column
-            await updateStatusColumn({
-              itemId: item?._id,
-              boardId: template.board_id,
-              columnId: template?.status_column_id,
-              columnValue: undefined,
-              userId: template?.user_id,
-              accountId: template?.account_id,
+          if (notSignedByBoth?.length > 0) {
+            notSignedByBoth?.forEach(async item => {
+              // updating status column
+              await updateStatusColumn({
+                itemId: item?._id,
+                boardId: template.board_id,
+                columnId: template?.status_column_id,
+                columnValue: undefined,
+                userId: template?.user_id,
+                accountId: template?.account_id,
+              });
             });
-          });
 
-          const notSignedByBothItemIds = notSignedByBoth.map(item => item?._id);
+            const notSignedByBothItemIds = notSignedByBoth.map(
+              item => item?._id
+            );
 
-          // delete history
-          await FileHistory.deleteMany({
-            itemId: { $in: notSignedByBothItemIds },
-          });
+            // delete history
+            await FileHistory.deleteMany({
+              itemId: { $in: notSignedByBothItemIds },
+            });
+          }
         }
       }
 
