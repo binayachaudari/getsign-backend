@@ -101,13 +101,14 @@ module.exports = {
         itemId: Number(item_id),
       });
 
+      let areSignersEqual = true;
       if (signerOrder) {
         signerOrder = await signerOrder.populate('originalFileId');
         const template = signerOrder.originalFileId;
 
         delete signerOrder.originalFileId;
 
-        const areSignersEqual = areArraysOfObjEqual(
+        areSignersEqual = areArraysOfObjEqual(
           signerOrder.signers || [],
           signers_settings.signers || []
         );
