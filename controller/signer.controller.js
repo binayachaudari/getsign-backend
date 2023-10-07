@@ -371,7 +371,6 @@ const signPDF = async (req, res, next) => {
       fileHistory,
     });
 
-    // return res.status(200);
     pdfSigners = pdfSigners.map(signer => {
       if (signer.fileStatus === fileHistoryId) {
         return {
