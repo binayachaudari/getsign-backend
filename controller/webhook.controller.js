@@ -43,7 +43,7 @@ const applicationWebhook = async (req, res, next) => {
   if (auth) decoded = jwt.decode(auth, process.env.CLIENT_SECRET);
 
   const payload = req.body;
-  console.log('Webhook', { payload });
+  console.log('Webhook', JSON.stringify(payload));
 
   if (payload?.challenge) {
     res.status(200).send(req.body);
@@ -114,6 +114,8 @@ const applicationWebhook = async (req, res, next) => {
         label:
           payload.type === 'app_subscription_cancelled'
             ? 'Cancelled'
+            : payload?.type === 'app_trial_subscription_ended'
+            ? 'Trial'
             : subscriptionType(payload?.data?.subscription),
       },
       status5: {
