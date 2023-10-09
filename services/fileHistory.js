@@ -8,7 +8,7 @@ const {
   monday,
   handleFormatNumericColumn,
 } = require('../utils/monday');
-const { embedHistory } = require('./embedDocumentHistory');
+const { newEmbedHistory } = require('./embedDocumentHistory');
 const {
   signPDF,
   generatePDF,
@@ -892,7 +892,7 @@ const getFinalContract = async (id, withPdfBytes) => {
       `data:${contentType};base64,${base64String}`
     );
 
-    const withDocumentHistory = await embedHistory(
+    const withDocumentHistory = await newEmbedHistory(
       pdfDoc,
       fileHistory.fileId?._id,
       fileHistory.itemId
