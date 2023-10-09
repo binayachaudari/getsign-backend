@@ -43,9 +43,6 @@ const getSignersOrDuplicate = async (req, res, next) => {
 
     let originlFileDetails = await FileDetails.findOne({ _id: fileId });
 
-    if (originlFileDetails?.type === 'adhoc')
-      return res.json({ data: null }).status(200);
-
     if (!signer && originlFileDetails?.type !== 'adhoc') {
       signer = await signerService.getOneSignersByFilter({
         originalFileId: Types.ObjectId(fileId),
@@ -63,6 +60,15 @@ const getSignersOrDuplicate = async (req, res, next) => {
           isSigningOrderRequired: signer?.isSigningOrderRequired || false,
         });
       }
+    }
+
+    if (!signer && originlFileDetails?.type === 'adhoc') {
+      signer = await signerService.createSigner({
+        originalFileId: Types.ObjectId(fileId),
+        itemId: item_id,
+        signers: [],
+        isSigningOrderRequired: signer?.isSigningOrderRequired || false,
+      });
     }
     return res.json({ data: signer }).status(200);
   } catch (err) {
