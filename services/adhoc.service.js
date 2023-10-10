@@ -157,6 +157,7 @@ const uploadAdhocDocument = async req => {
     account_id: body.account_id,
     board_id: Number(body.board_id),
     type: 'adhoc',
+    is_deleted: false,
   }).sort({ created_at: -1 });
 
   const uploadedFile = await uploadPreSignedFile({
@@ -171,8 +172,6 @@ const uploadAdhocDocument = async req => {
     account_id: body.account_id,
     board_id: body.board_id,
     item_id: body.item_id,
-    user_id: body.user_id,
-    file_name: file.name,
     itemViewInstanceId: body.instanceId,
     is_deleted: false,
     type: 'adhoc',
