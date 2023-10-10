@@ -113,7 +113,11 @@ module.exports = {
           signers_settings.signers || []
         );
 
-        if (!areSignersEqual) {
+        if (
+          !areSignersEqual ||
+          signerOrder.isSigningOrderRequired !==
+            signers_settings.isSigningOrderRequired
+        ) {
           const notSignedByBoth = await FileHistory.aggregate([
             {
               $group: {
