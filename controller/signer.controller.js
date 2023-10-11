@@ -1,6 +1,5 @@
 const signerService = require('../services/signers.service');
 const FileHistory = require('../models/FileHistory');
-const { loadFileDetails } = require('../services/s3');
 const fileHistoryService = require('../services/fileHistory');
 const { Types } = require('mongoose');
 
