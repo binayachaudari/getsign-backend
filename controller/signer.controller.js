@@ -99,10 +99,15 @@ const updateSigner = async (req, res, next) => {
 const sendMail = async (req, res, next) => {
   try {
     const { itemId, id } = req.params;
+
+    const message = req?.query?.message || '';
+
     const sentFile = await signerService.sendFileForMultipleSigners({
       fileId: id,
       itemId,
+      message,
     });
+
     return res.json({ data: sentFile }).status(200);
   } catch (err) {
     return next(err);
