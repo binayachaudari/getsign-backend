@@ -30,8 +30,8 @@ const AUDIT_TRIAL_CONFIG = {
     newLinePaddingY: 6,
   },
   imgDimensions: {
-    height: 32,
-    width: 32,
+    height: 24,
+    width: 24,
   },
 };
 
