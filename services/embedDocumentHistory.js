@@ -488,9 +488,6 @@ module.exports = {
     });
     const docDetails = await FileDetails.findById(fileId);
 
-    const { sentHistories, signedHisotries, viewedHistoires, resentHistories } =
-      getAllHistories(docHistory);
-
     let page = pdfDoc.addPage();
     const { height } = page.getSize();
     const fontSize = 30;

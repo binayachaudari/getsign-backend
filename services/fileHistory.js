@@ -173,18 +173,20 @@ const isAlreadyViewed = async ({ fileId, itemId }) => {
 const viewedFile = async (id, itemId, ip) => {
   try {
     const fromFileHistory = await FileHistory.findById(id);
+
     if (!fromFileHistory) throw new Error('No file with such id');
 
     const template = await FileDetails.findById(fromFileHistory.fileId);
 
-    const newHistory = await addFileHistory({
+    const newHistory = await multipleSignerAddFileHistory({
       id: fromFileHistory.fileId,
       itemId,
       status: 'viewed',
       ipAddress: ip,
+      fileHistory: fromFileHistory,
     });
 
-    if (newHistory?.status)
+    if (newHistory?.status !== fromFileHistory.status)
       await updateStatusColumn({
         itemId: itemId,
         boardId: template.board_id,
