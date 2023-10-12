@@ -162,11 +162,12 @@ const getFileHistory = async (itemId, id) => {
   }
 };
 
-const isAlreadyViewed = async ({ fileId, itemId }) => {
+const isAlreadyViewed = async ({ fileId, itemId, sentToEmail }) => {
   return await FileHistory.findOne({
     fileId,
     itemId,
     status: 'viewed',
+    sentToEmail,
   }).exec();
 };
 
@@ -855,7 +856,11 @@ const getFileForSigner = async (id, itemId) => {
         file: `data:${contentType};base64,${base64String}`,
         assignedFields,
         alreadySignedByOther: !!getFileToSignKey,
-        alreadyViewed: !!(await isAlreadyViewed({ fileId, itemId })),
+        alreadyViewed: !!(await isAlreadyViewed({
+          fileId,
+          itemId,
+          sentToEmail: currentSignerEmail,
+        })),
         sendDocumentTo: currentSignerEmail,
       };
     } catch (error) {
@@ -932,8 +937,6 @@ const generateFilePreview = async (fileId, itemId, accountId) => {
       _id: fileId,
       account_id: accountId,
     });
-
-    console.log({ fileDetails });
 
     if (!fileDetails) {
       return {

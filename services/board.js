@@ -141,6 +141,9 @@ const getStoredBoardFile = async (boardId, itemId, instanceId) => {
 
     const hasStartedSigningProcess = await FileHistory.findOne({
       fileId: doc?._id,
+      status: {
+        $nin: ['sent', 'viewed'],
+      },
     });
 
     return {
