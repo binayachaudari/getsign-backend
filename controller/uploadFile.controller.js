@@ -94,6 +94,7 @@ module.exports = {
     const item_id = req.params.item_id;
 
     const { fields, signers_settings } = req.body;
+
     try {
       const result = await addFormFields(id, fields);
       let signerOrder = await getOneSignersByFilter({
@@ -183,7 +184,12 @@ module.exports = {
         file: null,
       };
 
-      if (signerOrder && !areSignersEqual) {
+      if (
+        signerOrder &&
+        (!areSignersEqual ||
+          signerOrder.isSigningOrderRequired !==
+            signers_settings.isSigningOrderRequired)
+      ) {
         signerOrder = await updateSigner(signerOrder._id, signerOrderPayload);
       }
       if (!signerOrder) {
