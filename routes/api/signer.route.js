@@ -35,4 +35,9 @@ router.post(
 
 router.post('/view-document/:id', controller.viewDocument);
 
+router.post(
+  '/request-sign-by-me/:originalFileId/:itemId',
+  controller.handleRequestSignByMe
+);
+
 module.exports = router;

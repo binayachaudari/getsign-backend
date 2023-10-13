@@ -625,6 +625,56 @@ const viewDocument = async (req, res, next) => {
   }
 };
 
+const handleRequestSignByMe = async (req, res, next) => {
+  const { originalFileId, itemId } = req.params;
+
+  try {
+    let signerDetails = await signerService.getOneSignersByFilter({
+      originalFileId: Types.ObjectId(originalFileId),
+      itemId: Number(itemId),
+    });
+
+    if (!signerDetails) throw new Error('Signers not found!');
+
+    const meUserIndex = signerDetails.signers?.findIndex(
+      doc => doc?.userId && !doc?.isSigned
+    );
+
+    if (meUserIndex === -1) throw new Error('Signer not found!');
+    let meUserDetail;
+
+    signerDetails = await signerDetails.populate('originalFileId');
+    const template = signerDetails.originalFileId;
+    meUserDetail = signerDetails.signers[meUserIndex];
+
+    await setMondayToken(template?.user_id, template?.account_id);
+    const userResp = await getUsersByIds(meUserDetail.userId);
+    let meUserEmail = userResp?.data?.users?.[0]?.email;
+
+    const fileHistory = await FileHistory.create({
+      itemId: Number(itemId),
+      fileId: Types.ObjectId(originalFileId),
+      status: 'viewed',
+      sentToEmail: meUserEmail,
+    });
+
+    signerDetails.signers[meUserIndex].fileStatus = fileHistory._id.toString();
+
+    const updatedSiger = await SignerModel.findOneAndUpdate(
+      { _id: signerDetails._id },
+      { signers: signerDetails.signers },
+      { new: true }
+    );
+
+    return res.status(200).json({
+      fileHistory: fileHistory._id.toString(),
+      signerDetails: updatedSiger,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   createSigner,
   getSignersOrDuplicate,
@@ -634,4 +684,5 @@ module.exports = {
   signPDF,
   viewDocument,
   resendMail,
+  handleRequestSignByMe,
 };
