@@ -321,7 +321,7 @@ const signPDF = async (req, res, next) => {
     );
 
     // let signerEmail;
-    let currentSigner;
+    // let currentSigner;
 
     // if (indexOfCurrentSigner > -1) {
     //   currentSigner = pdfSigners[indexOfCurrentSigner];
@@ -464,7 +464,7 @@ const signPDF = async (req, res, next) => {
         itemId: itemId,
         boardId: template.board_id,
         columnId: template?.status_column_id,
-        columnValue: currentSigner.userId
+        columnValue: pdfSigners[indexOfCurrentSigner].userId
           ? `Me Signed`
           : `${indexOfCurrentSigner + 1} Signed`,
         userId: template?.user_id,
@@ -481,7 +481,7 @@ const signPDF = async (req, res, next) => {
         itemId: itemId,
         boardId: template.board_id,
         columnId: template?.status_column_id,
-        columnValue: currentSigner.userId
+        columnValue: pdfSigners[indexOfCurrentSigner].userId
           ? `Me Signed`
           : `${indexOfCurrentSigner + 1} Signed`,
         userId: template?.user_id,
