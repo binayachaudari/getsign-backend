@@ -126,6 +126,7 @@ const sendEmailAndUpdateBackOffice = async ({
   itemId,
   newSentHistory,
   session,
+  shouldUpdateMondayStatus = true,
 }) => {
   const mailStatus = await sendRequestToSign({
     template,
@@ -188,14 +189,16 @@ const sendEmailAndUpdateBackOffice = async ({
       },
     ]).session(session);
 
-    await updateStatusColumn({
-      itemId: itemId,
-      boardId: template.board_id,
-      columnId: template?.status_column_id,
-      columnValue: statusMapper[newSentHistory[0].status],
-      userId: template?.user_id,
-      accountId: template?.account_id,
-    });
+    if (shouldUpdateMondayStatus) {
+      await updateStatusColumn({
+        itemId: itemId,
+        boardId: template.board_id,
+        columnId: template?.status_column_id,
+        columnValue: statusMapper[newSentHistory[0].status],
+        userId: template?.user_id,
+        accountId: template?.account_id,
+      });
+    }
 
     if (appInstallDetails?.back_office_item_id) {
       await backOfficeSentDocument(appInstallDetails.back_office_item_id);

@@ -297,8 +297,10 @@ const signPDF = async (req, res, next) => {
     req.connection.remoteAddress ||
     ''
   ).split(',');
+
   const ip = ips[0].trim();
   const { status, signatures, itemId, standardFields } = req.body;
+
   try {
     const fileHistory = await FileHistory.findById(fileHistoryId).populate(
       'fileId'
@@ -318,28 +320,28 @@ const signPDF = async (req, res, next) => {
       signer => signer.fileStatus === fileHistoryId
     );
 
-    let signerEmail;
+    // let signerEmail;
     let currentSigner;
 
-    if (indexOfCurrentSigner > -1) {
-      currentSigner = pdfSigners[indexOfCurrentSigner];
+    // if (indexOfCurrentSigner > -1) {
+    //   currentSigner = pdfSigners[indexOfCurrentSigner];
 
-      await setMondayToken(template.user_id, template.account_id);
+    //   await setMondayToken(template.user_id, template.account_id);
 
-      if (currentSigner.emailColumnId && !currentSigner.userId) {
-        const currentSignerEmailRes = await getEmailColumnValue(
-          itemId,
-          currentSigner.emailColumnId
-        );
-        signerEmail =
-          currentSignerEmailRes?.data?.items?.[0]?.column_values?.[0]?.text;
-      }
+    //   if (currentSigner.emailColumnId && !currentSigner.userId) {
+    //     const currentSignerEmailRes = await getEmailColumnValue(
+    //       itemId,
+    //       currentSigner.emailColumnId
+    //     );
+    //     signerEmail =
+    //       currentSignerEmailRes?.data?.items?.[0]?.column_values?.[0]?.text;
+    //   }
 
-      if (currentSigner.userId) {
-        const userResp = await getUsersByIds(currentSigner.userId);
-        signerEmail = userResp?.data?.users?.[0]?.email;
-      }
-    }
+    //   if (currentSigner.userId) {
+    //     const userResp = await getUsersByIds(currentSigner.userId);
+    //     signerEmail = userResp?.data?.users?.[0]?.email;
+    //   }
+    // }
 
     let file;
     // takes the latest signed file if already signed else takes original file
@@ -512,6 +514,7 @@ const signPDF = async (req, res, next) => {
           session,
           template,
           to: email,
+          shouldUpdateMondayStatus: !signers.isSigningOrderRequired,
         });
 
         pdfSigners[indexOfNextSigner].fileStatus =
@@ -613,7 +616,7 @@ const viewDocument = async (req, res, next) => {
         itemId: itemId,
         boardId: template.board_id,
         columnId: template?.status_column_id,
-        columnValue: statusMapper[viewedFileHistory?.status],
+        columnValue: `Viewed by ${currentSigner.label}`,
         userId: template?.user_id,
         accountId: template?.account_id,
       });
