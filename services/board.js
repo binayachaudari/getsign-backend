@@ -22,6 +22,9 @@ const getAvailableFilesForBoard = async boardId => {
     return FileDetails.find({
       board_id: boardId,
       is_deleted: false,
+      type: {
+        $nin: ['adhoc', 'generate'],
+      },
     }).select('_id file_name');
   } catch (err) {
     throw err;
