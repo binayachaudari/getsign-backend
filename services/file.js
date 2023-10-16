@@ -60,56 +60,10 @@ const addFormFields = async (id, payload) => {
       await backOfficeSavedDocument(appInstallDetails.back_office_item_id);
     }
 
-    await setMondayToken(updatedFields.user_id, updatedFields.account_id);
-
-    if (!arraysAreEqual(payload || [], oldFields?.fields || [])) {
-      const notSignedByBoth = await FileHistory.aggregate([
-        {
-          $group: {
-            _id: '$itemId',
-            status: {
-              $push: '$status',
-            },
-            fileId: {
-              $first: '$fileId',
-            },
-          },
-        },
-        {
-          $match: {
-            fileId: Types.ObjectId(updatedFields._id),
-            status: {
-              $not: {
-                $all: ['signed_by_sender', 'signed_by_receiver'],
-              },
-            },
-          },
-        },
-      ]);
-
-      if (notSignedByBoth?.length > 0) {
-        notSignedByBoth?.forEach(async item => {
-          // updating status column
-          await updateStatusColumn({
-            itemId: item?._id,
-            boardId: updatedFields.board_id,
-            columnId: updatedFields?.status_column_id,
-            columnValue: undefined,
-            userId: updatedFields?.user_id,
-            accountId: updatedFields?.account_id,
-          });
-        });
-
-        const notSignedByBothItemIds = notSignedByBoth.map(item => item?._id);
-
-        // delete history
-        await FileHistory.deleteMany({
-          itemId: { $in: notSignedByBothItemIds },
-        });
-      }
-    }
-
-    return updatedFields;
+    return {
+      updatedFields,
+      hasChanged: !arraysAreEqual(payload || [], oldFields?.fields || []),
+    };
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
