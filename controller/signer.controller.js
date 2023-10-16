@@ -473,6 +473,23 @@ const signPDF = async (req, res, next) => {
     }
 
     if (
+      !hasAllSigned &&
+      !signers.isSigningOrderRequired &&
+      indexOfCurrentSigner > -1
+    ) {
+      await updateStatusColumn({
+        itemId: itemId,
+        boardId: template.board_id,
+        columnId: template?.status_column_id,
+        columnValue: currentSigner.userId
+          ? `Me Signed`
+          : `${indexOfCurrentSigner + 1} Signed`,
+        userId: template?.user_id,
+        accountId: template?.account_id,
+      });
+    }
+
+    if (
       signers.isSigningOrderRequired &&
       indexOfCurrentSigner > -1 &&
       indexOfCurrentSigner < pdfSigners.length - 1 &&
