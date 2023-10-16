@@ -647,6 +647,14 @@ const viewDocument = async (req, res, next) => {
 
 const handleRequestSignByMe = async (req, res, next) => {
   const { originalFileId, itemId } = req.params;
+  let ips = (
+    req.headers['cf-connecting-ip'] ||
+    req.headers['x-real-ip'] ||
+    req.headers['x-forwarded-for'] ||
+    req.connection.remoteAddress ||
+    ''
+  ).split(',');
+  const ip = ips[0].trim();
 
   try {
     let signerDetails = await signerService.getOneSignersByFilter({
@@ -676,6 +684,7 @@ const handleRequestSignByMe = async (req, res, next) => {
       fileId: Types.ObjectId(originalFileId),
       status: 'viewed',
       sentToEmail: meUserEmail,
+      viewedIpAddress: ip,
     });
 
     signerDetails.signers[meUserIndex].fileStatus = fileHistory._id.toString();
