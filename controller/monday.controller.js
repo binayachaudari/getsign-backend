@@ -7,6 +7,7 @@ const {
 } = require('../services/monday.service');
 const { getFormulaValueOfItem } = require('../utils/formula');
 const { handleFormatNumericColumn } = require('../utils/monday');
+const MondayDataFormatter = require('../utils/mondayDataParser');
 
 const getEmailAndPersons = async (req, res, next) => {
   const columns = req.body.columns || ['email', 'person'];
@@ -31,6 +32,11 @@ const itemDetails = async (req, res, next) => {
     const result = await getItemDetails(Number(itemId));
 
     let item = result?.data?.items?.[0];
+
+    const formattedBoard = MondayDataFormatter.formatBoardColumns(item.board);
+
+    item.board = formattedBoard;
+
     item = handleFormatNumericColumn(item);
 
     if (item) {

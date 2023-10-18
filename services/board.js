@@ -22,6 +22,9 @@ const getAvailableFilesForBoard = async boardId => {
     return FileDetails.find({
       board_id: boardId,
       is_deleted: false,
+      type: {
+        $nin: ['adhoc', 'generate'],
+      },
     }).select('_id file_name');
   } catch (err) {
     throw err;
@@ -51,7 +54,12 @@ const getStoredBoardFile = async (boardId, itemId, instanceId) => {
       item_id: itemId,
       itemViewInstanceId: instanceId,
       is_deleted: false,
-      type: 'adhoc',
+      $or: [
+        {
+          type: 'adhoc',
+        },
+        { type: 'generate' },
+      ],
     });
 
     if (template) {
@@ -136,6 +144,9 @@ const getStoredBoardFile = async (boardId, itemId, instanceId) => {
 
     const hasStartedSigningProcess = await FileHistory.findOne({
       fileId: doc?._id,
+      status: {
+        $nin: ['sent', 'viewed'],
+      },
     });
 
     return {

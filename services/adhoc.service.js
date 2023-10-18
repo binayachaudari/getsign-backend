@@ -177,6 +177,11 @@ const uploadAdhocDocument = async req => {
     type: 'adhoc',
   });
 
+  if (exists) {
+    exists.file_name = file.name;
+    await exists.save();
+  }
+
   if (!exists) {
     const result = await FileDetails.create({
       account_id: body.account_id,

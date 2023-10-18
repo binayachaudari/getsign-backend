@@ -16,8 +16,156 @@ const me = async () => {
   }
 };
 
-const getItemDetails = async id => {
+const registerWebhook = async ({
+  boardId,
+  url,
+  event,
+  config = null,
+  token,
+}) => {
+  console.log({ boardId, url, event, config, token });
   try {
+    const result = await monday.api(
+      `mutation registerWebhook($boardId: Int!, $url: String!, $event: WebhookEventType!, $config: JSON) {
+        create_webhook(board_id: $boardId, url: $url, event: $event, config: $config) {
+          id
+        }
+      }`,
+      {
+        variables: {
+          boardId: Number(boardId),
+          url,
+          event,
+          config,
+        },
+        token,
+        apiVersion: '2023-10',
+      }
+    );
+
+    console.log('webhookID', result);
+
+    if (
+      result &&
+      result.data &&
+      result.data.create_webhook &&
+      result.data.create_webhook
+    ) {
+      return result.data.create_webhook;
+    }
+  } catch (err) {
+    throw err;
+  }
+};
+
+const unregisterWebhook = async ({ webhookId, token }) => {
+  return await monday.api(
+    `
+  mutation deleteWebhook($id: Int!){
+    delete_webhook (id: $id) {
+      id
+      board_id
+    }
+  }
+  
+  `,
+    {
+      variables: {
+        id: Number(webhookId),
+      },
+      token,
+      apiVersion: '2023-10',
+    }
+  );
+};
+
+const getItemDetails = async (id, token) => {
+  try {
+    if (token) {
+      const query = `{
+        items(ids: ${[Number(id)]}) {
+          id
+          board{
+            id
+            name
+            columns{
+              id
+              type
+              settings_str
+              title
+            }
+          }
+          column_values {
+            id
+            text
+            column{
+              title
+            }
+            type
+            value
+            ... on EmailValue {
+              email
+              updated_at
+            }
+            ... on MirrorValue {
+              mirrored_items{
+                mirrored_value{
+                  __typename
+                }
+              }
+              display_value
+              id
+            }
+          }
+          name
+          parent_item {
+            id
+          }
+          state
+    
+          subitems{
+            id
+            name
+            board{
+              columns{
+                id
+                type
+                settings_str
+                title
+              }
+            }
+            column_values {
+              id
+              text
+              column{
+                title
+              }
+              type
+              value
+            }
+          }
+        }
+       }`;
+
+      const option = {
+        method: 'post',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token,
+          'API-Version': '2023-10',
+        },
+        body: JSON.stringify({
+          query,
+        }),
+      };
+
+      const request = new Request('https://api.monday.com/v2', option);
+
+      const res = await fetch(request);
+
+      return res.json();
+    }
+
     return await monday.api(
       `
   query getItemDetails($ids: [Int]) {
@@ -150,7 +298,7 @@ const uploadContract = async ({
       Buffer.from('\r\n--' + boundary + '--\r\n', 'utf8'),
     ]);
 
-    return await axios({
+    const response = await axios({
       url,
       method: 'post',
       headers: {
@@ -161,6 +309,7 @@ const uploadContract = async ({
       maxContentLength: Infinity,
       maxBodyLength: Infinity,
     });
+    return response;
   } catch (error) {
     throw error;
   }
@@ -171,12 +320,19 @@ const getUsersByIds = async (userIds = []) => {
     `
     query getUserByIds($userIds:[Int]){
             users(ids:$userIds){
+              id
               name
               email
             }
           }
         `,
-    { variables: { userIds: [...userIds] } }
+    {
+      variables: {
+        userIds: Array.isArray(userIds)
+          ? [...userIds].map(id => Number(id))
+          : [Number(userIds)],
+      },
+    }
   );
 };
 
@@ -301,7 +457,12 @@ const getEmailColumnValue = async (itemId, emailColId) => {
       }
     }
     `,
-    { variables: { ids: [Number(itemId)], emailColId: [emailColId] } }
+    {
+      variables: {
+        ids: [Number(itemId)],
+        emailColId: Array.isArray(emailColId) ? [...emailColId] : [emailColId],
+      },
+    }
   );
 };
 
@@ -1054,6 +1215,8 @@ async function handleFormatEmailAndPersons(column_values = []) {
 }
 module.exports = {
   me,
+  registerWebhook,
+  unregisterWebhook,
   getItemDetails,
   updateStatusColumn,
   getEmailColumnValue,

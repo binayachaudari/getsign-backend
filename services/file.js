@@ -60,56 +60,10 @@ const addFormFields = async (id, payload) => {
       await backOfficeSavedDocument(appInstallDetails.back_office_item_id);
     }
 
-    await setMondayToken(updatedFields.user_id, updatedFields.account_id);
-
-    if (!arraysAreEqual(payload || [], oldFields?.fields || [])) {
-      const notSignedByBoth = await FileHistory.aggregate([
-        {
-          $group: {
-            _id: '$itemId',
-            status: {
-              $push: '$status',
-            },
-            fileId: {
-              $first: '$fileId',
-            },
-          },
-        },
-        {
-          $match: {
-            fileId: Types.ObjectId(updatedFields._id),
-            status: {
-              $not: {
-                $all: ['signed_by_sender', 'signed_by_receiver'],
-              },
-            },
-          },
-        },
-      ]);
-
-      if (notSignedByBoth?.length > 0) {
-        notSignedByBoth?.forEach(async item => {
-          // updating status column
-          await updateStatusColumn({
-            itemId: item?._id,
-            boardId: updatedFields.board_id,
-            columnId: updatedFields?.status_column_id,
-            columnValue: undefined,
-            userId: updatedFields?.user_id,
-            accountId: updatedFields?.account_id,
-          });
-        });
-
-        const notSignedByBothItemIds = notSignedByBoth.map(item => item?._id);
-
-        // delete history
-        await FileHistory.deleteMany({
-          itemId: { $in: notSignedByBothItemIds },
-        });
-      }
-    }
-
-    return updatedFields;
+    return {
+      updatedFields,
+      hasChanged: !arraysAreEqual(payload || [], oldFields?.fields || []),
+    };
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
@@ -314,7 +268,8 @@ const generatePDFWithGivenPlaceholders = async (
   placeholders,
   values,
   items_subItem = [],
-  itemId
+  itemId,
+  withPdfBytes = false
 ) => {
   try {
     const fileDetails = await loadFileDetails(id);
@@ -714,10 +669,20 @@ const generatePDFWithGivenPlaceholders = async (
     const arrayBuffer = await blob.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     const base64String = buffer.toString('base64');
-    return {
-      name: fileDetails.file_name,
-      file: `data:${type};base64,${base64String}`,
-    };
+    if (withPdfBytes) {
+      return {
+        size: blob?.size,
+        name: fileDetails.file_name,
+        file: `data:${type};base64,${base64String}`,
+        bytes: pdfBytes,
+        type: blob.type,
+      };
+    } else {
+      return {
+        name: fileDetails.file_name,
+        file: `data:${type};base64,${base64String}`,
+      };
+    }
   } catch (error) {
     throw error;
   }
@@ -733,10 +698,19 @@ const loadFile = async url => {
   return `data:${contentType};base64,${base64String}`;
 };
 
-const signPDF = async ({ id, interactedFields, status, itemId }) => {
+const signPDF = async (
+  { id, interactedFields, status, itemId, s3fileKey = null } = {
+    id: '',
+    interactedFields: [],
+    status: '',
+    itemId: '',
+    s3fileKey: null,
+  }
+) => {
   try {
     let pdfDoc;
     const fileDetails = await loadFileDetails(id);
+
     await setMondayToken(fileDetails.user_id, fileDetails.account_id);
     const valuesToFill = await getColumnValues(itemId);
 
@@ -926,22 +900,30 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
       itemId,
     }).exec();
 
-    const signedByReceiver = await FileHistory.findOne({
-      fileId: id,
-      status: 'signed_by_receiver',
-      itemId,
-    }).exec();
+    if (!s3fileKey) {
+      const signedByReceiver = await FileHistory.findOne({
+        fileId: id,
+        status: 'signed_by_receiver',
+        itemId,
+      }).exec();
 
-    if (signedBySender) {
-      const url = await getSignedUrl(signedBySender?.file);
-      const file = await loadFile(url);
-      pdfDoc = await PDFDocument.load(file);
-    } else if (signedByReceiver) {
-      const url = await getSignedUrl(signedByReceiver?.file);
-      const file = await loadFile(url);
-      pdfDoc = await PDFDocument.load(file);
+      if (signedBySender) {
+        const url = await getSignedUrl(signedBySender?.file);
+        const file = await loadFile(url);
+        pdfDoc = await PDFDocument.load(file);
+      } else if (signedByReceiver) {
+        const url = await getSignedUrl(signedByReceiver?.file);
+        const file = await loadFile(url);
+        pdfDoc = await PDFDocument.load(file);
+      } else {
+        pdfDoc = await PDFDocument.load(fileDetails?.file);
+      }
     } else {
-      pdfDoc = await PDFDocument.load(fileDetails?.file);
+      const url = await getSignedUrl(s3fileKey);
+
+      const file = await loadFile(url);
+
+      pdfDoc = await PDFDocument.load(file);
     }
 
     const pages = pdfDoc.getPages();
@@ -964,13 +946,22 @@ const signPDF = async ({ id, interactedFields, status, itemId }) => {
 
           if (placeHolder?.image?.src) {
             const pngImage = await pdfDoc.embedPng(placeHolder?.image?.src);
-            const heightOfSignPlaceholder = 33;
+            const heightOfSignPlaceholder = placeHolder.height * 0.75 || 33;
+            let imgAspectRatio;
 
+            if (placeHolder.height && placeHolder.width) {
+              imgAspectRatio = placeHolder.width / placeHolder.height;
+            } else {
+              imgAspectRatio = 16 / 9;
+            }
             currentPage.drawImage(pngImage, {
-              x: placeHolder?.formField.coordinates.x,
-              y: placeHolder?.formField.coordinates.y - heightOfSignPlaceholder,
-              width: placeHolder?.image.width,
-              height: placeHolder?.image.height,
+              x: placeHolder?.formField.coordinates.x + 6,
+              y:
+                placeHolder?.formField.coordinates.y -
+                6 -
+                heightOfSignPlaceholder,
+              width: heightOfSignPlaceholder * imgAspectRatio,
+              height: heightOfSignPlaceholder,
             });
           } else if (placeHolder?.itemId === 'sign-date') {
             const fontSize = placeHolder.fontSize || 11;

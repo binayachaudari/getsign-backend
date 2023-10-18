@@ -332,4 +332,5 @@ module.exports = {
   },
   sendLimitAboutToReach,
   sendLimitReached,
+  sendRequestToSign,
 };

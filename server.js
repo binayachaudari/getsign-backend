@@ -60,7 +60,7 @@ app.post(
   '/webhook',
   // appSubscriptionValidation(),
   // validateRequest,
-  require('./controller/webhook.controller')
+  require('./controller/webhook.controller').applicationWebhook
 );
 
 /**
