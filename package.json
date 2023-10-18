@@ -6,6 +6,9 @@
   "private": true,
   "author": "Binaya Chaudhary <binayachaudari@gmail.com>",
   "scripts": {
+    "//": [
+      "env-cmd -f .env.qa nodemon server"
+    ],
     "dev": "nodemon server",
     "start": "node server",
     "format": "prettier . --write"
