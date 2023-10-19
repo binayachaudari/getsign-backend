@@ -55,8 +55,6 @@ app.use(
   })
 );
 
-app.use('/health', (req, res) => res.send({ message: 'Ok' }));
-
 app.use('/api/v1', require('./routes/api'));
 app.post(
   '/webhook',
