@@ -706,7 +706,11 @@ const getFileToSignReceiver = async (id, itemId) => {
 const getFileForSigner = async (id, itemId) => {
   try {
     let fileId;
-    const fileFromHistory = await FileHistory.findById(id).populate('fileId');
+    const fileFromHistory = await FileHistory.findOne({
+      _id: Types.ObjectId(id),
+    }).populate('fileId');
+
+    console.log({ fileFromHistory, id, itemId });
 
     if (!fileFromHistory) {
       return {
