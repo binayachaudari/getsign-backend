@@ -4,11 +4,21 @@ const FileDetails = require('../models/FileDetails');
 const FileHistory = require('../models/FileHistory');
 const { backOfficeDocumentSigned } = require('../services/backoffice.service');
 const STANDARD_FIELDS = require('../config/standardFields');
+const { Types } = require('mongoose');
+
 const {
   addFormFields,
   generatePDF,
   addSenderDetails,
 } = require('../services/file');
+
+const {
+  getSignerByFileId,
+  createSigner,
+  getOneSignersByFilter,
+  updateSigner,
+} = require('../services/signers.service');
+
 const {
   addFileHistory,
   getFileHistory,
@@ -19,6 +29,7 @@ const {
   downloadContract,
   generateFilePreview,
   generateFilePreviewWithPlaceholders,
+  getFileForSigner,
 } = require('../services/fileHistory');
 const { emailRequestToSign, sendFinalContract } = require('../services/mailer');
 const {
@@ -34,6 +45,8 @@ const {
   loadFileDetails,
 } = require('../services/s3');
 const { setMondayToken } = require('../utils/monday');
+const { arraysAreEqual, areArraysOfObjEqual } = require('../utils/arrays');
+const SignerModel = require('../models/Signer.model');
 
 const TEXT_BOX_ITEM_ID = 'text-box';
 
@@ -66,16 +79,165 @@ module.exports = {
       next(error);
     }
   },
-  updateFields: async (req, res, next) => {
+
+  getFileFields: async (req, res, next) => {
     const id = req.params.id;
-    const { fields } = req.body;
     try {
-      const result = await addFormFields(id, fields);
+      const result = await loadFileDetails(id);
       return res.json({ data: result }).status(200);
     } catch (error) {
       next(error);
     }
   },
+
+  updateFileFields: async (req, res, next) => {
+    const id = req.params.id;
+    const item_id = req.params.item_id;
+    const { fields, signers_settings } = req.body;
+    try {
+      const { updatedFields, hasChanged } = await addFormFields(id, fields); // Updates fields in file details and returns true if fields are changed.
+      let hasSignersChanged = false;
+
+      // Gets previously saved signer order if found
+      let signerOrder = await getOneSignersByFilter({
+        originalFileId: Types.ObjectId(id),
+        itemId: Number(item_id),
+      });
+
+      // Utility function that resets Singner Details, status columns and deletes file history related to that filedetails and itemId
+      const resetFileHistory = async () => {
+        // Aggregation query that gets all the signersDocs where all the signers dont have isSigned true
+        const signerAggregationQuery = [
+          {
+            $match: {
+              originalFileId: Types.ObjectId(id),
+              $or: [
+                {
+                  signers: { $exists: false },
+                },
+                {
+                  signers: {
+                    $elemMatch: {
+                      $or: [
+                        { isSigned: false },
+                        { isSigned: { $exists: false } },
+                      ],
+                    },
+                  },
+                },
+              ],
+            },
+          },
+          {
+            $project: {
+              itemId: 1,
+            },
+          },
+        ];
+
+        const signersWithNotAllSigned = await SignerModel.aggregate(
+          signerAggregationQuery
+        );
+
+        let itemIds = [];
+
+        if (signersWithNotAllSigned.length) {
+          await setMondayToken(updatedFields.user_id, updatedFields.account_id);
+        }
+
+        for (const iterator of signersWithNotAllSigned) {
+          itemIds.push(iterator.itemId);
+
+          // Clears each status column of items
+          await updateStatusColumn({
+            itemId: iterator?.itemId,
+            boardId: updatedFields.board_id,
+            columnId: updatedFields?.status_column_id,
+            columnValue: undefined,
+            userId: updatedFields?.user_id,
+            accountId: updatedFields?.account_id,
+          });
+        }
+
+        if (itemIds.length) {
+          await FileHistory.deleteMany({
+            itemId: {
+              $in: itemIds,
+            },
+            originalFileId: Types.ObjectId(id),
+          });
+        }
+
+        // Update signerDoc
+        await updateSigner(signerOrder._id, {
+          isSigningOrderRequired:
+            signers_settings.isSigningOrderRequired || false,
+          signers:
+            signers_settings.signers?.map(sgn => {
+              const { fileStatus = '', ...rest } = sgn;
+              return { ...rest, isSigned: false };
+            }) || [],
+          file: null,
+        });
+      };
+
+      if (!signerOrder) {
+        const signerOrderPayload = {
+          signers:
+            signers_settings.signers?.map(sgn => {
+              const { fileStatus = '', ...rest } = sgn;
+              return { ...rest, isSigned: false };
+            }) || [],
+          originalFileId: Types.ObjectId(id),
+          itemId: Number(item_id),
+          isSigningOrderRequired:
+            signers_settings.isSigningOrderRequired || false,
+          file: null,
+        };
+        signerOrder = await createSigner(signerOrderPayload);
+      }
+
+      const formatted_signer_setting_signers = signers_settings?.signers?.map(
+        signer => {
+          const sgner = {
+            emailColumnId: signer.emailColumnId,
+          };
+
+          if (signer.userId) sgner.userId = signer.userId;
+
+          return sgner;
+        }
+      );
+      const formatted_saved_signer_setting_signers = signerOrder?.signers?.map(
+        signer => {
+          const sgner = {
+            emailColumnId: signer.emailColumnId,
+          };
+
+          if (signer.userId) sgner.userId = signer.userId;
+
+          return sgner;
+        }
+      );
+
+      hasSignersChanged =
+        !areArraysOfObjEqual(
+          formatted_signer_setting_signers || [],
+          formatted_saved_signer_setting_signers || []
+        ) ||
+        signers_settings.isSigningOrderRequired !==
+          signerOrder.isSigningOrderRequired;
+
+      if (hasSignersChanged || hasChanged) {
+        await resetFileHistory();
+      }
+
+      return res.status(200).json({ data: updatedFields });
+    } catch (err) {
+      next(err);
+    }
+  },
+
   deleteFile: async (req, res, next) => {
     const id = req.params.id;
     try {
@@ -330,6 +492,17 @@ module.exports = {
     const { itemId, id } = req.params;
     try {
       const result = await getFileToSignReceiver(id, itemId);
+      return res.json({ data: result }).status(200);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getFileForSigner: async (req, res, next) => {
+    // fileHistory id having status = 'sent' | 'resent'
+    const { itemId, id } = req.params;
+    try {
+      const result = await getFileForSigner(id, itemId);
       return res.json({ data: result }).status(200);
     } catch (error) {
       next(error);

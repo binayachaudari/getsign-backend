@@ -6,6 +6,9 @@
   "private": true,
   "author": "Binaya Chaudhary <binayachaudari@gmail.com>",
   "scripts": {
+    "//": [
+      "env-cmd -f .env.qa nodemon server"
+    ],
     "dev": "nodemon server",
     "start": "node server",
     "format": "prettier . --write"
@@ -36,6 +39,7 @@
     "regenerator-runtime": "^0.13.11"
   },
   "devDependencies": {
+    "env-cmd": "^10.1.0",
     "husky": "^8.0.3",
     "lint-staged": "^13.1.0",
     "nodemon": "^2.0.20",
