@@ -133,6 +133,7 @@ const sendEmailAndUpdateBackOffice = async ({
     to,
     itemId,
     fileId: newSentHistory[0]._id,
+    isMultipleSigner: true,
   });
 
   if (mailStatus?.messageId) {

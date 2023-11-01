@@ -46,7 +46,13 @@ let transporter = nodemailer.createTransport({
   SES: { ses, aws },
 });
 
-const sendRequestToSign = async ({ template, to, itemId, fileId }) => {
+const sendRequestToSign = async ({
+  template,
+  to,
+  itemId,
+  fileId,
+  isMultipleSigner = false,
+}) => {
   return await transporter.sendMail({
     from: `${template.sender_name} - via GetSign <${process.env.EMAIL_USERNAME}>`,
     replyTo: template.email_address,
@@ -69,7 +75,9 @@ const sendRequestToSign = async ({ template, to, itemId, fileId }) => {
       documentName: template.file_name || '',
       message: template.message || '',
       emailTitle: template?.email_title || '',
-      url: `${HOST}/sign/${itemId}/${fileId}?receiver=true`,
+      url: isMultipleSigner
+        ? `${HOST}/sign/${itemId}/${fileId}`
+        : `${HOST}/sign/${itemId}/${fileId}?receiver=true`,
     }),
   });
 };
