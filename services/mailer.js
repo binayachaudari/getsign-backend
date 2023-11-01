@@ -22,8 +22,10 @@ const {
 } = require('./backoffice.service');
 const { default: mongoose } = require('mongoose');
 
+const Types = mongoose.Schema.Types;
 const aws = require('@aws-sdk/client-ses');
 const { defaultProvider } = require('@aws-sdk/credential-provider-node');
+const SignerModel = require('../models/Signer.model');
 
 config.update({
   credentials: {
@@ -176,6 +178,12 @@ module.exports = {
 
     try {
       const template = await FileDetails.findById(id);
+
+      let signerDoc = await SignerModel.findOne({
+        originalFileId: Types.ObjectId(id),
+        itemId: Number(itemId),
+      }).session(session);
+
       if (message) {
         template.message = message;
         await template.save();
@@ -223,6 +231,18 @@ module.exports = {
         ],
         { session }
       );
+
+      signerDoc.signers = signerDoc.signers.map(signer => {
+        if (!signer.userId) {
+          return {
+            ...signer,
+            fileStatus: newSentHistory[0]._id?.toString(),
+          };
+        }
+        return signer;
+      });
+
+      await signerDoc.save();
 
       const mailStatus = await sendRequestToSign({
         template,
