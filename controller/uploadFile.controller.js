@@ -302,6 +302,11 @@ module.exports = {
     try {
       const template = await FileDetails.findById(id);
 
+      let signerDetail = await SignerModel.findOne({
+        originalFileId: Types.ObjectId(id),
+        itemId: Number(itemId),
+      });
+
       const senderSignRequired = template?.fields?.filter(field =>
         ['Sender Signature', 'Sender Initials'].includes(field?.title)
       )?.length;
@@ -338,6 +343,37 @@ module.exports = {
         interactedFields: [...signatures, ...standardFields, ...lineItemFields],
         ipAddress: ip,
       });
+
+      if (status === 'signed_by_receiver' && signerDetail) {
+        signerDetail.signers = signerDetail.signers?.map(signer => {
+          if (!signer.userId) {
+            return {
+              ...signer,
+              fileStatus: result._id?.toString(),
+              isSigned: true,
+            };
+          }
+          return signer;
+        });
+
+        signerDetail.file = result.file;
+        await signerDetail.save();
+      }
+
+      if (status === 'signed_by_sender' && signerDetail) {
+        signerDetail.signers = signerDetail.signers?.map(signer => {
+          if (!!signer.userId) {
+            return {
+              ...signer,
+              fileStatus: result._id?.toString(),
+              isSigned: true,
+            };
+          }
+          return signer;
+        });
+        signerDetail.file = result.file;
+        await signerDetail.save();
+      }
 
       await setMondayToken(template.user_id, template.account_id);
       const alsoSignedBySender = await FileHistory.findOne({
