@@ -20,12 +20,12 @@ const {
   backOfficeUpdateTotalSent,
   backOfficeUpadateLastDocSentDate,
 } = require('./backoffice.service');
-const { default: mongoose } = require('mongoose');
+const { default: mongoose, Types } = require('mongoose');
 
-const Types = mongoose.Schema.Types;
 const aws = require('@aws-sdk/client-ses');
 const { defaultProvider } = require('@aws-sdk/credential-provider-node');
 const SignerModel = require('../models/Signer.model');
+const { findOneOrCreate } = require('./signers.service');
 
 config.update({
   credentials: {
@@ -187,10 +187,12 @@ module.exports = {
     try {
       const template = await FileDetails.findById(id);
 
-      let signerDoc = await SignerModel.findOne({
+      let signerDoc = await findOneOrCreate({
         originalFileId: Types.ObjectId(id),
         itemId: Number(itemId),
-      }).session(session);
+      });
+
+      console.log({ template, signerDoc });
 
       if (message) {
         template.message = message;

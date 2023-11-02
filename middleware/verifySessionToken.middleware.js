@@ -6,7 +6,6 @@ const verifySessionToken = async (req, res, next) => {
   try {
     let decoded;
     const token = req?.headers?.sessiontoken;
-
     if (token) decoded = jwt.decode(token, process.env.CLIENT_SECRET);
 
     const userId = decoded?.dat?.user_id;
