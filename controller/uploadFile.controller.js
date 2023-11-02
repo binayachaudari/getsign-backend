@@ -357,7 +357,17 @@ module.exports = {
         });
 
         signerDetail.file = result.file;
+
         await signerDetail.save();
+
+        const recieverEmail = await getEmailColumnValue(
+          itemId,
+          template.email_column_id
+        );
+        const to = recieverEmail?.data?.items?.[0]?.column_values?.[0]?.text;
+        result.sentToEmail = to;
+
+        await result.save();
       }
 
       if (status === 'signed_by_sender' && signerDetail) {
@@ -372,7 +382,12 @@ module.exports = {
           return signer;
         });
         signerDetail.file = result.file;
+
         await signerDetail.save();
+
+        result.sentToEmail = template?.email_address;
+
+        await result.save();
       }
 
       await setMondayToken(template.user_id, template.account_id);
