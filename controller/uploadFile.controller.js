@@ -64,6 +64,15 @@ module.exports = {
     const accountId = req.accountId;
 
     try {
+      const isV6 = await ApplicationModel.findOne({
+        account_id: Number(accountId),
+      }).sort({ created_at: -1 });
+
+      if (isV6.version_data.major !== 6) {
+        return res
+          .json({ data: { message: "doesn't grant access" } })
+          .status(200);
+      }
       const result = await getFile(id, accountId);
       return res.json({ data: result }).status(200);
     } catch (error) {
