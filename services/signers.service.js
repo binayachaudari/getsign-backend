@@ -16,7 +16,7 @@ const {
 } = require('./monday.service');
 const FileDetails = require('../models/FileDetails');
 const { setMondayToken } = require('../utils/monday');
-const { sendRequestToSign } = require('../services/mailer');
+
 const { Types } = require('mongoose');
 
 const createSigner = async signerDetails => {
@@ -128,11 +128,14 @@ const sendEmailAndUpdateBackOffice = async ({
   session,
   shouldUpdateMondayStatus = true,
 }) => {
+  console.log('Incside send Email');
+  const { sendRequestToSign } = require('../services/mailer');
   const mailStatus = await sendRequestToSign({
     template,
     to,
     itemId,
     fileId: newSentHistory[0]._id,
+    isMultipleSigner: true,
   });
 
   if (mailStatus?.messageId) {

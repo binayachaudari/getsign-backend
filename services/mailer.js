@@ -20,10 +20,11 @@ const {
   backOfficeUpdateTotalSent,
   backOfficeUpadateLastDocSentDate,
 } = require('./backoffice.service');
-const { default: mongoose } = require('mongoose');
+const { default: mongoose, Types } = require('mongoose');
 
 const aws = require('@aws-sdk/client-ses');
 const { defaultProvider } = require('@aws-sdk/credential-provider-node');
+const { findOneOrCreate } = require('./signers.service');
 
 config.update({
   credentials: {
@@ -44,7 +45,14 @@ let transporter = nodemailer.createTransport({
   SES: { ses, aws },
 });
 
-const sendRequestToSign = async ({ template, to, itemId, fileId }) => {
+const sendRequestToSign = async ({
+  template,
+  to,
+  itemId,
+  fileId,
+  isMultipleSigner = false,
+}) => {
+  console.log('Inside send Request to sign ==>');
   return await transporter.sendMail({
     from: `${template.sender_name} - via GetSign <${process.env.EMAIL_USERNAME}>`,
     replyTo: template.email_address,
@@ -67,7 +75,9 @@ const sendRequestToSign = async ({ template, to, itemId, fileId }) => {
       documentName: template.file_name || '',
       message: template.message || '',
       emailTitle: template?.email_title || '',
-      url: `${HOST}/sign/${itemId}/${fileId}?receiver=true`,
+      url: isMultipleSigner
+        ? `${HOST}/sign/${itemId}/${fileId}`
+        : `${HOST}/sign/${itemId}/${fileId}?receiver=true`,
     }),
   });
 };
@@ -176,6 +186,14 @@ module.exports = {
 
     try {
       const template = await FileDetails.findById(id);
+
+      let signerDoc = await findOneOrCreate({
+        originalFileId: Types.ObjectId(id),
+        itemId: Number(itemId),
+      });
+
+      console.log({ template, signerDoc });
+
       if (message) {
         template.message = message;
         await template.save();
@@ -223,6 +241,18 @@ module.exports = {
         ],
         { session }
       );
+
+      signerDoc.signers = signerDoc.signers.map(signer => {
+        if (!signer.userId) {
+          return {
+            ...signer,
+            fileStatus: newSentHistory[0]._id?.toString(),
+          };
+        }
+        return signer;
+      });
+
+      await signerDoc.save();
 
       const mailStatus = await sendRequestToSign({
         template,

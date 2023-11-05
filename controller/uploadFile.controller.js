@@ -64,6 +64,15 @@ module.exports = {
     const accountId = req.accountId;
 
     try {
+      const isV6 = await ApplicationModel.findOne({
+        account_id: Number(accountId),
+      }).sort({ created_at: -1 });
+
+      if (isV6.version_data.major !== 6) {
+        return res
+          .json({ data: { message: "doesn't grant access" } })
+          .status(200);
+      }
       const result = await getFile(id, accountId);
       return res.json({ data: result }).status(200);
     } catch (error) {
@@ -302,6 +311,11 @@ module.exports = {
     try {
       const template = await FileDetails.findById(id);
 
+      let signerDetail = await SignerModel.findOne({
+        originalFileId: Types.ObjectId(id),
+        itemId: Number(itemId),
+      });
+
       const senderSignRequired = template?.fields?.filter(field =>
         ['Sender Signature', 'Sender Initials'].includes(field?.title)
       )?.length;
@@ -338,6 +352,52 @@ module.exports = {
         interactedFields: [...signatures, ...standardFields, ...lineItemFields],
         ipAddress: ip,
       });
+
+      if (status === 'signed_by_receiver' && signerDetail) {
+        signerDetail.signers = signerDetail.signers?.map(signer => {
+          if (!signer.userId) {
+            return {
+              ...signer,
+              fileStatus: result._id?.toString(),
+              isSigned: true,
+            };
+          }
+          return signer;
+        });
+
+        signerDetail.file = result.file;
+
+        await signerDetail.save();
+
+        const recieverEmail = await getEmailColumnValue(
+          itemId,
+          template.email_column_id
+        );
+        const to = recieverEmail?.data?.items?.[0]?.column_values?.[0]?.text;
+        result.sentToEmail = to;
+
+        await result.save();
+      }
+
+      if (status === 'signed_by_sender' && signerDetail) {
+        signerDetail.signers = signerDetail.signers?.map(signer => {
+          if (!!signer.userId) {
+            return {
+              ...signer,
+              fileStatus: result._id?.toString(),
+              isSigned: true,
+            };
+          }
+          return signer;
+        });
+        signerDetail.file = result.file;
+
+        await signerDetail.save();
+
+        result.sentToEmail = template?.email_address;
+
+        await result.save();
+      }
 
       await setMondayToken(template.user_id, template.account_id);
       const alsoSignedBySender = await FileHistory.findOne({
@@ -448,6 +508,8 @@ module.exports = {
 
   sendPDF: async (req, res, next) => {
     const { itemId, id } = req.params;
+
+    console.log('On SendPDF controller ');
     try {
       const result = await emailRequestToSign(itemId, id);
       return res.json({ data: result }).status(200);
