@@ -24,7 +24,6 @@ const { default: mongoose, Types } = require('mongoose');
 
 const aws = require('@aws-sdk/client-ses');
 const { defaultProvider } = require('@aws-sdk/credential-provider-node');
-const SignerModel = require('../models/Signer.model');
 const { findOneOrCreate } = require('./signers.service');
 
 config.update({
@@ -53,6 +52,7 @@ const sendRequestToSign = async ({
   fileId,
   isMultipleSigner = false,
 }) => {
+  console.log('Inside send Request to sign ==>');
   return await transporter.sendMail({
     from: `${template.sender_name} - via GetSign <${process.env.EMAIL_USERNAME}>`,
     replyTo: template.email_address,
