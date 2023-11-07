@@ -180,7 +180,7 @@ module.exports = {
       throw error;
     }
   },
-  emailRequestToSign: async (itemId, id, message = '') => {
+  emailRequestToSign: async (itemId, id, message = '', isVer6) => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -259,6 +259,7 @@ module.exports = {
         to,
         itemId,
         fileId: newSentHistory[0]._id,
+        isMultipleSigner: isVer6,
       });
 
       if (mailStatus?.messageId) {
