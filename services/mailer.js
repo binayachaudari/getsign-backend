@@ -53,6 +53,8 @@ const sendRequestToSign = async ({
   isMultipleSigner = false,
 }) => {
   console.log('Inside send Request to sign ==>');
+
+  console.log('isMultipleSigner', isMultipleSigner);
   return await transporter.sendMail({
     from: `${template.sender_name} - via GetSign <${process.env.EMAIL_USERNAME}>`,
     replyTo: template.email_address,
@@ -180,7 +182,7 @@ module.exports = {
       throw error;
     }
   },
-  emailRequestToSign: async (itemId, id, message = '', isVer6) => {
+  emailRequestToSign: async (itemId, id, isVer6, message = '') => {
     const session = await mongoose.startSession();
     session.startTransaction();
 

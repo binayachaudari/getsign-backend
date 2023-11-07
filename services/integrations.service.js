@@ -19,14 +19,15 @@ async function getFileToAutoSend(itemId, boardId, columnId, isVer6) {
       account_id: Number(file?.account_id),
     });
 
-    const version = getItemDetailsFromBackOffice({
+    const versionData = await getItemDetailsFromBackOffice({
       itemId: accountDetails?.back_office_item_id,
       columnIds: ['text2'],
     });
 
-    console.log(version);
+    const version = versionData?.data?.items[0]?.column_values?.[0]?.value;
+    const majorVer = version.replaceAll('"', '').split('.')?.[0][1];
 
-    const isVer6 = false;
+    const isVer6 = majorVer >= 6;
 
     const result = await emailRequestToSign(itemId, file?._id, isVer6);
     return result;
