@@ -710,8 +710,6 @@ const getFileForSigner = async (id, itemId) => {
       _id: Types.ObjectId(id),
     }).populate('fileId');
 
-    console.log({ fileFromHistory, id, itemId });
-
     if (!fileFromHistory) {
       return {
         isDeleted: true,
@@ -736,15 +734,17 @@ const getFileForSigner = async (id, itemId) => {
 
     // set the email of current signer
     if (currentSigner?.userId) {
-      const userResp = await getUsersByIds(currentSigner.userId);
-      currentSignerEmail = userResp?.data?.users?.[0]?.email;
+      // const userResp = await getUsersByIds(currentSigner.userId);
+      // currentSignerEmail = userResp?.data?.users?.[0]?.email;
+
+      currentSignerEmail = template.email_address;
       assignedFields = template?.fields?.filter(
         field => field?.signer?.userId === currentSigner.userId
       );
     }
 
     if (!currentSigner?.userId && currentSigner?.emailColumnId) {
-      const emailResp = await await getEmailColumnValue(
+      const emailResp = await getEmailColumnValue(
         itemId,
         currentSigner.emailColumnId
       );
@@ -757,35 +757,35 @@ const getFileForSigner = async (id, itemId) => {
       );
     }
 
-    // if (currentSigner?.isSigned) {
-    //   return {
-    //     fileId,
-    //     isAlreadySigned: true,
-    //     sendDocumentTo: currentSignerEmail,
-    //   };
-    // }
-
     if (!currentSignerEmail) {
       // Need to refactore when we cannot find email column id
       return { isDeleted: true };
     }
 
-    const isAlreadySignedDocs = await FileHistory.find({
-      fileId,
-      itemId,
-      status: 'signed_by_receiver',
-    }).exec();
-
-    let isAlreadySigned = isAlreadySignedDocs?.find(
-      doc => doc?.sentToEmail === currentSignerEmail
-    );
-    if (isAlreadySigned) {
+    if (currentSigner?.isSigned) {
       return {
         fileId,
         isAlreadySigned: true,
         sendDocumentTo: currentSignerEmail,
       };
     }
+
+    // const isAlreadySignedDocs = await FileHistory.find({
+    //   fileId,
+    //   itemId,
+    //   status: 'signed_by_receiver',
+    // }).exec();
+
+    // let isAlreadySigned = isAlreadySignedDocs?.find(
+    //   doc => doc?.sentToEmail === currentSignerEmail
+    // );
+    // if (isAlreadySigned) {
+    //   return {
+    //     fileId,
+    //     isAlreadySigned: true,
+    //     sendDocumentTo: currentSignerEmail,
+    //   };
+    // }
 
     let getFileToSignKey = signersDoc.file;
 
