@@ -787,6 +787,23 @@ const getFileForSigner = async (id, itemId) => {
     //   };
     // }
 
+    // const isAlreadySignedDocs = await FileHistory.find({
+    //   fileId,
+    //   itemId,
+    //   status: 'signed_by_receiver',
+    // }).exec();
+
+    // let isAlreadySigned = isAlreadySignedDocs?.find(
+    //   doc => doc?.sentToEmail === currentSignerEmail
+    // );
+    // if (isAlreadySigned) {
+    //   return {
+    //     fileId,
+    //     isAlreadySigned: true,
+    //     sendDocumentTo: currentSignerEmail,
+    //   };
+    // }
+
     let getFileToSignKey = signersDoc.file;
 
     try {
