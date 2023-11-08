@@ -489,4 +489,5 @@ module.exports = {
   getDateAndTime,
   addItemsToOrders,
   backOfficeUpadateLastDocSentDate,
+  getItemDetailsFromBackOffice: getItemDetails,
 };
