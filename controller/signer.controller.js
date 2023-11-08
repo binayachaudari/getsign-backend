@@ -299,7 +299,7 @@ const signPDF = async (req, res, next) => {
   ).split(',');
 
   const ip = ips[0].trim();
-  const { status, signatures, itemId, standardFields } = req.body;
+  let { status, signatures, itemId, standardFields } = req.body;
 
   try {
     const fileHistory = await FileHistory.findById(fileHistoryId).populate(
@@ -344,11 +344,20 @@ const signPDF = async (req, res, next) => {
     // }
 
     let file;
+    let fields = [...standardFields];
     // takes the latest signed file if already signed else takes original file
     if (signers.file) {
       file = signers.file;
     } else {
       file = template.file;
+      // Only add sign-date on generated pdf when it is the first signer
+
+      const signDateFields = template?.fields?.filter(
+        field => field.itemId === 'sign-date'
+      );
+      fields = [...fields, ...signDateFields];
+
+      standardFields = [...fields];
     }
 
     if (standardFields?.length) {

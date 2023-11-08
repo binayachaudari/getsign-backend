@@ -51,7 +51,7 @@ const validateSenderDetails = () => [
     .withMessage({ message: 'Invalid Email Provided' }),
   body('email_title').trim().not().isEmpty().escape(),
   body('message').trim().not().isEmpty().escape(),
-  body('email_column_id').trim().not().isEmpty().escape(),
+  body('email_column_id').trim().optional().escape(),
   body('status_column_id').trim().not().isEmpty().escape(),
   body('file_column_id').trim().not().isEmpty().escape(),
 ];
