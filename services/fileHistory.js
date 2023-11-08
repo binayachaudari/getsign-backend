@@ -710,8 +710,6 @@ const getFileForSigner = async (id, itemId) => {
       _id: Types.ObjectId(id),
     }).populate('fileId');
 
-    console.log({ fileFromHistory, id, itemId });
-
     if (!fileFromHistory) {
       return {
         isDeleted: true,
@@ -736,8 +734,7 @@ const getFileForSigner = async (id, itemId) => {
 
     // set the email of current signer
     if (currentSigner?.userId) {
-      const userResp = await getUsersByIds(currentSigner.userId);
-      currentSignerEmail = userResp?.data?.users?.[0]?.email;
+      currentSignerEmail = template.email_address;
       assignedFields = template?.fields?.filter(
         field => field?.signer?.userId === currentSigner.userId
       );
