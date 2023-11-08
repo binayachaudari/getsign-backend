@@ -353,8 +353,9 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
         let indexOfEmailColumn;
 
         if (firstSignerDetail?.userId) {
-          const userResp = await getUsersByIds(firstSignerDetail.userId);
-          email = userResp?.data?.users?.[0]?.email;
+          // const userResp = await getUsersByIds(firstSignerDetail.userId);
+          email = template.email_address;
+          // userResp?.data?.users?.[0]?.email;
           indexOfEmailColumn = signerDetails?.signers?.findIndex(
             signer => signer?.userId === firstSignerDetail.userId
           );
