@@ -339,7 +339,7 @@ const createTable = async ({
       const pdfFont = pdfDoc?.fonts?.[pdfDoc?.fonts?.length - 1] || [];
       const width = pdfFont.widthOfTextAtSize(`${totalSum}`, 12 * 0.75);
       xCoordinate -= width;
-      currentPage.drawText(`${totalSum}`, {
+      currentPage.drawText(`${Number(parseFloat(totalSum).toFixed(2))}`, {
         x: xCoordinate,
         y: currentYCoordinate,
         size: 12,
