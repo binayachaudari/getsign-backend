@@ -754,35 +754,35 @@ const getFileForSigner = async (id, itemId) => {
       );
     }
 
-    // if (currentSigner?.isSigned) {
-    //   return {
-    //     fileId,
-    //     isAlreadySigned: true,
-    //     sendDocumentTo: currentSignerEmail,
-    //   };
-    // }
-
-    if (!currentSignerEmail) {
-      // Need to refactore when we cannot find email column id
-      return { isDeleted: true };
-    }
-
-    const isAlreadySignedDocs = await FileHistory.find({
-      fileId,
-      itemId,
-      status: 'signed_by_receiver',
-    }).exec();
-
-    let isAlreadySigned = isAlreadySignedDocs?.find(
-      doc => doc?.sentToEmail === currentSignerEmail
-    );
-    if (isAlreadySigned) {
+    if (currentSigner?.isSigned) {
       return {
         fileId,
         isAlreadySigned: true,
         sendDocumentTo: currentSignerEmail,
       };
     }
+
+    if (!currentSignerEmail) {
+      // Need to refactore when we cannot find email column id
+      return { isDeleted: true };
+    }
+
+    // const isAlreadySignedDocs = await FileHistory.find({
+    //   fileId,
+    //   itemId,
+    //   status: 'signed_by_receiver',
+    // }).exec();
+
+    // let isAlreadySigned = isAlreadySignedDocs?.find(
+    //   doc => doc?.sentToEmail === currentSignerEmail
+    // );
+    // if (isAlreadySigned) {
+    //   return {
+    //     fileId,
+    //     isAlreadySigned: true,
+    //     sendDocumentTo: currentSignerEmail,
+    //   };
+    // }
 
     let getFileToSignKey = signersDoc.file;
 
