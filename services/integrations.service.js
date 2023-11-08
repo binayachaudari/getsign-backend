@@ -11,6 +11,10 @@ async function getFileToAutoSend(itemId, boardId, columnId, isVer6) {
       is_deleted: false,
     });
 
+    if (!file) {
+      throw new Error('No file found');
+    }
+
     if (file?.type === 'adhoc') {
       return;
     }
