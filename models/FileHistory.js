@@ -29,6 +29,12 @@ const schema = new mongoose.Schema(
     receiverSignedIpAddress: String,
     sentToEmail: String,
     file: String,
+    assignedReciever: {
+      type: {
+        emailColumnId: String,
+        userId: String,
+      },
+    },
   },
   {
     timestamps: {
