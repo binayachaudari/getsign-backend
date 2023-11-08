@@ -30,9 +30,10 @@ const schema = new mongoose.Schema(
     sentToEmail: String,
     file: String,
     assignedReciever: {
+      // New field to accommodate having same email column for different signers. Similar to Signer Model ->type of signers
       type: {
-        emailColumnId: String,
-        userId: String,
+        emailColumnId: String, // Email/Mirrored Email column id of signer
+        userId: String, // to seperate signer that are 'Me'
       },
     },
   },

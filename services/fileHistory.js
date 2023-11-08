@@ -734,9 +734,6 @@ const getFileForSigner = async (id, itemId) => {
 
     // set the email of current signer
     if (currentSigner?.userId) {
-      // const userResp = await getUsersByIds(currentSigner.userId);
-      // currentSignerEmail = userResp?.data?.users?.[0]?.email;
-
       currentSignerEmail = template.email_address;
       assignedFields = template?.fields?.filter(
         field => field?.signer?.userId === currentSigner.userId
@@ -757,52 +754,41 @@ const getFileForSigner = async (id, itemId) => {
       );
     }
 
-    if (currentSigner?.isSigned) {
+    if (!currentSignerEmail) {
+      return { isDeleted: true };
+    }
+
+    const isAlreadySignedDocs = await FileHistory.find({
+      fileId,
+      itemId,
+      status: 'signed_by_receiver',
+    }).exec();
+
+    let isAlreadySigned = false;
+
+    if (currentSigner.userId) {
+      isAlreadySigned = isAlreadySignedDocs?.find(
+        doc =>
+          doc?.sentToEmail === currentSignerEmail &&
+          !!doc.assignedReciever.userId
+      );
+    }
+
+    if (!currentSigner?.userId && currentSigner.emailColumnId) {
+      isAlreadySigned = isAlreadySignedDocs?.find(
+        doc =>
+          doc?.sentToEmail === currentSignerEmail &&
+          doc?.assignedReciever?.emailColumnId === currentSigner.emailColumnId
+      );
+    }
+
+    if (isAlreadySigned) {
       return {
         fileId,
         isAlreadySigned: true,
         sendDocumentTo: currentSignerEmail,
       };
     }
-
-    if (!currentSignerEmail) {
-      // Need to refactore when we cannot find email column id
-      return { isDeleted: true };
-    }
-
-    // const isAlreadySignedDocs = await FileHistory.find({
-    //   fileId,
-    //   itemId,
-    //   status: 'signed_by_receiver',
-    // }).exec();
-
-    // let isAlreadySigned = isAlreadySignedDocs?.find(
-    //   doc => doc?.sentToEmail === currentSignerEmail
-    // );
-    // if (isAlreadySigned) {
-    //   return {
-    //     fileId,
-    //     isAlreadySigned: true,
-    //     sendDocumentTo: currentSignerEmail,
-    //   };
-    // }
-
-    // const isAlreadySignedDocs = await FileHistory.find({
-    //   fileId,
-    //   itemId,
-    //   status: 'signed_by_receiver',
-    // }).exec();
-
-    // let isAlreadySigned = isAlreadySignedDocs?.find(
-    //   doc => doc?.sentToEmail === currentSignerEmail
-    // );
-    // if (isAlreadySigned) {
-    //   return {
-    //     fileId,
-    //     isAlreadySigned: true,
-    //     sendDocumentTo: currentSignerEmail,
-    //   };
-    // }
 
     let getFileToSignKey = signersDoc.file;
 

@@ -73,13 +73,23 @@ const deletePreviousStatusAndSend = async ({
   email,
   session,
   itemId,
+  signerDetail,
 }) => {
   try {
+    let option = {};
+
+    if (signerDetail.userId) {
+      option.assignedReciever.userId = signerDetail.userId;
+    } else if (!signerDetail.userId && signerDetail.emailColumnId) {
+      option.assignedReciever.emailColumnId = signerDetail.emailColumnId;
+    }
+
     //clear viewed status if already sent
     const fileHistories = await FileHistory.find({
       fileId: fileId,
       itemId,
       status: 'viewed',
+      ...option,
     })
       .session(session)
       .exec();
@@ -94,6 +104,7 @@ const deletePreviousStatusAndSend = async ({
       fileId: fileId,
       itemId,
       status: 'sent',
+      ...option,
     })
       .session(session)
       .exec();
@@ -109,6 +120,7 @@ const deletePreviousStatusAndSend = async ({
           status: isAlreadySent ? 'resent' : 'sent',
           itemId,
           sentToEmail: email,
+          ...option,
         },
       ],
       { session }
@@ -380,6 +392,7 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
             email,
             session,
             itemId,
+            signerDetail: firstSignerDetail,
           });
 
           await sendEmailAndUpdateBackOffice({
@@ -434,6 +447,7 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
           emailColumnValue?.data?.items?.[0]?.column_values?.map(value => ({
             email: value?.text,
             id: value?.id,
+            userCol: false,
           }));
         if (emailColRes?.length > 0)
           emailList = emailList.concat([...emailColRes]);
@@ -445,6 +459,7 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
         const userColRes = userColumnValue?.data?.users?.map(user => ({
           id: user.id,
           email: user.email,
+          userCol: true,
         }));
 
         if (userColRes?.length > 0)
@@ -455,12 +470,21 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
         if (!emailDetail?.email) continue;
         let session = await mongoose.startSession();
         session.startTransaction();
+
+        let signerDetail = {};
+
+        if (emailDetail?.userCol) {
+          signerDetail.userId = emailDetail.id;
+        } else if (!emailDetail?.userCol) {
+          signerDetail.emailColumnId = emailDetail.id;
+        }
         try {
           const newHistory = await deletePreviousStatusAndSend({
             fileId,
             email: emailDetail.email,
             session,
             itemId,
+            signerDetail,
           });
 
           await sendEmailAndUpdateBackOffice({
