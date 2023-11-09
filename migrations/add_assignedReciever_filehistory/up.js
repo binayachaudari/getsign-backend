@@ -2,6 +2,7 @@ const { default: mongoose, Types } = require('mongoose');
 const fs = require('fs');
 const SignerModel = require('../../models/Signer.model');
 const FileHistory = require('../../models/FileHistory');
+const connectDB = require('../../db');
 
 const CONFIG = {
   migrationLogTypes: {
@@ -13,7 +14,7 @@ const CONFIG = {
 
 connectDB(); // Initialize DB
 
-const MIGRATION_LOG_FILE = 'add_assignedReciever_filehistory_logs.json';
+const MIGRATION_LOG_FILE = 'add_assignedReciever_filehistory_logs_up.json';
 
 let successfulMigrationCount = 0;
 let unSuccessFullMigrationCount = 0;
@@ -43,9 +44,67 @@ class MigrationHandler {
     this.signerDetail = signerDetail;
   }
 
-  async startTransaction() {}
+  async getFileHistory(fileStatus) {
+    try {
+      const fileHisory = await FileHistory.findOne({
+        _id: Types.ObjectId(fileStatus),
+      });
+      return fileHisory;
+    } catch (err) {
+      new LogManager(
+        'GET_FILEHISTORY_ERROR',
+        this.signerDetail,
+        JSON.stringify(err.message || {})
+      ).writeLog();
+      return null;
+    }
+  }
 
-  async handleError() {}
+  async startTransaction() {
+    const signers = this.signerDetail.signers;
+
+    try {
+      for (const signer of signers) {
+        if (signer.fileStatus) {
+          const fileHisory = await this.getFileHistory(signer.fileStatus);
+          if (fileHisory) {
+            let option = {};
+
+            if (signer.userId) {
+              option.userId = signer.userId;
+            } else if (!signer.userId && signer.emailColumnId) {
+              option.emailColumnId = signer.emailColumnId;
+            }
+
+            fileHisory.assignedReciever = option;
+            await fileHisory.save();
+          }
+        }
+      }
+      await this.handleSuccess();
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async handleError(err) {
+    console.log({ err });
+    unSuccessFullMigrationCount++;
+    await new LogManager(
+      CONFIG.migrationLogTypes.error,
+      this.signerDetail,
+      JSON.stringify(err.message || {})
+    ).writeLog();
+  }
+
+  async handleSuccess() {
+    successfulMigrationCount++;
+    await new LogManager(
+      CONFIG.migrationLogTypes.completed,
+      this.signerDetail,
+      `Successfully migrated Signers doc of id ${this.signerDetail._id.toString()}`
+    ).writeLog();
+  }
 }
 
 async function startMigration() {
@@ -94,11 +153,6 @@ async function startMigration() {
     }
     process.exit(0);
   });
-
-  // await fileDetailCursor
-  //   .eachAsync(async function (doc) {})
-  //   .catch(err => console.log('Error while running the curson', err))
-  //   .finally(() => {});
 }
 
 startMigration();
