@@ -192,8 +192,6 @@ module.exports = {
         itemId: Number(itemId),
       });
 
-      console.log({ template, signerDoc });
-
       if (message) {
         template.message = message;
         await template.save();
