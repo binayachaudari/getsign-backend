@@ -366,13 +366,17 @@ module.exports = {
         );
         const to = recieverEmail?.data?.items?.[0]?.column_values?.[0]?.text;
         result.sentToEmail = to;
-
+        result.assignedReciever = {
+          emailColumnId: template.email_column_id,
+        };
         await result.save();
       }
 
       if (status === 'signed_by_sender' && signerDetail) {
+        let userSigner = null;
         signerDetail.signers = signerDetail.signers?.map(signer => {
           if (!!signer.userId) {
+            userSigner = signer.userId;
             return {
               ...signer,
               fileStatus: result._id?.toString(),
@@ -386,7 +390,9 @@ module.exports = {
         await signerDetail.save();
 
         result.sentToEmail = template?.email_address;
-
+        result.assignedReciever = {
+          userId: userSigner,
+        };
         await result.save();
       }
 

@@ -45,12 +45,29 @@ const multipleSignerAddFileHistory = async ({
   ipAddress,
   s3fileKey,
   fileHistory,
+  signerDetail,
 }) => {
   try {
+    let option = {};
+
+    if (signerDetail.userId) {
+      option = {
+        assignedReciever: {
+          userId: signerDetail.userId,
+        },
+      };
+    } else if (!signerDetail.userId && signerDetail.emailColumnId) {
+      option = {
+        assignedReciever: {
+          emailColumnId: signerDetail.emailColumnId,
+        },
+      };
+    }
     const addedHistory = await FileHistory.find({
       fileId: Types.ObjectId(id),
       itemId,
       status,
+      option,
     }).exec();
 
     const historyWithEmail = addedHistory?.find(
@@ -79,6 +96,7 @@ const multipleSignerAddFileHistory = async ({
           receiverSignedIpAddress: ipAddress,
         }),
         sentToEmail: fileHistory?.sentToEmail,
+        assignedReciever: option.assignedReciever,
       });
     }
 
@@ -89,6 +107,7 @@ const multipleSignerAddFileHistory = async ({
         itemId,
         viewedIpAddress: ipAddress,
         sentToEmail: fileHistory?.sentToEmail,
+        assignedReciever: option.assignedReciever,
       });
   } catch (err) {
     throw err;
@@ -108,7 +127,9 @@ const addFileHistory = async ({
       fileId: id,
       itemId,
       status,
-    }).exec();
+    })
+      .populate('fileId')
+      .exec();
 
     if (addedHistory) {
       if (addedHistory?.status === 'viewed') return;
@@ -130,6 +151,9 @@ const addFileHistory = async ({
         file: signedFile.Key,
         ...(status === 'signed_by_receiver' && {
           receiverSignedIpAddress: ipAddress,
+          assignedReciever: {
+            emailColumnId: addedHistory?.fileId?.email_column_id,
+          },
         }),
       });
     }
@@ -140,6 +164,9 @@ const addFileHistory = async ({
         status,
         itemId,
         viewedIpAddress: ipAddress,
+        assignedReciever: {
+          emailColumnId: addedHistory?.fileId?.email_column_id,
+        },
       });
   } catch (error) {
     throw error;
@@ -179,12 +206,11 @@ const viewedFile = async (id, itemId, ip) => {
 
     const template = await FileDetails.findById(fromFileHistory.fileId);
 
-    const newHistory = await multipleSignerAddFileHistory({
+    const newHistory = await addFileHistory({
       id: fromFileHistory.fileId,
       itemId,
       status: 'viewed',
       ipAddress: ip,
-      fileHistory: fromFileHistory,
     });
 
     if (newHistory?.status !== fromFileHistory.status)

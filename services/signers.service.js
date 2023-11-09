@@ -150,7 +150,6 @@ const sendEmailAndUpdateBackOffice = async ({
   session,
   shouldUpdateMondayStatus = true,
 }) => {
-  console.log('Incside send Email');
   const { sendRequestToSign } = require('../services/mailer');
   const mailStatus = await sendRequestToSign({
     template,
@@ -371,8 +370,6 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
           signer => !signer?.isSigned
         )?.[0];
 
-        console.log({ firstSignerDetail });
-
         let email;
         let indexOfEmailColumn;
 
@@ -397,7 +394,6 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
             signer => signer?.emailColumnId === emailColumn
           );
         }
-        console.log({ email });
 
         if (email) {
           const newHistory = await deletePreviousStatusAndSend({

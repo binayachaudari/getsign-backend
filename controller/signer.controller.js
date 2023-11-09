@@ -406,6 +406,7 @@ const signPDF = async (req, res, next) => {
       ipAddress: ip,
       s3fileKey: file,
       fileHistory,
+      signerDetail: currentSigner,
     });
 
     pdfSigners = pdfSigners.map(signer => {

@@ -237,6 +237,9 @@ module.exports = {
             status: addedHistory ? 'resent' : 'sent',
             itemId,
             sentToEmail: to,
+            assignedReciever: {
+              emailColumnId: template.email_column_id,
+            },
           },
         ],
         { session }
