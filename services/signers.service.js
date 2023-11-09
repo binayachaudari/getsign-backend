@@ -79,9 +79,17 @@ const deletePreviousStatusAndSend = async ({
     let option = {};
 
     if (signerDetail.userId) {
-      option.assignedReciever.userId = signerDetail.userId;
+      option = {
+        assignedReciever: {
+          userId: signerDetail.userId,
+        },
+      };
     } else if (!signerDetail.userId && signerDetail.emailColumnId) {
-      option.assignedReciever.emailColumnId = signerDetail.emailColumnId;
+      option = {
+        assignedReciever: {
+          emailColumnId: signerDetail.emailColumnId,
+        },
+      };
     }
 
     //clear viewed status if already sent
@@ -125,6 +133,8 @@ const deletePreviousStatusAndSend = async ({
       ],
       { session }
     );
+
+    console.log({ newSentHistory });
 
     return newSentHistory;
   } catch (error) {
@@ -361,6 +371,8 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
           signer => !signer?.isSigned
         )?.[0];
 
+        console.log({ firstSignerDetail });
+
         let email;
         let indexOfEmailColumn;
 
@@ -385,6 +397,7 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
             signer => signer?.emailColumnId === emailColumn
           );
         }
+        console.log({ email });
 
         if (email) {
           const newHistory = await deletePreviousStatusAndSend({
@@ -520,6 +533,7 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
       return SignerModel.findById(signerDetails._id);
     }
   } catch (err) {
+    console.log({ err });
     throw err;
   }
 };
