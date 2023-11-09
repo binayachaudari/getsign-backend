@@ -67,7 +67,12 @@ const multipleSignerAddFileHistory = async ({
       fileId: Types.ObjectId(id),
       itemId,
       status,
-      option,
+      ...(option.assignedReciever.userId
+        ? { 'assignedReciever.userId': option.assignedReciever.userId }
+        : {
+            'assignedReciever.emailColumnId':
+              option.assignedReciever.emailColumnId,
+          }),
     }).exec();
 
     const historyWithEmail = addedHistory?.find(

@@ -97,7 +97,12 @@ const deletePreviousStatusAndSend = async ({
       fileId: fileId,
       itemId,
       status: 'viewed',
-      ...option,
+      ...(option.assignedReciever.userId
+        ? { 'assignedReciever.userId': option.assignedReciever.userId }
+        : {
+            'assignedReciever.emailColumnId':
+              option.assignedReciever.emailColumnId,
+          }),
     })
       .session(session)
       .exec();
@@ -112,11 +117,17 @@ const deletePreviousStatusAndSend = async ({
       fileId: fileId,
       itemId,
       status: 'sent',
-      ...option,
+      ...(option.assignedReciever.userId
+        ? { 'assignedReciever.userId': option.assignedReciever.userId }
+        : {
+            'assignedReciever.emailColumnId':
+              option.assignedReciever.emailColumnId,
+          }),
     })
       .session(session)
       .exec();
 
+    console.log({ isAlreadySentDocs, option });
     let isAlreadySent = isAlreadySentDocs?.find(
       doc => doc.sentToEmail === email
     );
