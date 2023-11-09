@@ -645,6 +645,21 @@ const viewDocument = async (req, res, next) => {
         data: isViewedAlready?.find(doc => doc.sentToEmail === signerEmail),
       });
     }
+    let option = {};
+
+    if (currentSigner.userId) {
+      option = {
+        assignedReciever: {
+          userId: currentSigner.userId,
+        },
+      };
+    } else if (!currentSigner.userId && currentSigner.emailColumnId) {
+      option = {
+        assignedReciever: {
+          emailColumnId: currentSigner.emailColumnId,
+        },
+      };
+    }
 
     const viewedFileHistory = await FileHistory.create({
       fileId: template._id,
@@ -653,6 +668,7 @@ const viewDocument = async (req, res, next) => {
       file: fileHistory.file,
       viewedIpAddress: ip,
       sentToEmail: signerEmail,
+      assignedReciever: option,
     });
 
     if (viewedFileHistory?.status) {
