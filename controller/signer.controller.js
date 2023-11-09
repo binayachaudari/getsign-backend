@@ -339,26 +339,6 @@ const signPDF = async (req, res, next) => {
       currentSigner = pdfSigners[indexOfCurrentSigner];
     }
 
-    // if (indexOfCurrentSigner > -1) {
-    //   currentSigner = pdfSigners[indexOfCurrentSigner];
-
-    //   await setMondayToken(template.user_id, template.account_id);
-
-    //   if (currentSigner.emailColumnId && !currentSigner.userId) {
-    //     const currentSignerEmailRes = await getEmailColumnValue(
-    //       itemId,
-    //       currentSigner.emailColumnId
-    //     );
-    //     signerEmail =
-    //       currentSignerEmailRes?.data?.items?.[0]?.column_values?.[0]?.text;
-    //   }
-
-    //   if (currentSigner.userId) {
-    //     const userResp = await getUsersByIds(currentSigner.userId);
-    //     signerEmail = userResp?.data?.users?.[0]?.email;
-    //   }
-    // }
-
     let file;
     let fields = [...standardFields];
     // takes the latest signed file if already signed else takes original file
@@ -534,13 +514,18 @@ const signPDF = async (req, res, next) => {
           nextSigner.emailColumnId
         );
         email = nextSignerEmailRes?.data?.items?.[0]?.column_values?.[0]?.text;
-        signerDetail.emailColumnId = nextSigner.emailColumnId;
+        signerDetail = {
+          emailColumnId: nextSigner.emailColumnId,
+        };
       }
 
       if (nextSigner.userId && !nextSigner?.isSigned) {
         const userResp = await getUsersByIds(nextSigner.userId);
         email = userResp?.data?.users?.[0]?.email;
-        signerDetail.userId = nextSigner.userId;
+
+        signerDetail = {
+          userId: nextSigner.userId,
+        };
       }
 
       if (email) {
@@ -669,7 +654,7 @@ const viewDocument = async (req, res, next) => {
       file: fileHistory.file,
       viewedIpAddress: ip,
       sentToEmail: signerEmail,
-      assignedReciever: option,
+      assignedReciever: option.assignedReciever,
     });
 
     if (viewedFileHistory?.status) {
