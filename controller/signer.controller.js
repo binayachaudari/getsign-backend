@@ -247,9 +247,9 @@ const resendMail = async (req, res, next) => {
         let signerDetail = {};
 
         if (emailDetail?.userCol) {
-          signerDetail.userId = emailDetail.id;
+          signerDetail = { userId: emailDetail.id };
         } else if (!emailDetail?.userCol) {
-          signerDetail.emailColumnId = emailDetail.id;
+          signerDetail = { emailColumnId: emailDetail.id };
         }
 
         let session = await mongoose.startSession();
