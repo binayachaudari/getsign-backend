@@ -105,14 +105,14 @@ module.exports = {
       const description = req.body.description || '';
       const column_type = req.body.column_type || '';
 
-      const res = await createBoardColumn({
+      const response = await createBoardColumn({
         board_id: board,
         title,
         description,
         column_type,
       });
 
-      return res.status(200).json({ column: res });
+      return res.status(200).json({ column: response });
     } catch (err) {
       next(err);
     }
