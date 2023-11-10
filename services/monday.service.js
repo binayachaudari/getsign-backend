@@ -254,6 +254,7 @@ const updateStatusColumn = async ({
         },
       }
     );
+    console.log('updateStatusColumn', result);
     return result;
   } catch (error) {
     throw error;
