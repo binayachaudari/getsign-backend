@@ -29,6 +29,8 @@ router.get(
   controller.getBoardFile
 );
 
+router.post('/add-column/:board', verifySessionToken, controller.createColumn);
+
 router.get('/:boardId', verifySessionToken, controller.getFiles);
 
 module.exports = router;

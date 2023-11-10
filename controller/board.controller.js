@@ -9,6 +9,8 @@ const {
   getAvailableFilesForBoard,
   updateInstanceId,
 } = require('../services/board');
+const { createBoardColumn } = require('../services/monday.service');
+const { setMondayToken, monday } = require('../utils/monday');
 
 module.exports = {
   installedItemView: async (req, res, next) => {
@@ -90,6 +92,29 @@ module.exports = {
         .status(200);
     } catch (error) {
       next(error);
+    }
+  },
+  createColumn: async (req, res, next) => {
+    try {
+      if (!req.monday_access_token)
+        return next({ statusCode: 401, message: 'Unauthorized' });
+      monday.setToken(req.monday_access_token);
+
+      const { board } = req.params;
+      const title = req.body.title || '';
+      const description = req.body.description || '';
+      const column_type = req.body.column_type || '';
+
+      const res = await createBoardColumn({
+        board_id: board,
+        title,
+        description,
+        column_type,
+      });
+
+      return res.status(200).json({ column: res });
+    } catch (err) {
+      next(err);
     }
   },
 };
