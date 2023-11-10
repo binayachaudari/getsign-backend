@@ -77,6 +77,7 @@ class MigrationHandler {
             }
 
             fileHisory.assignedReciever = option;
+            fileHisory.markModified('assignedReciever');
             await fileHisory.save();
           }
         }
