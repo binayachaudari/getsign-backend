@@ -872,7 +872,11 @@ const getFileForSigner = async (id, itemId) => {
           ...generatedPDF,
           assignedFields,
           alreadySignedByOther: !!getFileToSignKey,
-          alreadyViewed: !!(await isAlreadyViewed({ fileId, itemId })),
+          alreadyViewed: !!(await isAlreadyViewed({
+            fileId,
+            itemId,
+            sentToEmail: currentSignerEmail,
+          })),
           sendDocumentTo: currentSignerEmail,
         };
       }
