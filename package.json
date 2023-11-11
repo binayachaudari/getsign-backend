@@ -11,7 +11,8 @@
     ],
     "dev": "nodemon server",
     "start": "node server",
-    "format": "prettier . --write"
+    "format": "prettier . --write",
+    "dev:qa": "env-cmd -f .env.qa nodemon server"
   },
   "dependencies": {
     "@aws-sdk/client-ses": "^3.299.0",
