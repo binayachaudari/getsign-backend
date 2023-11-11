@@ -67,6 +67,11 @@ class MigrationHandler {
       for (const signer of signers) {
         if (signer.fileStatus) {
           const fileHisory = await this.getFileHistory(signer.fileStatus);
+
+          console.log('<== File hsitory for signer ==>', {
+            signer,
+            fileHisory,
+          });
           if (fileHisory) {
             let option = {};
 
@@ -76,9 +81,13 @@ class MigrationHandler {
               option.emailColumnId = signer.emailColumnId;
             }
 
+            console.log({ option });
             fileHisory.assignedReciever = option;
             fileHisory.markModified('assignedReciever');
+
             await fileHisory.save();
+
+            console.log('<== Filehistory saved ==>', { fileHisory });
           }
         }
       }
@@ -91,6 +100,7 @@ class MigrationHandler {
   async handleError(err) {
     console.log({ err });
     unSuccessFullMigrationCount++;
+    console.log('<== Migration failed for signer doc ==>', this.signerDetail);
     await new LogManager(
       CONFIG.migrationLogTypes.error,
       this.signerDetail,
@@ -100,6 +110,10 @@ class MigrationHandler {
 
   async handleSuccess() {
     successfulMigrationCount++;
+    console.log(
+      '<== Migration succeeded for signer doc ==>',
+      this.signerDetail
+    );
     await new LogManager(
       CONFIG.migrationLogTypes.completed,
       this.signerDetail,
