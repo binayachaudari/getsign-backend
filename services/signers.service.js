@@ -73,13 +73,36 @@ const deletePreviousStatusAndSend = async ({
   email,
   session,
   itemId,
+  signerDetail,
 }) => {
   try {
+    let option = {};
+
+    if (signerDetail.userId) {
+      option = {
+        assignedReciever: {
+          userId: signerDetail.userId,
+        },
+      };
+    } else if (!signerDetail.userId && signerDetail.emailColumnId) {
+      option = {
+        assignedReciever: {
+          emailColumnId: signerDetail.emailColumnId,
+        },
+      };
+    }
+
     //clear viewed status if already sent
     const fileHistories = await FileHistory.find({
       fileId: fileId,
       itemId,
       status: 'viewed',
+      ...(option.assignedReciever.userId
+        ? { 'assignedReciever.userId': option.assignedReciever.userId }
+        : {
+            'assignedReciever.emailColumnId':
+              option.assignedReciever.emailColumnId,
+          }),
     })
       .session(session)
       .exec();
@@ -94,10 +117,17 @@ const deletePreviousStatusAndSend = async ({
       fileId: fileId,
       itemId,
       status: 'sent',
+      ...(option.assignedReciever.userId
+        ? { 'assignedReciever.userId': option.assignedReciever.userId }
+        : {
+            'assignedReciever.emailColumnId':
+              option.assignedReciever.emailColumnId,
+          }),
     })
       .session(session)
       .exec();
 
+    console.log({ isAlreadySentDocs, option });
     let isAlreadySent = isAlreadySentDocs?.find(
       doc => doc.sentToEmail === email
     );
@@ -109,10 +139,13 @@ const deletePreviousStatusAndSend = async ({
           status: isAlreadySent ? 'resent' : 'sent',
           itemId,
           sentToEmail: email,
+          ...option,
         },
       ],
       { session }
     );
+
+    console.log({ newSentHistory });
 
     return newSentHistory;
   } catch (error) {
@@ -128,7 +161,6 @@ const sendEmailAndUpdateBackOffice = async ({
   session,
   shouldUpdateMondayStatus = true,
 }) => {
-  console.log('Incside send Email');
   const { sendRequestToSign } = require('../services/mailer');
   const mailStatus = await sendRequestToSign({
     template,
@@ -353,8 +385,9 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
         let indexOfEmailColumn;
 
         if (firstSignerDetail?.userId) {
-          const userResp = await getUsersByIds(firstSignerDetail.userId);
-          email = userResp?.data?.users?.[0]?.email;
+          // const userResp = await getUsersByIds(firstSignerDetail.userId);
+          email = template.email_address;
+          // userResp?.data?.users?.[0]?.email;
           indexOfEmailColumn = signerDetails?.signers?.findIndex(
             signer => signer?.userId === firstSignerDetail.userId
           );
@@ -379,6 +412,7 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
             email,
             session,
             itemId,
+            signerDetail: firstSignerDetail,
           });
 
           await sendEmailAndUpdateBackOffice({
@@ -433,6 +467,7 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
           emailColumnValue?.data?.items?.[0]?.column_values?.map(value => ({
             email: value?.text,
             id: value?.id,
+            userCol: false,
           }));
         if (emailColRes?.length > 0)
           emailList = emailList.concat([...emailColRes]);
@@ -444,6 +479,7 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
         const userColRes = userColumnValue?.data?.users?.map(user => ({
           id: user.id,
           email: user.email,
+          userCol: true,
         }));
 
         if (userColRes?.length > 0)
@@ -454,12 +490,21 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
         if (!emailDetail?.email) continue;
         let session = await mongoose.startSession();
         session.startTransaction();
+
+        let signerDetail = {};
+
+        if (emailDetail?.userCol) {
+          signerDetail.userId = emailDetail.id;
+        } else if (!emailDetail?.userCol) {
+          signerDetail.emailColumnId = emailDetail.id;
+        }
         try {
           const newHistory = await deletePreviousStatusAndSend({
             fileId,
             email: emailDetail.email,
             session,
             itemId,
+            signerDetail,
           });
 
           await sendEmailAndUpdateBackOffice({
@@ -495,6 +540,7 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
       return SignerModel.findById(signerDetails._id);
     }
   } catch (err) {
+    console.log({ err });
     throw err;
   }
 };
