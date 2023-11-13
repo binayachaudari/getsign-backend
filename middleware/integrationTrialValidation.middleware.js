@@ -28,11 +28,10 @@ const integrationValidateTrial = async (req, res, next) => {
         '********************************** NO SUBSCRIPTION **********************************',
         JSON.stringify({ payload, subscription, decoded, token })
       );
-      return next();
-      // return next({
-      //   message: 'You need to upgrade/re-install GetSign',
-      //   statusCode: 426,
-      // });
+      return next({
+        message: 'You need to upgrade/re-install GetSign',
+        statusCode: 426,
+      });
     }
 
     let trialPeriodExpired = true;
