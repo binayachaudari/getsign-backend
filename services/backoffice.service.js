@@ -416,6 +416,16 @@ const backOfficeUpdateTotalSigned = async itemId => {
   await updateColumnValues(itemId, values);
 };
 
+const backofficeUpdateTotalGenerated = async (itemId, totalCount = 0) => {
+  monday.setToken(backOfficeMondayToken);
+
+  const values = JSON.stringify({
+    numbers595: totalCount,
+  });
+
+  await updateColumnValues(itemId, values);
+};
+
 const addItemsToOrders = async ({
   customerName,
   createdDate,
@@ -490,4 +500,5 @@ module.exports = {
   addItemsToOrders,
   backOfficeUpadateLastDocSentDate,
   getItemDetailsFromBackOffice: getItemDetails,
+  backofficeUpdateTotalGenerated,
 };
