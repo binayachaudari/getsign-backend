@@ -105,12 +105,12 @@ async function generatePDFWithStatus(req, res, next) {
       });
       const today = new Date();
       const subscription_start_date = new Date(
-        new Date(today).getFullYear,
+        new Date(today).getFullYear(),
         new Date(today).getMonth(),
         new Date(subscriptionDetail?.subscription?.renewal_date).getDay()
       );
 
-      const subscription_end_date = subscription_start_date.setMonth(
+      const subscription_end_date = new Date(subscription_start_date).setMonth(
         subscription_start_date.getMonth() + 1
       );
 
