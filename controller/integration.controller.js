@@ -125,7 +125,7 @@ async function generatePDFWithStatus(req, res, next) {
       }).sort({ subscription_end_date: -1 });
 
       if (exists) {
-        exists.$inc({ count: 1 });
+        exists.count += 1;
         if (backOfficeDetails.back_office_item_id) {
           backofficeUpdateTotalGenerated(
             backOfficeDetails.back_office_item_id,
