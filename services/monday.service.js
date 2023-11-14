@@ -26,7 +26,7 @@ const registerWebhook = async ({
   console.log({ boardId, url, event, config, token });
   try {
     const result = await monday.api(
-      `mutation registerWebhook($boardId: Int!, $url: String!, $event: WebhookEventType!, $config: JSON) {
+      `mutation registerWebhook($boardId: ID!, $url: String!, $event: WebhookEventType!, $config: JSON) {
         create_webhook(board_id: $boardId, url: $url, event: $event, config: $config) {
           id
         }
