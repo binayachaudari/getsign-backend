@@ -12,6 +12,12 @@ const { config } = require('../config');
 const {
   generateFilePreviewWithPlaceholders,
 } = require('../services/fileHistory');
+const SubscriptionModel = require('../models/Subscription.model');
+const TotalModel = require('../models/Total.model');
+const {
+  backofficeUpdateTotalGenerated,
+} = require('../services/backoffice.service');
+const ApplicationModel = require('../models/Application.model');
 
 async function autoSend(req, res, next) {
   try {
@@ -67,6 +73,17 @@ async function generatePDFWithStatus(req, res, next) {
     const fileId = payload?.inputFields?.fileId;
 
     const fileDetails = await FileDetails.findById(fileId);
+    if (!fileDetails) {
+      await updateStatusColumn({
+        itemId,
+        boardId,
+        columnId: webhookDetails?.inputFields?.columnId,
+        columnValue: 'File not found',
+        userId: fileDetails.user_id,
+        accountId: fileDetails.account_id,
+      });
+      return;
+    }
     const webhookDetails = await WebhookModel.findOne({ fileId });
     const placeholders = fileDetails.fields;
 
@@ -76,6 +93,61 @@ async function generatePDFWithStatus(req, res, next) {
       placeholders,
       true
     );
+
+    const subscriptionDetail = await SubscriptionModel.findOne({
+      accountId: fileDetails.account_id,
+    });
+
+    if (subscriptionDetail?.subscription) {
+      const backOfficeDetails = await ApplicationModel.findOne({
+        account_id: fileDetails.account_id,
+        back_office_item_id: { $exists: true },
+      });
+      const today = new Date();
+      const subscription_start_date = new Date(
+        new Date(today).getFullYear(),
+        new Date(today).getMonth(),
+        new Date(subscriptionDetail?.subscription?.renewal_date).getDay()
+      );
+
+      const subscription_end_date = new Date(subscription_start_date).setMonth(
+        subscription_start_date.getMonth() + 1
+      );
+
+      const exists = await TotalModel.findOne({
+        account_id: fileDetails.account_id,
+        subscription_start_date: {
+          $lte: new Date(),
+        },
+        subscription_end_date: {
+          $gte: new Date(),
+        },
+      }).sort({ subscription_end_date: -1 });
+
+      if (exists) {
+        exists.count += 1;
+        if (backOfficeDetails.back_office_item_id) {
+          backofficeUpdateTotalGenerated(
+            backOfficeDetails.back_office_item_id,
+            exists.count
+          );
+        }
+        await exists.save();
+      } else {
+        await TotalModel.create({
+          account_id: fileDetails.account_id,
+          subscription_start_date,
+          subscription_end_date,
+          count: 1,
+        });
+        if (backOfficeDetails.back_office_item_id) {
+          backofficeUpdateTotalGenerated(
+            backOfficeDetails.back_office_item_id,
+            1
+          );
+        }
+      }
+    }
 
     await uploadContract({
       itemId,
