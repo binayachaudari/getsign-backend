@@ -169,7 +169,8 @@ module.exports = {
         }
 
         // Update signerDoc
-        await updateSigner(signerOrder._id, {
+
+        let newSignerData = {
           isSigningOrderRequired:
             signers_settings.isSigningOrderRequired || false,
           signers:
@@ -178,7 +179,14 @@ module.exports = {
               return { ...rest, isSigned: false };
             }) || [],
           file: null,
-        });
+        };
+
+        await SignerModel.updateMany(
+          {
+            originalFileId: Types.ObjectId(updatedFields._id),
+          },
+          newSignerData
+        );
       };
 
       if (!signerOrder) {
