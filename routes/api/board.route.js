@@ -11,6 +11,7 @@ const {
 } = require('../../middleware/verifySessionToken.middleware');
 const {
   boardGetBoardFileValidator,
+  addColumnToBoardValidator,
 } = require('../../validators/board.validator');
 
 router.get('/installed', decodeSessionToken, controller.installedItemView);
@@ -27,6 +28,14 @@ router.get(
   boardGetBoardFileValidator(),
   validateRequest,
   controller.getBoardFile
+);
+
+router.post(
+  '/add-column/:board',
+  verifySessionToken,
+  addColumnToBoardValidator(),
+  validateRequest,
+  controller.createColumn
 );
 
 router.get('/:boardId', verifySessionToken, controller.getFiles);
