@@ -5,6 +5,10 @@
   "license": "MIT",
   "private": true,
   "author": "Binaya Chaudhary <binayachaudari@gmail.com>",
+  "engines": {
+    "npm": "please-use-yarn",
+    "yarn": ">= 1.19.1"
+  },
   "scripts": {
     "//": [
       "env-cmd -f .env.qa nodemon server"
