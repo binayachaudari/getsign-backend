@@ -179,6 +179,7 @@ const resendMail = async (req, res, next) => {
             itemId: Number(itemId),
             email,
             session,
+            signerDetail: firstSignerDetail,
           });
 
           await signerService.sendEmailAndUpdateBackOffice({
@@ -224,6 +225,7 @@ const resendMail = async (req, res, next) => {
           emailColumnValue?.data?.items?.[0]?.column_values?.map(value => ({
             email: value?.text,
             id: value?.id,
+            userCol: false,
           }));
         if (emailColRes?.length > 0)
           emailList = emailList.concat([...emailColRes]);
@@ -233,6 +235,7 @@ const resendMail = async (req, res, next) => {
         const userColRes = userColumnValue?.data?.users?.map(user => ({
           id: user.id,
           email: user.email,
+          userCol: true,
         }));
         if (userColRes?.length > 0)
           emailList = emailList.concat([...userColRes]);
@@ -240,6 +243,15 @@ const resendMail = async (req, res, next) => {
 
       for (const emailDetail of emailList) {
         if (!emailDetail?.email) continue;
+
+        let signerDetail = {};
+
+        if (emailDetail?.userCol) {
+          signerDetail = { userId: emailDetail.id };
+        } else if (!emailDetail?.userCol) {
+          signerDetail = { emailColumnId: emailDetail.id };
+        }
+
         let session = await mongoose.startSession();
         session.startTransaction();
 
@@ -249,6 +261,7 @@ const resendMail = async (req, res, next) => {
             email: emailDetail.email,
             session,
             itemId,
+            signerDetail,
           });
 
           await signerService.sendEmailAndUpdateBackOffice({
@@ -321,27 +334,10 @@ const signPDF = async (req, res, next) => {
     );
 
     // let signerEmail;
-    // let currentSigner;
-
-    // if (indexOfCurrentSigner > -1) {
-    //   currentSigner = pdfSigners[indexOfCurrentSigner];
-
-    //   await setMondayToken(template.user_id, template.account_id);
-
-    //   if (currentSigner.emailColumnId && !currentSigner.userId) {
-    //     const currentSignerEmailRes = await getEmailColumnValue(
-    //       itemId,
-    //       currentSigner.emailColumnId
-    //     );
-    //     signerEmail =
-    //       currentSignerEmailRes?.data?.items?.[0]?.column_values?.[0]?.text;
-    //   }
-
-    //   if (currentSigner.userId) {
-    //     const userResp = await getUsersByIds(currentSigner.userId);
-    //     signerEmail = userResp?.data?.users?.[0]?.email;
-    //   }
-    // }
+    let currentSigner;
+    if (indexOfCurrentSigner > -1) {
+      currentSigner = pdfSigners[indexOfCurrentSigner];
+    }
 
     let file;
     let fields = [...standardFields];
@@ -390,6 +386,7 @@ const signPDF = async (req, res, next) => {
       ipAddress: ip,
       s3fileKey: file,
       fileHistory,
+      signerDetail: currentSigner,
     });
 
     pdfSigners = pdfSigners.map(signer => {
@@ -508,6 +505,7 @@ const signPDF = async (req, res, next) => {
       const nextSigner = pdfSigners[indexOfNextSigner];
 
       let email;
+      let signerDetail;
       await setMondayToken(template.user_id, template.account_id);
 
       if (nextSigner.emailColumnId && !nextSigner?.isSigned) {
@@ -516,11 +514,18 @@ const signPDF = async (req, res, next) => {
           nextSigner.emailColumnId
         );
         email = nextSignerEmailRes?.data?.items?.[0]?.column_values?.[0]?.text;
+        signerDetail = {
+          emailColumnId: nextSigner.emailColumnId,
+        };
       }
 
       if (nextSigner.userId && !nextSigner?.isSigned) {
         const userResp = await getUsersByIds(nextSigner.userId);
         email = userResp?.data?.users?.[0]?.email;
+
+        signerDetail = {
+          userId: nextSigner.userId,
+        };
       }
 
       if (email) {
@@ -532,6 +537,7 @@ const signPDF = async (req, res, next) => {
           email,
           session,
           itemId,
+          signerDetail,
         });
 
         await signerService.sendEmailAndUpdateBackOffice({
@@ -625,6 +631,21 @@ const viewDocument = async (req, res, next) => {
         data: isViewedAlready?.find(doc => doc.sentToEmail === signerEmail),
       });
     }
+    let option = {};
+
+    if (currentSigner.userId) {
+      option = {
+        assignedReciever: {
+          userId: currentSigner.userId,
+        },
+      };
+    } else if (!currentSigner.userId && currentSigner.emailColumnId) {
+      option = {
+        assignedReciever: {
+          emailColumnId: currentSigner.emailColumnId,
+        },
+      };
+    }
 
     const viewedFileHistory = await FileHistory.create({
       fileId: template._id,
@@ -633,6 +654,7 @@ const viewDocument = async (req, res, next) => {
       file: fileHistory.file,
       viewedIpAddress: ip,
       sentToEmail: signerEmail,
+      assignedReciever: option.assignedReciever,
     });
 
     if (viewedFileHistory?.status) {

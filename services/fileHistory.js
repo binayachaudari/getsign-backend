@@ -45,12 +45,34 @@ const multipleSignerAddFileHistory = async ({
   ipAddress,
   s3fileKey,
   fileHistory,
+  signerDetail,
 }) => {
   try {
+    let option = {};
+
+    if (signerDetail.userId) {
+      option = {
+        assignedReciever: {
+          userId: signerDetail.userId,
+        },
+      };
+    } else if (!signerDetail.userId && signerDetail.emailColumnId) {
+      option = {
+        assignedReciever: {
+          emailColumnId: signerDetail.emailColumnId,
+        },
+      };
+    }
     const addedHistory = await FileHistory.find({
       fileId: Types.ObjectId(id),
       itemId,
       status,
+      ...(option.assignedReciever.userId
+        ? { 'assignedReciever.userId': option.assignedReciever.userId }
+        : {
+            'assignedReciever.emailColumnId':
+              option.assignedReciever.emailColumnId,
+          }),
     }).exec();
 
     const historyWithEmail = addedHistory?.find(
@@ -79,6 +101,7 @@ const multipleSignerAddFileHistory = async ({
           receiverSignedIpAddress: ipAddress,
         }),
         sentToEmail: fileHistory?.sentToEmail,
+        assignedReciever: option.assignedReciever,
       });
     }
 
@@ -89,6 +112,7 @@ const multipleSignerAddFileHistory = async ({
         itemId,
         viewedIpAddress: ipAddress,
         sentToEmail: fileHistory?.sentToEmail,
+        assignedReciever: option.assignedReciever,
       });
   } catch (err) {
     throw err;
@@ -108,7 +132,9 @@ const addFileHistory = async ({
       fileId: id,
       itemId,
       status,
-    }).exec();
+    })
+      .populate('fileId')
+      .exec();
 
     if (addedHistory) {
       if (addedHistory?.status === 'viewed') return;
@@ -130,6 +156,9 @@ const addFileHistory = async ({
         file: signedFile.Key,
         ...(status === 'signed_by_receiver' && {
           receiverSignedIpAddress: ipAddress,
+          assignedReciever: {
+            emailColumnId: addedHistory?.fileId?.email_column_id,
+          },
         }),
       });
     }
@@ -140,6 +169,9 @@ const addFileHistory = async ({
         status,
         itemId,
         viewedIpAddress: ipAddress,
+        assignedReciever: {
+          emailColumnId: addedHistory?.fileId?.email_column_id,
+        },
       });
   } catch (error) {
     throw error;
@@ -179,12 +211,11 @@ const viewedFile = async (id, itemId, ip) => {
 
     const template = await FileDetails.findById(fromFileHistory.fileId);
 
-    const newHistory = await multipleSignerAddFileHistory({
+    const newHistory = await addFileHistory({
       id: fromFileHistory.fileId,
       itemId,
       status: 'viewed',
       ipAddress: ip,
-      fileHistory: fromFileHistory,
     });
 
     if (newHistory?.status !== fromFileHistory.status)
@@ -734,9 +765,6 @@ const getFileForSigner = async (id, itemId) => {
 
     // set the email of current signer
     if (currentSigner?.userId) {
-      // const userResp = await getUsersByIds(currentSigner.userId);
-      // currentSignerEmail = userResp?.data?.users?.[0]?.email;
-
       currentSignerEmail = template.email_address;
       assignedFields = template?.fields?.filter(
         field => field?.signer?.userId === currentSigner.userId
@@ -758,17 +786,8 @@ const getFileForSigner = async (id, itemId) => {
     }
 
     if (!currentSignerEmail) {
-      // Need to refactore when we cannot find email column id
       return { isDeleted: true };
     }
-
-    // if (currentSigner?.isSigned) {
-    //   return {
-    //     fileId,
-    //     isAlreadySigned: true,
-    //     sendDocumentTo: currentSignerEmail,
-    //   };
-    // }
 
     const isAlreadySignedDocs = await FileHistory.find({
       fileId,
@@ -776,9 +795,24 @@ const getFileForSigner = async (id, itemId) => {
       status: 'signed_by_receiver',
     }).exec();
 
-    let isAlreadySigned = isAlreadySignedDocs?.find(
-      doc => doc?.sentToEmail === currentSignerEmail
-    );
+    let isAlreadySigned = false;
+
+    if (currentSigner.userId) {
+      isAlreadySigned = isAlreadySignedDocs?.find(
+        doc =>
+          doc?.sentToEmail === currentSignerEmail &&
+          !!doc.assignedReciever.userId
+      );
+    }
+
+    if (!currentSigner?.userId && currentSigner.emailColumnId) {
+      isAlreadySigned = isAlreadySignedDocs?.find(
+        doc =>
+          doc?.sentToEmail === currentSignerEmail &&
+          doc?.assignedReciever?.emailColumnId === currentSigner.emailColumnId
+      );
+    }
+
     if (isAlreadySigned) {
       return {
         fileId,
@@ -838,7 +872,11 @@ const getFileForSigner = async (id, itemId) => {
           ...generatedPDF,
           assignedFields,
           alreadySignedByOther: !!getFileToSignKey,
-          alreadyViewed: !!(await isAlreadyViewed({ fileId, itemId })),
+          alreadyViewed: !!(await isAlreadyViewed({
+            fileId,
+            itemId,
+            sentToEmail: currentSignerEmail,
+          })),
           sendDocumentTo: currentSignerEmail,
         };
       }
