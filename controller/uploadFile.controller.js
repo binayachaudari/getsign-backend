@@ -183,22 +183,10 @@ module.exports = {
 
         await SignerModel.updateMany(
           {
-            $match: {
-              originalFileId: Types.ObjectId(updatedFields._id),
-            },
+            originalFileId: Types.ObjectId(updatedFields._id),
           },
           newSignerData
         );
-        // await updateSigner(signerOrder._id, {
-        //   isSigningOrderRequired:
-        //     signers_settings.isSigningOrderRequired || false,
-        //   signers:
-        //     signers_settings.signers?.map(sgn => {
-        //       const { fileStatus = '', ...rest } = sgn;
-        //       return { ...rest, isSigned: false };
-        //     }) || [],
-        //   file: null,
-        // });
       };
 
       if (!signerOrder) {
