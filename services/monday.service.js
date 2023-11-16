@@ -2,7 +2,6 @@ const { monday, setMondayToken } = require('../utils/monday');
 const axios = require('axios');
 
 const STANDARD_FIELDS = require('../config/standardFields');
-const { async } = require('regenerator-runtime');
 
 const me = async () => {
   try {
