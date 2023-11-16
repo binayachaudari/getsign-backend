@@ -15,9 +15,7 @@
     ],
     "dev": "nodemon server",
     "start": "node server",
-    "format": "prettier . --write",
-    "migration:up": "env-cmd -f .env node ./migrations/add_assignedReciever_filehistory/up.js",
-    "migration:down": "env-cmd -f .env node ./migrations/add_assignedReciever_filehistory/down.js"
+    "format": "prettier . --write"
   },
   "dependencies": {
     "@aws-sdk/client-ses": "^3.299.0",
