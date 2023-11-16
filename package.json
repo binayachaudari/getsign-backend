@@ -33,7 +33,7 @@
     "hyperformula": "^2.5.0",
     "jsonwebtoken": "^9.0.0",
     "moment": "^2.29.4",
-    "monday-sdk-js": "^0.1.6",
+    "monday-sdk-js": "^0.4.12",
     "mongoose": "^6.8.3",
     "mongoose-encryption": "^2.1.2",
     "nodemailer": "^6.9.1",
