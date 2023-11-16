@@ -1214,6 +1214,62 @@ async function handleFormatEmailAndPersons(column_values = []) {
 
   return Array.from(uniqueUsers.values());
 }
+
+async function createBoardColumn({
+  board_id,
+  title,
+  description = '',
+  column_type,
+}) {
+  try {
+    const query = `
+    mutation CreateColumn($board_id:ID!,$title:String!,$description:String,$column_type:ColumnType! ){
+      create_column(board_id:$board_id,title:$title,description:$description,column_type:$column_type){
+        id
+        title
+        description
+      }
+    }
+  `;
+
+    const option = {
+      variables: {
+        board_id: Number(board_id),
+        title,
+        description,
+        column_type,
+      },
+      apiVersion: '2023-10',
+    };
+    const mondayResponse = await monday.api(query, option);
+
+    if (
+      mondayResponse.hasOwnProperty('error_message') ||
+      mondayResponse.hasOwnProperty('error_code') ||
+      mondayResponse.hasOwnProperty('errors')
+    ) {
+      throw {
+        status: 403,
+        message: mondayResponse?.errors?.[0]?.message,
+      };
+    }
+
+    console.log({ mondayResponse: JSON.stringify(mondayResponse) });
+
+    if (
+      mondayResponse &&
+      mondayResponse.data &&
+      mondayResponse.data.create_column
+    ) {
+      return mondayResponse.data.create_column;
+    }
+
+    return null;
+  } catch (err) {
+    throw err;
+  }
+}
+
 module.exports = {
   me,
   registerWebhook,
@@ -1235,4 +1291,5 @@ module.exports = {
   getUsersByIds,
   getUsersOfTeams,
   handleFormatEmailAndPersons,
+  createBoardColumn,
 };

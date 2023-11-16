@@ -13,7 +13,7 @@ const verifySessionToken = async (req, res, next) => {
     const subscription = decoded?.dat?.subscription;
     const slug = decoded?.dat?.slug;
     const user = await isUserAuthenticated(userId, accountId);
-    await setMondayToken(userId, accountId);
+    const monday_access_token = await setMondayToken(userId, accountId);
 
     if (!user || !user?.accessToken) {
       return next({ statusCode: 401, message: 'Unauthorized' });
@@ -25,7 +25,7 @@ const verifySessionToken = async (req, res, next) => {
     req.accountId = accountId;
     req.subscription = subscription;
     req.slug = slug;
-
+    req.monday_access_token = monday_access_token;
     next();
   } catch (err) {
     return next(err);
