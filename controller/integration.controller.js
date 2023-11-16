@@ -278,9 +278,15 @@ async function unsubscribeGenerateWithStatus(req, res, next) {
       accountId = reqTokenData?.accountId;
       userId = reqTokenData?.userId;
       shortLivedToken = reqTokenData?.shortLivedToken;
+      const webhookDetails = await WebhookModel.findById(webhookId);
 
-      await unregisterWebhook({ webhookId, token: shortLivedToken });
-      await WebhookModel.findByIdAndDelete(webhookId);
+      const removedWebhook = await unregisterWebhook({
+        webhookId: webhookDetails?.webhookId,
+        token: shortLivedToken,
+      });
+
+      if (!removedWebhook?.errors?.length)
+        await WebhookModel.findByIdAndDelete(webhookId);
 
       return res.status(200).send();
     } catch (err) {
