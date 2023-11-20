@@ -12,6 +12,13 @@ const { config } = require('../config');
 const {
   generateFilePreviewWithPlaceholders,
 } = require('../services/fileHistory');
+const SubscriptionModel = require('../models/Subscription.model');
+const TotalModel = require('../models/Total.model');
+const {
+  backofficeUpdateTotalGenerated,
+} = require('../services/backoffice.service');
+const ApplicationModel = require('../models/Application.model');
+const { sendLimitAboutToReach } = require('../services/mailer');
 
 async function autoSend(req, res, next) {
   try {
@@ -76,6 +83,102 @@ async function generatePDFWithStatus(req, res, next) {
       placeholders,
       true
     );
+
+    const subscriptionDetail = await SubscriptionModel.findOne({
+      accountId: fileDetails.account_id,
+    });
+
+    if (!subscriptionDetail?.subscription && !process.env.IS_DEV) {
+      throw {
+        message: 'You need to upgrade/re-install GetSign',
+        statusCode: 426,
+      };
+    }
+
+    if (subscriptionDetail?.subscription) {
+      const backOfficeDetails = await ApplicationModel.findOne({
+        account_id: fileDetails.account_id,
+        back_office_item_id: { $exists: true },
+      });
+
+      const exists = await TotalModel.findOne({
+        account_id: fileDetails.account_id,
+        subscription_start_date: {
+          $lte: new Date(),
+        },
+        subscription_end_date: {
+          $gte: new Date(),
+        },
+      }).sort({ subscription_end_date: -1 });
+
+      if (exists) {
+        // Limit trial users to 15 documents
+        let isTrial = true;
+        let trialPeriodExpired = true;
+        let isFreePlan = subscriptionDetail?.subscription?.plan_id === '3seats';
+        if (!isFreePlan) {
+          const renewalDate = new Date(
+            subscriptionDetail?.subscription?.renewal_date
+          );
+          const now = new Date();
+
+          trialPeriodExpired = Boolean(renewalDate - now < 0);
+          isTrial = subscriptionDetail?.subscription?.is_trial;
+        }
+
+        if ((isTrial && trialPeriodExpired) || isFreePlan) {
+          if (exists.count === 10) {
+            await sendLimitAboutToReach(
+              `https://${subscriptionDetail?.account_slug}.monday.com/apps/installed_apps/10050849?billing`,
+              [fileDetails?.email_address, subscriptionDetail?.user_email]
+            );
+          } else if (exists.count >= 15) {
+            await updateStatusColumn({
+              itemId,
+              boardId,
+              columnId: webhookDetails?.inputFields?.columnId,
+              columnValue: 'Limit Reached',
+              userId: fileDetails.user_id,
+              accountId: fileDetails.account_id,
+            });
+            return;
+          }
+        }
+
+        exists.count += 1;
+        if (backOfficeDetails.back_office_item_id) {
+          backofficeUpdateTotalGenerated(
+            backOfficeDetails.back_office_item_id,
+            exists.count
+          );
+        }
+        await exists.save();
+      } else {
+        const today = new Date();
+        const subscription_start_date = new Date(
+          new Date(today).getFullYear(),
+          new Date(today).getMonth(),
+          new Date(subscriptionDetail?.subscription?.renewal_date).getDay()
+        );
+
+        const subscription_end_date = new Date(
+          subscription_start_date
+        ).setMonth(subscription_start_date.getMonth() + 1);
+
+        await TotalModel.create({
+          account_id: fileDetails.account_id,
+          subscription_start_date,
+          subscription_end_date,
+          count: 1,
+        });
+        if (backOfficeDetails.back_office_item_id) {
+          backofficeUpdateTotalGenerated(
+            backOfficeDetails.back_office_item_id,
+            1
+          );
+        }
+      }
+    }
 
     await uploadContract({
       itemId,
@@ -175,9 +278,15 @@ async function unsubscribeGenerateWithStatus(req, res, next) {
       accountId = reqTokenData?.accountId;
       userId = reqTokenData?.userId;
       shortLivedToken = reqTokenData?.shortLivedToken;
+      const webhookDetails = await WebhookModel.findById(webhookId);
 
-      await unregisterWebhook({ webhookId, token: shortLivedToken });
-      await WebhookModel.findByIdAndDelete(webhookId);
+      const removedWebhook = await unregisterWebhook({
+        webhookId: webhookDetails?.webhookId,
+        token: shortLivedToken,
+      });
+
+      if (!removedWebhook?.errors?.length)
+        await WebhookModel.findByIdAndDelete(webhookId);
 
       return res.status(200).send();
     } catch (err) {

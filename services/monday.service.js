@@ -25,23 +25,34 @@ const registerWebhook = async ({
 }) => {
   console.log({ boardId, url, event, config, token });
   try {
-    const result = await monday.api(
-      `mutation registerWebhook($boardId: Int!, $url: String!, $event: WebhookEventType!, $config: JSON) {
+    const query = `mutation registerWebhook($boardId: ID!, $url: String!, $event: WebhookEventType!, $config: JSON) {
+      create_webhook(board_id: $boardId, url: $url, event: $event, config: $config) {
+        id
+      }
+    }`;
+
+    const options = {
+      variables: {
+        boardId: Number(boardId),
+        url,
+        event,
+        config,
+      },
+      token,
+      apiVersion: '2023-10',
+    };
+    let result = await monday.api(query, options);
+
+    if (result?.errors?.[0]?.message?.includes('Type mismatch')) {
+      const oldVerQuery = `mutation registerWebhook($boardId: Int!, $url: String!, $event: WebhookEventType!, $config: JSON) {
         create_webhook(board_id: $boardId, url: $url, event: $event, config: $config) {
           id
         }
-      }`,
-      {
-        variables: {
-          boardId: Number(boardId),
-          url,
-          event,
-          config,
-        },
-        token,
-        apiVersion: '2023-10',
-      }
-    );
+      }`;
+
+      options.apiVersion = '2023-07';
+      result = await monday.api(oldVerQuery, options);
+    }
 
     console.log('webhookID', result);
 
@@ -59,24 +70,38 @@ const registerWebhook = async ({
 };
 
 const unregisterWebhook = async ({ webhookId, token }) => {
-  return await monday.api(
-    `
-  mutation deleteWebhook($id: Int!){
+  const options = {
+    variables: {
+      id: Number(webhookId),
+    },
+    token,
+    apiVersion: '2023-10',
+  };
+
+  const newQuery = `
+  mutation deleteWebhook($id: ID!){
     delete_webhook (id: $id) {
       id
       board_id
     }
   }
-  
-  `,
-    {
-      variables: {
-        id: Number(webhookId),
-      },
-      token,
-      apiVersion: '2023-10',
-    }
-  );
+  `;
+  let result = await monday.api(newQuery, options);
+
+  if (result?.errors?.[0]?.message?.includes('Type mismatch')) {
+    options.apiVersion = '2023-07';
+    const oldQuery = `
+    mutation deleteWebhook($id: Int!){
+      delete_webhook (id: $id) {
+        id
+        board_id
+      }
+      }
+      `;
+    result = await monday.api(oldVerQuery, options);
+  }
+
+  return result;
 };
 
 const getItemDetails = async (id, token) => {

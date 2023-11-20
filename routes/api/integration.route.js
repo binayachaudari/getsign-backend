@@ -15,6 +15,12 @@ router.post(
   controller.unsubscribeGenerateWithStatus
 );
 
+/** this is because there was typos on webhook url in the workflow block in version <= 6.7.0 */
+router.post(
+  '/generate-pdf/status-change/ussubscribe',
+  controller.unsubscribeGenerateWithStatus
+);
+
 router.post(
   '/templates-for-pdf',
   // integrationValidateTrial,

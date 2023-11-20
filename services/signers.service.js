@@ -9,11 +9,7 @@ const {
   backOfficeUpdateTotalSent,
   backOfficeUpadateLastDocSentDate,
 } = require('./backoffice.service');
-const {
-  getEmailColumnValue,
-  updateStatusColumn,
-  getUsersByIds,
-} = require('./monday.service');
+const { getEmailColumnValue, updateStatusColumn } = require('./monday.service');
 const FileDetails = require('../models/FileDetails');
 const { setMondayToken } = require('../utils/monday');
 
@@ -287,10 +283,7 @@ const extractAllEmails = async ({ template, signerDetails, itemId }) => {
     }
 
     if (userColumns?.length) {
-      const userColumnValue = await getUsersByIds(userColumns);
-
-      const userColRes = userColumnValue?.data?.users?.map(user => user.email);
-
+      const userColRes = userColumns?.map(() => template.email_address);
       if (userColRes?.length > 0) emailList = emailList.concat([...userColRes]);
     }
 
@@ -385,9 +378,7 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
         let indexOfEmailColumn;
 
         if (firstSignerDetail?.userId) {
-          // const userResp = await getUsersByIds(firstSignerDetail.userId);
           email = template.email_address;
-          // userResp?.data?.users?.[0]?.email;
           indexOfEmailColumn = signerDetails?.signers?.findIndex(
             signer => signer?.userId === firstSignerDetail.userId
           );
@@ -474,11 +465,9 @@ const sendFileForMultipleSigners = async ({ itemId, fileId, message = '' }) => {
       }
 
       if (userColumns?.length) {
-        const userColumnValue = await getUsersByIds(userColumns);
-
-        const userColRes = userColumnValue?.data?.users?.map(user => ({
-          id: user.id,
-          email: user.email,
+        const userColRes = userColumns.map(user => ({
+          id: user,
+          email: template.email_address,
           userCol: true,
         }));
 
