@@ -185,6 +185,7 @@ module.exports = {
   emailRequestToSign: async (itemId, id, isVer6, message = '') => {
     const session = await mongoose.startSession();
     session.startTransaction();
+    const sentToEmail = [];
 
     try {
       const template = await FileDetails.findById(id);
@@ -208,64 +209,92 @@ module.exports = {
         };
       }
 
+      const emailCols = signerDoc?.signers
+        ?.filter(item => !item.userId && !item?.isSigned)
+        ?.map(item => item.emailColumnId);
+
       await setMondayToken(template.user_id, template.account_id);
-      const emailColumn = await getEmailColumnValue(
-        itemId,
-        template.email_column_id
-      );
-      const to = emailColumn?.data?.items?.[0]?.column_values?.[0]?.text;
+      const emailColumn = await getEmailColumnValue(itemId, emailCols);
 
       //clear viewed status if already sent
-      await FileHistory.deleteOne({
+      await FileHistory.deleteMany({
         fileId: id,
         itemId,
         status: 'viewed',
-      });
+      }).session(session);
 
-      const addedHistory = await FileHistory.findOne({
-        fileId: id,
-        itemId,
-        status: 'sent',
-      })
-        .session(session)
-        .exec();
-
-      const newSentHistory = await FileHistory.create(
-        [
-          {
-            fileId: id,
-            status: addedHistory ? 'resent' : 'sent',
-            itemId,
-            sentToEmail: to,
-            assignedReciever: {
-              emailColumnId: template.email_column_id,
-            },
-          },
-        ],
-        { session }
-      );
-
-      signerDoc.signers = signerDoc.signers.map(signer => {
-        if (!signer.userId) {
-          return {
-            ...signer,
-            fileStatus: newSentHistory[0]._id?.toString(),
+      for (const [idx, signer] of signerDoc?.signers?.entries()) {
+        let to = '';
+        let assignedReciever = {};
+        if (signer.userId) {
+          to = template?.email_address;
+          assignedReciever = {
+            userId: signer?.userId,
+          };
+        } else {
+          to = emailColumn?.data?.items?.[0]?.column_values?.find(
+            item => item.id === signer.emailColumnId
+          )?.text;
+          assignedReciever = {
+            emailColumnId: signer.emailColumnId,
           };
         }
-        return signer;
-      });
 
+        const addedHistory = await FileHistory.findOne({
+          fileId: id,
+          itemId,
+          status: 'sent',
+          ...(signer.userId
+            ? { 'assignedReciever.userId': signer.userId }
+            : { 'assignedReciever.emailColumnId': signer.emailColumnId }),
+        })
+          .session(session)
+          .exec();
+
+        const newSentHistory = await FileHistory.create(
+          [
+            {
+              fileId: id,
+              status: addedHistory ? 'resent' : 'sent',
+              itemId,
+              sentToEmail: to,
+              assignedReciever,
+            },
+          ],
+          { session }
+        );
+
+        signerDoc.signers[idx].fileStatus = newSentHistory[0]._id?.toString();
+
+        await sendRequestToSign({
+          template,
+          to,
+          itemId,
+          fileId: newSentHistory[0]._id,
+          isMultipleSigner: isVer6,
+        });
+
+        sentToEmail.push(to);
+
+        await updateStatusColumn({
+          itemId: itemId,
+          boardId: template.board_id,
+          columnId: template?.status_column_id,
+          columnValue: statusMapper[newSentHistory[0].status],
+          userId: template?.user_id,
+          accountId: template?.account_id,
+        });
+
+        if (signerDoc.isSigningOrderRequired) {
+          break;
+        }
+      }
+
+      signerDoc.markModified('signers');
       await signerDoc.save();
 
-      const mailStatus = await sendRequestToSign({
-        template,
-        to,
-        itemId,
-        fileId: newSentHistory[0]._id,
-        isMultipleSigner: isVer6,
-      });
-
-      if (mailStatus?.messageId) {
+      // Block to update backoffice
+      {
         const appInstallDetails = await ApplicationModel.findOne({
           type: 'install',
           account_id: template.account_id,
@@ -319,15 +348,6 @@ module.exports = {
           },
         ]).session(session);
 
-        await updateStatusColumn({
-          itemId: itemId,
-          boardId: template.board_id,
-          columnId: template?.status_column_id,
-          columnValue: statusMapper[newSentHistory[0].status],
-          userId: template?.user_id,
-          accountId: template?.account_id,
-        });
-
         if (appInstallDetails?.back_office_item_id) {
           await backOfficeSentDocument(appInstallDetails.back_office_item_id);
 
@@ -345,12 +365,11 @@ module.exports = {
             appInstallDetails.back_office_item_id
           );
         }
-
-        await session.commitTransaction();
-        return mailStatus;
       }
-      await session.abortTransaction();
+
+      await session.commitTransaction();
       session.endSession();
+      return sentToEmail;
     } catch (err) {
       await session.abortTransaction();
       session.endSession();
