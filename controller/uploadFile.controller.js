@@ -275,6 +275,7 @@ module.exports = {
       email_column_id,
       status_column_id,
       file_column_id,
+      forceUpdate,
     } = req.body;
 
     try {
@@ -286,6 +287,7 @@ module.exports = {
         email_column_id,
         status_column_id,
         file_column_id,
+        forceUpdate,
       });
 
       return res.json({ data: result }).status(200);
