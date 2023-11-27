@@ -16,5 +16,4 @@ else
   exit 1
 fi
 
-sudo rm -rf $DESTINATION_PATH
-sudo cp -R /var/www/GetSign-Temp/jetsign-backend $DESTINATION_PATH
+sudo cp -R /var/www/GetSign-Temp/jetsign-backend/* $DESTINATION_PATH -f

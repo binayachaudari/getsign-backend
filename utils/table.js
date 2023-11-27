@@ -25,7 +25,7 @@ const calculateRowHeight = ({
   cellMargin = 5,
   defaultRowHeight,
 }) => {
-  const words = text?.split('');
+  const words = String(text)?.split('');
   let lines = [''];
   let currentLine = 0;
 
@@ -155,7 +155,7 @@ const createTable = async ({
                 }`;
         }
         const { rowHeight, lines } = calculateRowHeight({
-          text: textVal || '',
+          text: String(textVal) || '',
           currentPage,
           defaultRowHeight,
           fontSize: fontSize,

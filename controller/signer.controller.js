@@ -7,7 +7,6 @@ const {
   updateMultipleTextColumnValues,
   uploadContract,
   getEmailColumnValue,
-  getUsersByIds,
   updateStatusColumn,
 } = require('../services/monday.service');
 const STANDARD_FIELDS = require('../config/standardFields');
@@ -154,8 +153,7 @@ const resendMail = async (req, res, next) => {
         let indexOfEmailColumn;
 
         if (firstSignerDetail?.userId) {
-          const userResp = await getUsersByIds(firstSignerDetail.userId);
-          email = userResp?.data?.users?.[0]?.email;
+          email = template.email_address;
           indexOfEmailColumn = signerDetails?.signers?.findIndex(
             signer => signer?.userId === firstSignerDetail.userId
           );
@@ -231,12 +229,12 @@ const resendMail = async (req, res, next) => {
           emailList = emailList.concat([...emailColRes]);
       }
       if (userColumns?.length) {
-        const userColumnValue = await getUsersByIds(userColumns);
-        const userColRes = userColumnValue?.data?.users?.map(user => ({
-          id: user.id,
-          email: user.email,
+        const userColRes = userColumns?.map(user => ({
+          id: user,
+          email: template.email_address,
           userCol: true,
         }));
+
         if (userColRes?.length > 0)
           emailList = emailList.concat([...userColRes]);
       }
@@ -520,9 +518,7 @@ const signPDF = async (req, res, next) => {
       }
 
       if (nextSigner.userId && !nextSigner?.isSigned) {
-        const userResp = await getUsersByIds(nextSigner.userId);
-        email = userResp?.data?.users?.[0]?.email;
-
+        email = template.email_address;
         signerDetail = {
           userId: nextSigner.userId,
         };
@@ -614,8 +610,7 @@ const viewDocument = async (req, res, next) => {
       }
 
       if (currentSigner.userId) {
-        const userResp = await getUsersByIds(currentSigner.userId);
-        signerEmail = userResp?.data?.users?.[0]?.email;
+        signerEmail = template.email_address;
       }
     }
 
@@ -707,8 +702,8 @@ const handleRequestSignByMe = async (req, res, next) => {
     meUserDetail = signerDetails.signers[meUserIndex];
 
     await setMondayToken(template?.user_id, template?.account_id);
-    const userResp = await getUsersByIds(meUserDetail.userId);
-    let meUserEmail = userResp?.data?.users?.[0]?.email;
+
+    let meUserEmail = template.email_address;
 
     const fileHistory = await FileHistory.create({
       itemId: Number(itemId),
