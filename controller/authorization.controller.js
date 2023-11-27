@@ -12,8 +12,8 @@ module.exports = {
   authorize: (req, res, next) => {
     var code = req.query.code || null;
     var state = req.query.state || null;
-
-    const context = state ? JSON.parse(state) : null;
+    var decodedContext = decodeURIComponent(state);
+    const context = decodedContext ? JSON.parse(decodedContext) : null;
 
     const raw = JSON.stringify({
       client_id: CLIENT_ID,
