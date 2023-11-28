@@ -67,6 +67,8 @@ const getSubItems = async (subItemSettings = {}, items_subItem) => {
       if (column) {
         if (column.type == 'formula') {
           formatCol = column?.text || '';
+        } else if (column.type == 'board-relation') {
+          formatCol = column?.text || '';
         } else {
           formatCol = await getFieldValue(column, null);
         }
