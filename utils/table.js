@@ -25,7 +25,7 @@ const calculateRowHeight = ({
   cellMargin = 5,
   defaultRowHeight,
 }) => {
-  const words = text?.split('');
+  const words = String(text)?.split('');
   let lines = [''];
   let currentLine = 0;
 
@@ -120,15 +120,15 @@ const createTable = async ({
       defaultRowHeight,
       ...tableData[currentRowPosition].map((col, j) => {
         let textVal = col?.value || 0;
+
         if (currentRowPosition > 0 && col.type === 'numeric') {
           textVal = col?.formattedValue || '';
         }
 
         if (
           currentRowPosition > 0 &&
-          col.type === 'formula' &&
           tableSetting?.currency?.checked &&
-          currencyColumns?.includes(col.id)
+          currencyColumns?.findIndex(colm => colm.id === col.id) > -1
         ) {
           textVal = parseFloat(textVal);
 
@@ -155,7 +155,7 @@ const createTable = async ({
                 }`;
         }
         const { rowHeight, lines } = calculateRowHeight({
-          text: textVal || '',
+          text: String(textVal) || '',
           currentPage,
           defaultRowHeight,
           fontSize: fontSize,
@@ -319,6 +319,8 @@ const createTable = async ({
       }
     }
 
+    totalSum = totalSum.toFixed(2);
+
     if (tableSetting?.currency?.checked) {
       totalSum =
         tableSetting?.currency?.position?.value ===
@@ -339,7 +341,7 @@ const createTable = async ({
       const pdfFont = pdfDoc?.fonts?.[pdfDoc?.fonts?.length - 1] || [];
       const width = pdfFont.widthOfTextAtSize(`${totalSum}`, 12 * 0.75);
       xCoordinate -= width;
-      currentPage.drawText(`${Number(parseFloat(totalSum).toFixed(2))}`, {
+      currentPage.drawText(`${totalSum}`, {
         x: xCoordinate,
         y: currentYCoordinate,
         size: 12,
