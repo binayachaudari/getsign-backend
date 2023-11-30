@@ -1109,6 +1109,31 @@ const signPDF = async (
                 customFont
               );
               pdfWriter.writeTextBox();
+            } else if (value?.type === 'numeric') {
+              currentPage.drawText(value?.formattedValue || value?.text || '', {
+                x: placeHolder.formField.coordinates.x,
+                y:
+                  placeHolder.formField.coordinates.y -
+                  fontSize * scalingFactor,
+                font: customFont,
+                size: fontSize,
+              });
+            } else if (
+              value?.type === 'date' &&
+              placeHolder?.dateFormat?.format &&
+              value?.text
+            ) {
+              const currentDate = moment(new Date(value?.text))
+                .format(placeHolder?.dateFormat?.format || 'DD/MM/YYYY')
+                .toString();
+              currentPage.drawText(currentDate || '', {
+                x: placeHolder.formField.coordinates.x,
+                y:
+                  placeHolder.formField.coordinates.y -
+                  fontSize * scalingFactor,
+                font: customFont,
+                size: fontSize,
+              });
             } else {
               currentPage.drawText(value?.text || '', {
                 x: placeHolder.formField.coordinates.x,
