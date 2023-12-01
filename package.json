@@ -18,6 +18,7 @@
     "format": "prettier . --write"
   },
   "dependencies": {
+    "@aws-sdk/client-cloudwatch-logs": "^3.462.0",
     "@aws-sdk/client-ses": "^3.299.0",
     "@aws-sdk/credential-provider-node": "^3.299.0",
     "@formulajs/formulajs": "^4.2.0",
@@ -40,7 +41,9 @@
     "mongoose-encryption": "^2.1.2",
     "nodemailer": "^6.9.1",
     "pdf-lib": "^1.17.1",
-    "regenerator-runtime": "^0.13.11"
+    "regenerator-runtime": "^0.13.11",
+    "winston": "^3.11.0",
+    "winston-cloudwatch": "^6.2.0"
   },
   "devDependencies": {
     "env-cmd": "^10.1.0",
