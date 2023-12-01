@@ -6,6 +6,8 @@ const connectDB = require('./db');
 const path = require('path');
 const bodyParser = require('body-parser');
 const Sentry = require('@sentry/node');
+const Logger = require('./utils/logger/logger');
+const logger = new Logger();
 
 connectDB();
 
@@ -54,6 +56,14 @@ app.use(
     preserveExtension: true,
   })
 );
+
+app.use((req, res, next) => {
+  logger.info(`Requesting ${req.method} ${req.originalUrl}`, {
+    tags: 'http',
+    additionalInfo: { body: req.body, headers: req.headers },
+  });
+  next();
+});
 
 app.use('/api/v1', require('./routes/api'));
 app.post(
