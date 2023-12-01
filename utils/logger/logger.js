@@ -10,8 +10,12 @@ class Logger {
         new WinstonCloudWatch({
           logGroupName: process.env.AWS_CLOUDWATCH_GROUP_NAME,
           logStreamName: process.env.AWS_CLOUDWATCH_STREAM,
-          awsAccessKeyId: process.env.AWS_CLOUDWATCH_ACCESS_KEY,
-          awsSecretKey: process.env.AWS_CLOUDWATCH_SECRET_ACCESS_KEY,
+          awsOptions: {
+            credentials: {
+              accessKeyId: process.env.AWS_CLOUDWATCH_ACCESS_KEY,
+              secretAccessKey: process.env.AWS_CLOUDWATCH_SECRET_ACCESS_KEY,
+            },
+          },
           awsRegion: process.env.AWS_REGION,
           jsonMessage: true,
         }),
