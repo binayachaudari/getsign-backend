@@ -58,10 +58,9 @@ app.use(
 );
 
 app.use((req, res, next) => {
-  logger.info(`Requesting ${req.method} ${req.originalUrl}
-  
-  Additional Info: ${JSON.stringify({ body: req.body, headers: req.headers })}
-  `);
+  logger.info(`Requesting ${req.method} ${req.originalUrl}`, {
+    additionalInfo: { body: req.body, headers: req.headers },
+  });
   next();
 });
 

@@ -5,7 +5,12 @@ const { createLogger, format } = require('winston'),
 class Logger {
   constructor() {
     this.logger = createLogger({
-      format: format.combine(format.timestamp(), format.json()),
+      format: format.combine(
+        format.timestamp({
+          format: 'YYYY-MM-DD hh:mm:ss.SS A',
+        }),
+        format.json()
+      ),
       transports: [
         new WinstonCloudWatch({
           logGroupName: process.env.AWS_CLOUDWATCH_GROUP_NAME,
@@ -23,12 +28,12 @@ class Logger {
     });
   }
 
-  info(message) {
-    this.logger.info(message);
+  info(request, message) {
+    this.logger.info(request, message);
   }
 
-  error(message) {
-    this.logger.error(message);
+  error(request, message) {
+    this.logger.error(request, message);
   }
 }
 
