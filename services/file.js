@@ -1109,6 +1109,31 @@ const signPDF = async (
                 customFont
               );
               pdfWriter.writeTextBox();
+            } else if (value?.type === 'numeric') {
+              currentPage.drawText(value?.formattedValue || value?.text || '', {
+                x: placeHolder.formField.coordinates.x,
+                y:
+                  placeHolder.formField.coordinates.y -
+                  fontSize * scalingFactor,
+                font: customFont,
+                size: fontSize,
+              });
+            } else if (
+              value?.type === 'date' &&
+              placeHolder?.dateFormat?.format &&
+              value?.text
+            ) {
+              const currentDate = moment(new Date(value?.text))
+                .format(placeHolder?.dateFormat?.format || 'DD/MM/YYYY')
+                .toString();
+              currentPage.drawText(currentDate || '', {
+                x: placeHolder.formField.coordinates.x,
+                y:
+                  placeHolder.formField.coordinates.y -
+                  fontSize * scalingFactor,
+                font: customFont,
+                size: fontSize,
+              });
             } else {
               currentPage.drawText(value?.text || '', {
                 x: placeHolder.formField.coordinates.x,
@@ -1158,56 +1183,59 @@ const addSenderDetails = async (
     email_column_id,
     status_column_id,
     file_column_id,
+    forceUpdate = false,
   }
 ) => {
   try {
     const updated = await FileDetails.findById(id);
 
-    const statusColumnAlreadyUsed = await FileDetails.find({
-      board_id: updated?.board_id,
-      status_column_id: status_column_id,
-      itemViewInstanceId: { $ne: null },
-      _id: { $ne: Types.ObjectId(id) },
-      is_deleted: false,
-    });
+    if (!forceUpdate) {
+      const statusColumnAlreadyUsed = await FileDetails.find({
+        board_id: updated?.board_id,
+        status_column_id: status_column_id,
+        itemViewInstanceId: { $ne: null },
+        _id: { $ne: Types.ObjectId(id) },
+        is_deleted: false,
+      });
 
-    if (statusColumnAlreadyUsed.length) {
-      throw {
-        statusCode: 400,
-        message: 'Status column already used',
-      };
-    }
+      if (statusColumnAlreadyUsed.length) {
+        throw {
+          statusCode: 400,
+          message: 'Status column already used',
+        };
+      }
 
-    const fileColumnAlreadyUsed = await FileDetails.find({
-      board_id: updated?.board_id,
-      file_column_id: file_column_id,
-      itemViewInstanceId: { $ne: null },
-      type: 'adhoc',
-      _id: { $ne: Types.ObjectId(id) },
-      is_deleted: false,
-    });
+      const fileColumnAlreadyUsed = await FileDetails.find({
+        board_id: updated?.board_id,
+        file_column_id: file_column_id,
+        itemViewInstanceId: { $ne: null },
+        type: 'adhoc',
+        _id: { $ne: Types.ObjectId(id) },
+        is_deleted: false,
+      });
 
-    if (fileColumnAlreadyUsed.length) {
-      throw {
-        statusCode: 400,
-        message: 'File column already used',
-      };
-    }
+      if (fileColumnAlreadyUsed.length) {
+        throw {
+          statusCode: 400,
+          message: 'File column already used',
+        };
+      }
 
-    const presignedColumnAlreadyUsed = await FileDetails.find({
-      board_id: updated?.board_id,
-      presigned_file_column_id: file_column_id,
-      itemViewInstanceId: { $ne: null },
-      type: 'adhoc',
-      _id: { $ne: Types.ObjectId(id) },
-      is_deleted: false,
-    });
+      const presignedColumnAlreadyUsed = await FileDetails.find({
+        board_id: updated?.board_id,
+        presigned_file_column_id: file_column_id,
+        itemViewInstanceId: { $ne: null },
+        type: 'adhoc',
+        _id: { $ne: Types.ObjectId(id) },
+        is_deleted: false,
+      });
 
-    if (presignedColumnAlreadyUsed.length) {
-      throw {
-        statusCode: 400,
-        message: 'File column already used as pre-signed file column',
-      };
+      if (presignedColumnAlreadyUsed.length) {
+        throw {
+          statusCode: 400,
+          message: 'File column already used as pre-signed file column',
+        };
+      }
     }
 
     // for (const [key, value] of Object.entries(statusMapper)) {

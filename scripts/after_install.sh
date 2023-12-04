@@ -13,7 +13,9 @@ elif [ "$DEPLOYMENT_GROUP_NAME" == "GetSignBackEndCICDProd" ]; then
   cd /home/ubuntu/GetSign/jetsign-backend
 fi
 
-  sudo yarn --frozen-lockfile
+pwd 
+
+sudo yarn --frozen-lockfile
 
 
 
