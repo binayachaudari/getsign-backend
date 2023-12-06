@@ -11,6 +11,12 @@ router.get(
   controller.itemDetails
 );
 
+router.get(
+  '/item-sub-items/:itemId',
+  verifySessionToken,
+  controller.itemSubItems
+);
+
 // router.get(
 //   '/get-email-persons/:fileId/:itemId',
 //   getMondayToken,
