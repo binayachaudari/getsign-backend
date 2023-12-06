@@ -85,7 +85,7 @@ async function generatePDFWithStatus(req, res, next) {
     );
 
     const subscriptionDetail = await SubscriptionModel.findOne({
-      accountId: fileDetails.account_id,
+      account_id: fileDetails.account_id,
     });
 
     if (!subscriptionDetail?.subscription && !process.env.IS_DEV) {
