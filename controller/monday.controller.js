@@ -38,6 +38,7 @@ const itemDetails = async (req, res, next) => {
 
     item.board = formattedBoard;
 
+    delete item.subitems;
     item = handleFormatNumericColumn(item);
 
     if (item) {
