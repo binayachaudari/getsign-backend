@@ -752,6 +752,8 @@ const getFileForSigner = async (id, itemId) => {
     const signersDoc = await SignerModel.findOne({
       originalFileId: fileId,
       itemId,
+    }).sort({
+      updated_at: -1, //gets the latest updated document for the filter
     });
 
     await setMondayToken(template?.user_id, template?.account_id);
