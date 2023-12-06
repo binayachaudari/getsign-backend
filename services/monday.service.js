@@ -1295,7 +1295,48 @@ async function createBoardColumn({
   }
 }
 
+const getSubItems = async itemId => {
+  const query = `
+ query GET_SUB_ITEMS($ids:[ID!]) {
+    items(ids: $ids) {
+      id
+      subitems{
+        id
+        name
+        board{
+          columns{
+            id
+            type
+            settings_str
+            title
+          }
+        }
+        column_values {
+          id
+          text
+          column{
+            title
+          }
+          type
+          value
+        }
+      }
+    }
+  }
+`;
+
+  const options = {
+    variables: {
+      ids: Number(itemId),
+    },
+    apiVersion: '2023-10',
+  };
+
+  return await monday.api(query, options);
+};
+
 module.exports = {
+  getSubItems,
   me,
   registerWebhook,
   unregisterWebhook,
