@@ -33,7 +33,7 @@ const getSubItems = async (subItemSettings = {}, items_subItem) => {
   const { columns: selectedColumn } = subItemSettings;
   formattedTableData[0][0] = {
     id: 'item-name',
-    value: 'Item',
+    label: 'Item',
     size: columnWidths['item-name'],
   };
 

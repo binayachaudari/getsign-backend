@@ -45,44 +45,6 @@ const itemDetails = async (req, res, next) => {
       result.data.items[0] = item;
     }
 
-    // const items_subItem = result?.data?.items?.[0]?.subitems || [];
-
-    // if (items_subItem?.length > 0) {
-    //   for (const [subItemIndex, subItem] of items_subItem?.entries()) {
-    //     const formulaColumnValues = await getFormulaValueOfItem({
-    //       itemId: subItem.id,
-    //       boardColumns: subItem?.board?.columns || [],
-    //       boardColumnValues: subItem?.column_values || [],
-    //     });
-
-    //     for (const columnValue of formulaColumnValues) {
-    //       const alreadyExistsIdx = subItem.column_values.findIndex(
-    //         formValue => formValue.id === columnValue?.id
-    //       );
-
-    //       if (alreadyExistsIdx > -1) {
-    //         items_subItem[subItemIndex]?.column_values?.forEach(
-    //           (col, index) => {
-    //             if (col.id == columnValue.id) {
-    //               col = columnValue;
-    //             }
-
-    //             items_subItem[subItemIndex].column_values[index] = col;
-    //           }
-    //         );
-    //       } else {
-    //         items_subItem[subItemIndex]?.column_values?.push({
-    //           ...columnValue,
-    //         });
-    //       }
-    //     }
-    //   }
-
-    //   if (result?.data?.items?.[0]?.subitems?.length) {
-    //     result.data.items[0].subitems = [...items_subItem];
-    //   }
-    // }
-
     return res.json({ ...result }).status(200);
   } catch (error) {
     next(error);
@@ -94,6 +56,24 @@ const itemSubItems = async (req, res, next) => {
     const { itemId } = req.params;
     const mondayResponse = await getSubItems(itemId);
     const items_subItem = mondayResponse?.data?.items?.[0]?.subitems || [];
+
+    // Format Column Values Object of each columns of Subitems
+    for (let [subItemIndex, subItem] of items_subItem?.entries()) {
+      let column_values = subItem?.column_values || [];
+
+      column_values = column_values.map(colVal => {
+        if (!colVal.text && colVal?.display_value) {
+          return {
+            ...colVal,
+            text: colVal.display_value,
+          };
+        } else return colVal;
+      });
+
+      subItem.column_values = column_values;
+
+      items_subItem[subItemIndex] = subItem;
+    }
 
     if (items_subItem?.length > 0) {
       for (const [subItemIndex, subItem] of items_subItem?.entries()) {

@@ -121,13 +121,13 @@ const createTable = async ({
       ...tableData[currentRowPosition].map((col, j) => {
         let textVal;
         if (currentRowPosition !== 0) {
-          textVal = col?.value || 0;
+          textVal = col?.value || '';
         } else {
           textVal = col?.label;
         }
 
         if (currentRowPosition > 0 && col.type === 'numeric') {
-          textVal = col?.formattedValue || '';
+          textVal = col?.formattedValue;
         }
 
         if (
@@ -311,7 +311,7 @@ const createTable = async ({
         const column = tableData[currentRowPosition][currentColumn];
 
         if (column.id === tableSetting?.sum?.column?.id) {
-          totalSum += parseFloat(column.value);
+          totalSum += parseFloat(column?.value || 0);
         }
       }
     }
