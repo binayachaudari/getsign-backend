@@ -119,7 +119,12 @@ const createTable = async ({
     let maxRowHeight = Math.max(
       defaultRowHeight,
       ...tableData[currentRowPosition].map((col, j) => {
-        let textVal = col?.value || 0;
+        let textVal;
+        if (currentRowPosition !== 0) {
+          textVal = col?.value || 0;
+        } else {
+          textVal = col?.label;
+        }
 
         if (currentRowPosition > 0 && col.type === 'numeric') {
           textVal = col?.formattedValue || '';
