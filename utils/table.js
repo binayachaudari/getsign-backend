@@ -123,7 +123,7 @@ const createTable = async ({
         if (currentRowPosition !== 0) {
           textVal = col?.value || '';
         } else {
-          textVal = col?.label;
+          textVal = col?.value || col?.label;
         }
 
         if (currentRowPosition > 0 && col.type === 'numeric') {
