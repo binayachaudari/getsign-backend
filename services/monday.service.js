@@ -1319,6 +1319,24 @@ const getSubItems = async itemId => {
           }
           type
           value
+          ... on EmailValue {
+            email
+            updated_at
+          }
+          ... on MirrorValue {
+            mirrored_items{
+              mirrored_value{
+                __typename
+              }
+            }
+            display_value
+            id
+          }
+          ... on BoardRelationValue{
+            display_value
+            id
+            value
+          }
         }
       }
     }
