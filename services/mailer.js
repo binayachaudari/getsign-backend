@@ -240,6 +240,10 @@ module.exports = {
           };
         }
 
+        if (!to) {
+          continue;
+        }
+
         const addedHistory = await FileHistory.findOne({
           fileId: id,
           itemId,
