@@ -2,6 +2,7 @@ const nodemailer = require('nodemailer');
 const { config, SES } = require('aws-sdk');
 const FileDetails = require('../models/FileDetails');
 const FileHistory = require('../models/FileHistory');
+const he = require('he');
 const {
   requestSignature,
   signedDocument,
@@ -56,13 +57,15 @@ const sendRequestToSign = async ({
 
   console.log('isMultipleSigner', isMultipleSigner);
   return await transporter.sendMail({
-    from: `${template.sender_name} - via GetSign <${process.env.EMAIL_USERNAME}>`,
+    from: `${he.decode(template.sender_name)} - via GetSign <${
+      process.env.EMAIL_USERNAME
+    }>`,
     replyTo: template.email_address,
     to,
-    subject: `Signature requested by ${template.sender_name}`,
+    subject: `Signature requested by ${he.decode(template.sender_name)}`,
     text: `Your signature has been requested!
     
-    ${template.sender_name} has requested a signature.
+    ${he.decode(template.sender_name)} has requested a signature.
 
 
     ${template?.email_title}
@@ -95,10 +98,12 @@ const sendSignedDocuments = async (document, to) => {
   }
 
   return await transporter.sendMail({
-    from: `${document.senderName} - via GetSign <${process.env.EMAIL_USERNAME}>`,
+    from: `${he.decode(document.senderName)} - via GetSign <${
+      process.env.EMAIL_USERNAME
+    }>`,
     replyTo: document.senderEmail,
     to,
-    subject: `You just signed ${document.name || ''}`,
+    subject: `You just signed ${he.decode(document.name) || ''}`,
     text: `You have successfully signed your document!
     
     You can view the document as an attachment below (if it's under 25 MB) or by clicking this link. 
