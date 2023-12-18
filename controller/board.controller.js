@@ -85,6 +85,7 @@ module.exports = {
         itemId,
         Number(instanceId)
       );
+
       return res
         .json({
           data: { ...boardDetails, isAuthenticated: req.isAuthenticated },

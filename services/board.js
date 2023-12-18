@@ -2,6 +2,7 @@ const FileDetails = require('../models/FileDetails');
 const FileHistory = require('../models/FileHistory');
 const ApplicationModel = require('../models/Application.model');
 const { backOfficeItemViewInstalled } = require('./backoffice.service');
+const he = require('he');
 
 const updateBackOfficeInstalledItemView = async accountId => {
   try {
@@ -148,6 +149,12 @@ const getStoredBoardFile = async (boardId, itemId, instanceId) => {
         $nin: ['sent', 'viewed'],
       },
     });
+
+    // unescape html entities
+    doc.email_title = he.decode(doc.email_title);
+    doc.file_name = he.decode(doc.file_name);
+    doc.message = he.decode(doc.message);
+    doc.sender_name = he.decode(doc.sender_name);
 
     return {
       doc,
