@@ -151,10 +151,10 @@ const getStoredBoardFile = async (boardId, itemId, instanceId) => {
     });
 
     // unescape html entities
-    doc.email_title = he.decode(doc.email_title);
-    doc.file_name = he.decode(doc.file_name);
-    doc.message = he.decode(doc.message);
-    doc.sender_name = he.decode(doc.sender_name);
+    doc.email_title = he.decode(doc?.email_title || '');
+    doc.file_name = he.decode(doc?.file_name || '');
+    doc.message = he.decode(doc?.message || '');
+    doc.sender_name = he.decode(doc?.sender_name || '');
 
     return {
       doc,
